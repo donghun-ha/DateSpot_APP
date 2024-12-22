@@ -2,7 +2,7 @@ services:
   web:
     build: .
     image: 240317130487.dkr.ecr.ap-northeast-2.amazonaws.com/datespot:${DOCKER_IMAGE_TAG:-latest}
-    container_name: fastapi-app
+    container_name: datespot
     volumes:
       - .:/code
     ports:
