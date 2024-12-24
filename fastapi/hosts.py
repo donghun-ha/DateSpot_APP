@@ -79,6 +79,7 @@ async def user_login(request: Request):
     2. Redis에 데이터가 없으면 MySQL에서 확인 후 추가
     3. Apple 이메일 가리기 로직 추가.
     """
+    print(request)
     # 클라이언트에서 전송된 JSON
     data = await request.json()
     email = data.get("email")
@@ -88,11 +89,13 @@ async def user_login(request: Request):
         raise HTTPException(status_code=400, detail="email이 누락되었습니다.")
     
     # Apple 이메일 가리기 처리 로직
+    user_identifier = email
     if email.endswith("privaterelay.appleid.com"):
-        email = email.split('@')[0] + "@hidden.appleid.com"
+        # 이메일 가리기 처리 후 user_identifier로 저장
+        user_identifier = email.split('@')[0] + "@hidden.appleid.com"
 
     # Reids 키 설정 (이메일 기반)
-    redis_key = f"user:{email}"
+    redis_key = f"user:{user_identifier}"
     
     # Redis 연결
     redis = await get_redis_connection()
@@ -102,7 +105,7 @@ async def user_login(request: Request):
     if cached_user:
         user_data = json.loads(cached_user)
         print("Redis에서 사용자 데이터를 반환")
-        return {"source": "redis", "user_data": cached_user}
+        return {"source": "redis", "user_data": user_data}
     
     # Redis에 데이터가 없을 경우
     mysql_conn = connect()
@@ -132,7 +135,7 @@ async def user_login(request: Request):
             INSERT INTO user (email, name, image, user_identifier)
             VALUES (%s, %s, NULL, NULL)
             """ 
-            cursor.execute(insert_query, (email,name))
+            cursor.execute(insert_query, (email,name,user_identifier))
             mysql_conn.commit()
 
             user_data = {"email" : email, "name" : name}
