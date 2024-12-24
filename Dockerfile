@@ -13,6 +13,15 @@ WORKDIR /DATESPOT/fastapi
 COPY ./fastapi/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
+# ENV DATESPOT_DB=""
+# ENV DATESPOT_DB_USER=""
+# ENV DATESPOT_DB_PASSWORD=""
+# ENV DATESPOT_DB_TABLE=""
+# ENV DATESPOT_PORT=""
+# ENV REDIS_HOST=""
+# ENV REDIS_PORT=""
+# ENV REDIS_PASSWORD=""
+
 # Expose the port the app runs on
 EXPOSE 6003
 

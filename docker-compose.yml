@@ -1,9 +1,12 @@
+
 services:
   web:
     build: .
     image: 240317130487.dkr.ecr.ap-northeast-2.amazonaws.com/datespot:${DOCKER_IMAGE_TAG:-latest}
     container_name: datespot
     volumes:
-      - .:/code
+      - /tmp/jenkins_workspace:/code  # Jenkins 디렉터리 대신 임시 디렉터리 사용
     ports:
       - "6003:6003"
+    env_file: 
+      - .env
