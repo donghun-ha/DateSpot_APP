@@ -35,6 +35,18 @@ async def health_check():
         "uptime": "100%"  # Example additional info
     }
 
+@app.get("/test", response_model=HealthCheckResponse)
+async def health_check():
+    """
+    Health check endpoint
+    """
+    await hosts.get_redis_connection()
+    hosts.connect()
+    return {
+        "status": "healthy",
+        "message": "The server is running fine!",
+        "uptime": "100%"  # Example additional info
+    }
 
 
         
