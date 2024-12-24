@@ -60,7 +60,7 @@ def connect():
         conn = pymysql.connect(
             host="3.34.18.250",
             user=DB_USER,
-            password=DB_USER,
+            password=DB_PASSWORD,
             charset='utf8',
             db=DB_TABLE,
             port=int(DB_PORT)
