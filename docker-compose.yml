@@ -9,10 +9,10 @@ services:
     ports:
       - "6003:6003"
     environment: 
-      DATESPOT_DB='3.34.18.250'
-      DATESPOT_DB_USER='datespot'
-      DATESPOT_DB_PASSWORD="qwer1234"
-      DATESPOT_DB_TABLE="datespot"
-      DATESPOT_PORT="3306"
-      REDIS_HOST="redis_host"
-      REDIS_PORT="6379"
+      DATESPOT_DB: "3.34.18.250"
+      DATESPOT_DB_USER: "datespot"
+      DATESPOT_DB_PASSWORD: "qwer1234"
+      DATESPOT_DB_TABLE: "datespot"
+      DATESPOT_PORT: "3306"
+      REDIS_HOST: "redis_host"
+      REDIS_PORT: "6379"
