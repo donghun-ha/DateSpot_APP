@@ -49,17 +49,14 @@ pipeline {
                 }
             }
         }
-        stage("Deploy") {
+       stage("Deploy") {
             steps {
                 sh '''
-                    echo "Preparing temporary workspace: ${TMP_WORKSPACE}"
-                    mkdir -p ${TMP_WORKSPACE}  # 임시 작업 디렉터리 생성
-                    cp -R . ${TMP_WORKSPACE}  # 현재 작업 디렉터리를 임시 디렉터리로 복사
-                    
                     echo "Deploying Docker Image with tag: ${DOCKER_IMAGE_TAG}"
                     DOCKER_IMAGE_TAG=${DOCKER_IMAGE_TAG} docker-compose -f docker-compose.yml up -d
                 '''
             }
         }
+
     }
 }
