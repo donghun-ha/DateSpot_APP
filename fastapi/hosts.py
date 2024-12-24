@@ -38,7 +38,7 @@ async def get_redis_connection():
             print("Initializing Redis connection...")
             # Redis 클라이언트 생성
             redis_client = Redis(
-                host=REDIS_HOST,
+                host='datespot-redis.a4ifxd.ng.0001.apn2.cache.amazonaws.com',
                 port=REDIS_PORT,
                 decode_responses=True  # 문자열 디코딩 활성화
             )
