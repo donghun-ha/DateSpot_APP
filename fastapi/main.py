@@ -34,6 +34,9 @@ async def health_check():
         "message": "The server is running fine!",
         "uptime": "100%"  # Example additional info
     }
+
+
+
         
 
 if __name__ == "__main__":
