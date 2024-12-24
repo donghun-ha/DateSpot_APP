@@ -23,7 +23,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # ENV REDIS_PASSWORD=""
 
 # Expose the port the app runs on
-EXPOSE 6003
+EXPOSE 6004
 
 # Command to run the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "6003"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "6004"]
