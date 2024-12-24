@@ -38,7 +38,7 @@ async def get_redis_connection():
 
 def connect():
     conn = pymysql.connect(
-        host="https://3.34.18.250",
+        host="3.34.18.250",
         user=DB_USER,
         password=DB_USER,
         charset='utf8',
