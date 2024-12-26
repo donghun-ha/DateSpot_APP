@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import hosts
 from pydantic import BaseModel
 from hosts import router as hosts_router
+from restaurant import router as restaurant_router
 
 
 app = FastAPI()
@@ -52,6 +53,7 @@ async def health_check():
     }
 
 app.include_router(hosts_router, tags=["User Login"])
+app.include_router(restaurant_router, tags=["Restaurant"], prefix='/restaurant')
 
 if __name__ == "__main__":
     import uvicorn

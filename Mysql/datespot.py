@@ -71,6 +71,3 @@ def connect():
 #         print("Error:",e)
 #         return {'result':'Error'}
     
-if __name__ == "__main__":
-    import uvicorn 
-    uvicorn.run(app, host="3.36.84.93", port=8000)
