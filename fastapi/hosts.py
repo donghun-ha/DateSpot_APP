@@ -79,7 +79,7 @@ async def user_login(request: Request):
     2. Redis에 데이터가 없으면 MySQL에서 확인 후 추가
     3. Apple 이메일 가리기 로직 추가.
     """
-    print(request)
+    print(f"로그인 요청 request : {request}")
     # 클라이언트에서 전송된 JSON
     data = await request.json()
     email = data.get("email")
