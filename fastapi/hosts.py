@@ -74,12 +74,12 @@ def connect():
 @router.post("/login") 
 async def user_login(request: Request):
     """
-    사용자 로그인 요청 처리"
-    1. Redis에서 사용자 데이터 검색.
+    사용자 로그인 요청 처리:
+    1. Redis에서 사용자 데이터 검색
     2. Redis에 데이터가 없으면 MySQL에서 확인 후 추가
-    3. Apple 이메일 가리기 로직 추가.
+    3. Apple 이메일 가리기 로직 추가
     """
-    print(f"로그인 요청 request : {request}")
+    print(f"로그인 요청 request : {request.body}")
     # 클라이언트에서 전송된 JSON
     data = await request.json()
     email = data.get("email")
@@ -91,10 +91,9 @@ async def user_login(request: Request):
     # Apple 이메일 가리기 처리 로직
     user_identifier = email
     if email.endswith("privaterelay.appleid.com"):
-        # 이메일 가리기 처리 후 user_identifier로 저장
         user_identifier = email.split('@')[0] + "@hidden.appleid.com"
 
-    # Reids 키 설정 (이메일 기반)
+    # Redis 키 설정 (이메일 기반)
     redis_key = f"user:{user_identifier}"
     
     # Redis 연결
@@ -127,24 +126,25 @@ async def user_login(request: Request):
             }
             # Redis에 사용자 데이터 캐싱
             await redis.set(redis_key, str(user_data))
-            return {"source" : "mysql", "user_data" : user_data}
+            return {"source": "mysql", "user_data": user_data}
         else:
             print("MySQL 사용자 데이터 없음")
             # MySQL에 새 사용자 추가
             insert_query = """
             INSERT INTO user (email, name, image, user_identifier)
-            VALUES (%s, %s, NULL, NULL)
+            VALUES (%s, %s, %s, %s)
             """ 
-            cursor.execute(insert_query, (email,name,user_identifier))
+            cursor.execute(insert_query, (email, name, None, user_identifier))
             mysql_conn.commit()
 
-            user_data = {"email" : email, "name" : name}
+            user_data = {"email": email, "name": name}
             # Redis에 추가된 사용자 데이터 캐싱
             await redis.set(redis_key, json.dumps(user_data))
-            return {"source" : "mysql", "user_data" : user_data}
+            return {"source": "mysql", "user_data": user_data}
     finally:
         cursor.close()
         mysql_conn.close()
+
 
 
 @router.post("/update_user")

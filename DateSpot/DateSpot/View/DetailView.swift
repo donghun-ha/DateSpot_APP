@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct PlaceDetailView: View {
-    let restaurant: Restaurant
+//    let restaurant: Restaurant
     
     var images = ["2025 서울 카페&베이커리페어_1_공공1유형", "2025 서울 카페&베이커리페어_2_공공1유형", "2025 서울 카페&베이커리페어_3_공공1유형", "2025 서울 카페&베이커리페어_4_공공1유형"] // 이미지 배열
     @State private var selection: Int = 0 // 현재 페이지 인덱스 추적
