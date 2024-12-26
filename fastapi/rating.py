@@ -6,13 +6,13 @@ Usage: 별점 읽어오고 별점 수정하기 기능을 제공하는 라우터
 """
 
 from fastapi import APIRouter, HTTPException 
-import hosts
+import user
 router = APIRouter()
 
 # Detail Page에서 별점을 메긴 기록이 있으면 별점 가져오기
 @router.get('/')
 async def get_booked_rating(user_email: str):
-    conn = hosts.connect()
+    conn = user.connect()
     curs = conn.cursor()
 
     sql = "SELECT * FROM rating WHERE user_email = %s"

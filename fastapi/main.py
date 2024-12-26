@@ -9,9 +9,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import user
 from pydantic import BaseModel
-from hosts import router as hosts_router
+from user import router as hosts_router
 from place import router as place_router
-from restaurant import router as restaurant_route
+from restaurant import router as restaurant_router
 
 
 app = FastAPI()
@@ -60,4 +60,4 @@ app.include_router(place_router, tags=["Place"], prefix='/place')
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host = "0.0.0.0", port = 8000)
-    hosts.get_redis_connection()
+    user.get_redis_connection()
