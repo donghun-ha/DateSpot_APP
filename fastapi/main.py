@@ -9,7 +9,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import user as user
 from pydantic import BaseModel
-from user import router as user_router
+from hosts import router as hosts_router
+from place import router as place_router
+
 
 app = FastAPI()
 
@@ -50,9 +52,10 @@ async def health_check():
         "uptime": "100%"  # Example additional info
     }
 
-app.include_router(user_router, tags=["User Login"])
+app.include_router(hosts_router, tags=["User Login"])
+app.include_router(place_router, tags=["Place"], prefix='/place')
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host = "0.0.0.0", port = 6004)
-    user.get_redis_connection()
+    uvicorn.run(app, host = "127.0.0.1", port = 8000)
+    hosts.get_redis_connection()
