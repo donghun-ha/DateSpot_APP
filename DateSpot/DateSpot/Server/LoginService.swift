@@ -1,5 +1,14 @@
+//
+//  LoginService.swift
+//  DateSpot
+//
+//  Created by 하동훈 on 24/12/2024.
+//
+
 import Foundation
 
+
+// FastAPI 서버로 사용자 정보를 전송
 class LoginService {
     /*
      사용자 데이터 백엔드 전송
@@ -9,60 +18,36 @@ class LoginService {
      */
     
     // 서버에 이메일, 이름 전송 후 JSON 응답
-    func sendUserData(email: String, name: String) async throws -> [String: Any] {
-        // FastAPI 주소 설정
+    func sendUserData(email: String, name: String) async throws -> [String: Any]{
+        // FastApi 주소 설정
         guard let url = URL(string: "https://fastapi.fre.today/login") else {
-            print("❌ URL 생성 실패")
             throw URLError(.badURL)
         }
-        
-        print("🌐 URL: \(url)")
         
         // URLRequest 생성
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         
+        
         // JSON 바디 구성
         let requestBody: [String: Any] = ["email": email, "name": name]
-        
-        do {
-            request.httpBody = try JSONSerialization.data(withJSONObject: requestBody, options: [])
-            print("📦 HTTP Body: \(String(data: request.httpBody!, encoding: .utf8) ?? "No Body")")
-        } catch {
-            print("❌ JSON 직렬화 실패: \(error.localizedDescription)")
-            throw error
-        }
+        request.httpBody = try JSONSerialization.data(withJSONObject: requestBody, options: [])
         
         // 비동기 네트워크 통신
-        do {
-            let (data, response) = try await URLSession.shared.data(for: request)
-            
-            // 응답 상태 확인
-            if let httpResponse = response as? HTTPURLResponse {
-                print("📡 서버 응답 상태 코드: \(httpResponse.statusCode)")
-                
-                if httpResponse.statusCode != 200 {
-                    print("❌ 서버 응답 오류: \(httpResponse)")
-                    throw URLError(.badServerResponse)
-                }
-            }
-            
-            // JSON 파싱
-            do {
-                guard let jsonResponse = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] else {
-                    print("❌ 응답 데이터 파싱 실패")
-                    throw URLError(.cannotParseResponse)
-                }
-                print("✅ 서버 응답 데이터: \(jsonResponse)")
-                return jsonResponse
-            } catch {
-                print("❌ JSON 파싱 실패: \(error.localizedDescription)")
-                throw error
-            }
-        } catch {
-            print("❌ 네트워크 요청 실패: \(error.localizedDescription)")
-            throw error
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        // 응답 상태 확인
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            throw URLError(.badServerResponse)
         }
+        
+        // JSON 파싱
+        guard let jsonResponse = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] else {
+            throw URLError(.cannotParseResponse)
+        }
+        
+        return jsonResponse
     }
-}
+    
+} // LoginService
