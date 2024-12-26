@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from user import router as hosts_router
 from place import router as place_router
 from restaurant import router as restaurant_router
-
+from rating import router as rating_router
 
 app = FastAPI()
 
@@ -56,6 +56,7 @@ async def health_check():
 app.include_router(hosts_router, tags=["User Login"])
 app.include_router(restaurant_router, tags=["Restaurant"], prefix='/restaurant')
 app.include_router(place_router, tags=["Place"], prefix='/place')
+app.include_router(rating_router, tags=["Rating"], prefix='/rating')
 
 if __name__ == "__main__":
     import uvicorn
