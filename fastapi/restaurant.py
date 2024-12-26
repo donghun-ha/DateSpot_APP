@@ -1,7 +1,7 @@
 from fastapi import APIRouter, FastAPI
 import pymysql 
 import os
-import hosts 
+import user 
 
 
 
@@ -29,11 +29,11 @@ app = FastAPI()
 
 @router.get('/restaurant_select_all')
 async def select():
-    redis = hosts.get_redis_connection()
+    redis = user.get_redis_connection()
 
 
     try:
-        conn = hosts.connect()
+        conn = user.connect()
         curs = conn.cursor()
         sql = "select * from restaurant"
         curs.execute(sql)
