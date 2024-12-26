@@ -74,10 +74,10 @@ def connect():
 @router.post("/login") 
 async def user_login(request: Request):
     """
-    사용자 로그인 요청 처리"
-    1. Redis에서 사용자 데이터 검색.
+    사용자 로그인 요청 처리:
+    1. Redis에서 사용자 데이터 검색
     2. Redis에 데이터가 없으면 MySQL에서 확인 후 추가
-    3. Apple 이메일 가리기 로직 추가.
+    3. Apple 이메일 가리기 로직 추가
     """
     print(f"로그인 요청 request : {request}")
     # 클라이언트에서 전송된 JSON
@@ -91,10 +91,9 @@ async def user_login(request: Request):
     # Apple 이메일 가리기 처리 로직
     user_identifier = email
     if email.endswith("privaterelay.appleid.com"):
-        # 이메일 가리기 처리 후 user_identifier로 저장
         user_identifier = email.split('@')[0] + "@hidden.appleid.com"
 
-    # Reids 키 설정 (이메일 기반)
+    # Redis 키 설정 (이메일 기반)
     redis_key = f"user:{user_identifier}"
     
     # Redis 연결
@@ -127,21 +126,101 @@ async def user_login(request: Request):
             }
             # Redis에 사용자 데이터 캐싱
             await redis.set(redis_key, str(user_data))
-            return {"source" : "mysql", "user_data" : user_data}
+            return {"source": "mysql", "user_data": user_data}
         else:
             print("MySQL 사용자 데이터 없음")
             # MySQL에 새 사용자 추가
             insert_query = """
             INSERT INTO user (email, name, image, user_identifier)
-            VALUES (%s, %s, NULL, NULL)
+            VALUES (%s, %s, %s, %s)
             """ 
-            cursor.execute(insert_query, (email,name,user_identifier))
+            cursor.execute(insert_query, (email, name, None, user_identifier))
             mysql_conn.commit()
 
-            user_data = {"email" : email, "name" : name}
+            user_data = {"email": email, "name": name}
             # Redis에 추가된 사용자 데이터 캐싱
             await redis.set(redis_key, json.dumps(user_data))
-            return {"source" : "mysql", "user_data" : user_data}
+            return {"source": "mysql", "user_data": user_data}
+    finally:
+        cursor.close()
+        mysql_conn.close()
+
+
+
+@router.post("/update_user")
+async def update_user(request: Request):
+    """
+    사용자 데이터를 업데이트하고 Redis와 MySQL 동기화
+    """
+    print(f"사용자 데이터 업데이트 요청: {request}")
+    
+    # 클라이언트에서 전송된 JSON 데이터
+    data = await request.json()
+    email = data.get("email")
+    name = data.get("name")
+    image = data.get("image")
+    
+    if not email:
+        raise HTTPException(status_code=400, detail="email이 누락되었습니다.")
+    
+    # Apple 이메일 가리기 처리 로직
+    user_identifier = email
+    if email.endswith("privaterelay.appleid.com"):
+        user_identifier = email.split('@')[0] + "@hidden.appleid.com"
+    
+    # Redis 키 설정
+    redis_key = f"user:{user_identifier}"
+
+    # Redis 연결
+    redis = await get_redis_connection()
+
+    # MySQL 연결
+    mysql_conn = connect()
+    cursor = mysql_conn.cursor()
+
+    try:
+        # MySQL 사용자 데이터 업데이트
+        update_query = """
+        UPDATE user
+        SET name = %s, image = %s, user_identifier = %s
+        WHERE email = %s
+        """
+        cursor.execute(update_query, (name, image, user_identifier, email))
+        mysql_conn.commit()
+
+        print(f"MySQL에서 사용자 데이터 업데이트: {email}")
+
+        # Redis에서 기존 사용자 데이터 삭제
+        await redis.delete(redis_key)
+        print(f"Redis에서 기존 사용자 데이터 삭제: {redis_key}")
+
+        # 최신 사용자 데이터를 MySQL에서 가져오기
+        select_query = """
+        SELECT email, name, image, user_identifier
+        FROM user
+        WHERE email = %s
+        """
+        cursor.execute(select_query, (email,))
+        user = cursor.fetchone()
+
+        if user:
+            user_data = {
+                "email": user[0],
+                "name": user[1],
+                "image": user[2],
+                "user_identifier": user[3],
+            }
+            # Redis에 최신 사용자 데이터 저장
+            await redis.set(redis_key, json.dumps(user_data))
+            print(f"Redis에 최신 사용자 데이터 저장: {redis_key}")
+            return {"status": "success", "source": "mysql", "user_data": user_data}
+        else:
+            raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
+    
+    except Exception as e:
+        print(f"사용자 업데이트 중 오류 발생: {e}")
+        raise HTTPException(status_code=500, detail="사용자 데이터를 업데이트하는 중 오류가 발생했습니다.")
+    
     finally:
         cursor.close()
         mysql_conn.close()
