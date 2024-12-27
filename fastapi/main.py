@@ -9,10 +9,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import user
 from pydantic import BaseModel
-from user import router as hosts_router
+from user import router as user_router
 from place import router as place_router
 from restaurant import router as restaurant_router
 from rating import router as rating_router
+
 
 app = FastAPI()
 

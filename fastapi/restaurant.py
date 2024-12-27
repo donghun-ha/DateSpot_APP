@@ -44,8 +44,3 @@ async def select():
         print("restaurant.py select Error")
         return {"restaurant.py select Error" : e}
     
-
-
-
-
-    

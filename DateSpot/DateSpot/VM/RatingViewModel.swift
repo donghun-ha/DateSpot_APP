@@ -32,7 +32,7 @@ class RatingViewModel: ObservableObject {
                 if success {
                     print("Rating successfully inserted")
                     // Fetch 업데이트된 데이터
-                    await fetchRatings(for: rating.userEmail)
+                     fetchRatings(for: rating.userEmail)
                 }
             } catch {
                 print("Failed to insert rating: \(error.localizedDescription)")
@@ -131,6 +131,6 @@ extension RatingViewModel {
         }
 
         // 서버 업데이트 성공 후, 로컬 데이터를 갱신
-        await fetchRatings(for: rating.userEmail)
+         fetchRatings(for: rating.userEmail)
     }
 }
