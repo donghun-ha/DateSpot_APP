@@ -24,8 +24,8 @@ async def select():
         print("restaurant.py select Error")
         return {"restaurant.py select Error" : e}
     
-
-@router.get('/')
+# 디테일 페이지로 이동할때 클릭한 restaurant 정보 쿼리
+@router.get('/go_detail')
 async def get_booked_rating(name: str):
     conn = user.connect()
     curs = conn.cursor()
@@ -38,18 +38,19 @@ async def get_booked_rating(name: str):
     if not rows:
         raise HTTPException(status_code=404, detail="Not Found")
     
-    # 데이터를 매핑하여 반환
+    # 데이터를 매핑하여 반환 // SwiftUI에 맞는 형태
     results = [
         {
             "name": row[0],
             "address": row[1],
             "lat": row[2],
             "lng": row[3],
-            "description": row[4],
-            "contactInfo": row[5],
-            "operatingHour": row[6],
-            "parking": row[7],
-            "closingTIme": row[8]
+            "parking": row[4],
+            "operatingHour": row[5],
+            "closedDays": row[6],
+            "contactInfo": row[7],
+            "breakTime": row[8],
+            "lastOrder": row[9]
         }
         for row in rows
     ]

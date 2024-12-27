@@ -12,7 +12,7 @@ class RatingViewModel: ObservableObject {
     private let defaultEmail = "dnjsd97@gmail.com" // 테스트용 이메일
     
     // Fetch Ratings
-    func fetchRatings(for email: String? = nil) {
+    func fetchRatings(for email: String? = nil) async {
         let userEmail = email ?? defaultEmail
         Task {
             do {
