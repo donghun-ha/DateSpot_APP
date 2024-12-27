@@ -16,6 +16,8 @@ class TabMapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
             span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05) // 지도에 표시할 범위
         )
     )
+    @Published var parkingData: [Parking] = [] // 해당구의 전체 주차장 목록
+    @Published var nearParking: [Parking] = [] // 주차장 marker
     @Published var places: [Place] = [] // 마커로 표시할 장소 목록
     
     private let locationManager = CLLocationManager()
@@ -45,26 +47,50 @@ class TabMapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
     }
     
+    
     func filterNearbyPlaces(currentLocation: CLLocation) {
-        
-        // 마커 테스트 데이터
-        let testData = [
-            Place(name: "Test 1", coordinate: CLLocationCoordinate2D(latitude: 37.4985, longitude: 127.0323)),
-            Place(name: "Test 2", coordinate: CLLocationCoordinate2D(latitude: 37.49849, longitude: 127.0333)),
-            Place(name: "Test 3", coordinate: CLLocationCoordinate2D(latitude: 37.49847, longitude: 127.0328))
-        ]
-        
-        
-        // 장소 거리 필터링
-        self.places = testData.filter { place in
-            let placeLocation = CLLocation(latitude: place.coordinate.latitude, longitude: place.coordinate.longitude)
-            return currentLocation.distance(from: placeLocation) <= 5000 // 5km 이내
+            // 장소 거리 필터링
+            self.nearParking = parkingData.filter { parking in
+                let parkingLocation = CLLocation(latitude: parking.lat, longitude: parking.lng)
+                return currentLocation.distance(from: parkingLocation) <= 5000 // 5km 이내
+            }
         }
+    
+    
+    // 주차장 목록 API 호출
+    func fetchParkingInfo(region: String) {
+        guard let url = URL(string: "http://127.0.0.1:8000/select_parkinginfo?region=\(region)") else {
+            print("Invalid URL")
+            return
+        }
+
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            if let error = error {
+                print("Error fetching data:", error)
+                return
+            }
+
+            guard let data = data else {
+                print("No data returned")
+                return
+            }
+
+            do {
+                // FastAPI 응답 데이터 디코딩
+                let decodedResponse = try JSONDecoder().decode([String: [Parking]].self, from: data)
+                DispatchQueue.main.async {
+                    self.parkingData = decodedResponse["result"] ?? []
+                }
+            } catch {
+                print("Error decoding JSON:", error)
+            }
+        }.resume()
     }
     
-    func initdata(){
-        
-    }
+    
+    
+    
+    
     
     
 // map에 사용될 장소 모델

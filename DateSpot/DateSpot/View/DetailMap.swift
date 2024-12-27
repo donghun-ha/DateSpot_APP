@@ -8,8 +8,11 @@ import SwiftUI
 import MapKit
 
 struct DetailMapView : View {
+    
+    @StateObject private var detailMapViewModel = TabMapViewModel()
+
     @State private var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 37.465618, longitude: 127.0232), // LA 중심 좌표
+        center: CLLocationCoordinate2D(latitude: 37.465618, longitude: 127.0232),
         span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01) // 줌 레벨
     )
     
@@ -31,27 +34,23 @@ struct DetailMapView : View {
             ZStack {
                 // 지도
                 Map(coordinateRegion: $region)
+                
                     .edgesIgnoringSafeArea(.all)
                 
                 // 위치 핀
-                VStack {
-                    Spacer()
-                    Image(systemName: "mappin.circle.fill")
-                        .resizable()
-                        .frame(width: 40, height: 40)
-                        .foregroundColor(.red)
-                        .offset(y: -100) // 핀 위치 조정
-                    
-                    Spacer()
+               
                     
                     // 카드 뷰
                     DetailMapCardView()
                         .padding(.bottom, 80) // 카드뷰와 탭바 간격 조정
                 }
             }
+            .onAppear{
+                detailMapViewModel.fetchParkingInfo(region: "강남구")
+            }
         }
     }
-}
+
 
 struct DetailMapCardView: View {
     var body: some View {
