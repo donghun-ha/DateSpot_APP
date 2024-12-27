@@ -1,4 +1,4 @@
-FROM mysql:latest
+FROM mysql:8.0
 
 # MySQL 설정
 ENV MYSQL_ROOT_PASSWORD="qwer1234"

@@ -10,11 +10,16 @@ import os
 import pymysql , json
 from redis.asyncio import Redis
 from fastapi import APIRouter, HTTPException, Request
-
+import boto3
 # FastAPI 라우터 생성
 router = APIRouter()
 
 # 환경 변수에서 불러오기
+
+AWS_ACCESS_KEY = os.getenv('AWS_ACCESS_KEY_ID')
+AWS_SECRET_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+BUCKET_NAME = os.getenv('AWS_S3_BUCKET_NAME')
+REGION = os.getenv('AWS_REGION')
 DB = os.getenv('DATESPOT_DB')
 DB_USER = os.getenv('DATESPOT_DB_USER')
 DB_PASSWORD = os.getenv('DATESPOT_DB_PASSWORD')
@@ -26,6 +31,15 @@ REDIS_PASSWORD = os.getenv("REDIS_PASSWORD")
 
 # Redis client 초기화
 redis_client = None
+
+
+s3 = boto3.client(
+    's3',
+    aws_access_key_id=AWS_ACCESS_KEY,
+    aws_secret_access_key=AWS_SECRET_KEY,
+    region_name=REGION
+)
+
 
 # Redis 연결 함수
 async def get_redis_connection():

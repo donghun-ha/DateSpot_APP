@@ -53,7 +53,7 @@ async def health_check():
         "uptime": "100%"  # Example additional info
     }
 
-app.include_router(hosts_router, tags=["User Login"])
+app.include_router(user_router, tags=["User Login"])
 app.include_router(restaurant_router, tags=["Restaurant"], prefix='/restaurant')
 app.include_router(place_router, tags=["Place"], prefix='/place')
 app.include_router(rating_router, tags=["Rating"], prefix='/rating')

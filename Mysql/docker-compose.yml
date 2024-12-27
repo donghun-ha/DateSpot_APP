@@ -1,20 +1,27 @@
-version: "3.8"
-
 services:
   datespot_db:  # MySQL 데이터베이스 컨테이너 정의
-    image: mysql:latest  # 최신 MySQL 이미지 사용
-    container_name: datespot_db  # 데이터베이스 컨테이너 이름 설정
+    image: datespot-mysql:port  # 최신 MySQL 이미지 사용
+    container_name: datespot_db2  # 데이터베이스 컨테이너 이름 설정
     restart: unless-stopped  # 컨테이너 중단 시 자동 재시작
     environment:  # MySQL 초기화 및 설정을 위한 환경 변수
       MYSQL_ROOT_PASSWORD: qwer1234  # MySQL 루트 계정 비밀번호
       MYSQL_DATABASE: datespot  # 초기화 시 생성할 기본 데이터베이스 이름
       MYSQL_USER: root  # 사용자 계정 이름
       MYSQL_PASSWORD: qwer1234  # 사용자 계정 비밀번호
+    
     volumes:
       - db_data:/var/lib/mysql  # MySQL 데이터 영구 저장소 설정 (호스트 볼륨:컨테이너 내부 경로)
     ports:
       - "3306:3306"  # MySQL 데이터베이스 접근 포트 설정 (호스트:컨테이너)
-
+    networks:
+      - mysql_network
+    build:
+      context: .
+      dockerfile: Dockerfile
 volumes:
   db_data:  # MySQL 데이터가 저장될 호스트 볼륨
     # MySQL 데이터를 컨테이너 외부에 저장하여 재시작 시 데이터가 유지되도록 보장
+
+networks:
+  mysql_network:
+    driver: bridge

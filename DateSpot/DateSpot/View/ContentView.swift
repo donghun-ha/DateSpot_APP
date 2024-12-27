@@ -7,47 +7,71 @@
 
 import SwiftUI
 
-struct ContentView: View {
-    
-//    let restaurantData = [
-//        Restaurant(image: "w1", category: "한식", name: "김치찌개 맛집", description: "한국의 전통 음식을 맛볼 수 있는 곳"),
-//        Restaurant(image: "w2", category: "일식", name: "스시야", description: "신선한 초밥이 유명한 레스토랑"),
-//        Restaurant(image: "w3", category: "양식", name: "스테이크 하우스", description: "부드러운 스테이크와 와인을 즐길 수 있는 곳"),
-//        Restaurant(image: "w4", category: "중식", name: "짜장면 전문점", description: "수제 짜장면과 탕수육이 유명한 곳")
-//    ]
+import SwiftUI
 
-    let spotData = [
-        Spot(image: "w5", category: "박물관", name: "역사 박물관", description: "한국의 역사를 알 수 있는 명소"),
-        Spot(image: "w6", category: "자연", name: "도심 공원", description: "도심 속에서 자연을 느낄 수 있는 공간"),
-        Spot(image: "w7", category: "테마파크", name: "놀이공원", description: "아이들과 함께 즐기기 좋은 장소"),
-        Spot(image: "w8", category: "랜드마크", name: "전망대", description: "도시를 한눈에 볼 수 있는 명소")
-    ]
+// MARK: - 모델 정의
+struct Restaurant: Decodable, Hashable {
+    let name: String
+    let address: String
+    let lat: Double
+    let lng: Double
+    let parking: String
+    let operatingHours: String
+    let closedDays: String
+    let contactInfo: String
+    let breakTime: String
+    let lastOrder: String
+}
+
+struct PlaceData: Decodable, Hashable {
+    let name: String
+    let address: String
+    let lat: Double
+    let lng: Double
+    let description: String
+    let contact_info: String
+    let operating_hours: String
+    let parking: String
+    let closing_time: String
+}
+
+// 서버나 로컬 JSON 구조가 {"restaurants": [...], "places": [...]} 형태라고 가정
+struct DataModel: Decodable {
+    let restaurants: [Restaurant]
+    let places: [PlaceData]
+}
+
+// MARK: - 메인 ContentView
+struct ContentView: View {
+    @State private var restaurants: [Restaurant] = []
+    @State private var places: [PlaceData] = []
     
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                
                 // 맛집 섹션
                 Text("맛집")
                     .font(.title)
                     .fontWeight(.bold)
                     .padding(.horizontal)
                 
-//                ScrollView(.horizontal, showsIndicators: false) {
-//                    HStack(spacing: 20) {
-//                        ForEach(restaurantData) { restaurant in
-//                            CardView(
-//                                image: restaurant.image,
-//                                category: restaurant.category,
-//                                heading: restaurant.name,
-//                                author: restaurant.description
-//                            )
-//                            .frame(width: 300) // 카드 너비 설정
-//                        }
-//                    }
-//                    .padding(.horizontal)
-//                }
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 20) {
+                        ForEach(restaurants, id: \.self) { restaurant in
+                            CardView(
+                                image: "w1",                  // 실제로는 모델에 맞춰 변경
+                                category: restaurant.parking, // ex) 주차 가능/불가
+                                heading: restaurant.name,     // ex) 식당 이름
+                                author: restaurant.address    // or contactInfo 등 원하는 정보
+                            )
+                            .frame(width: 300)
+                        }
+                    }
+                    .padding(.horizontal)
+                }
                 
-                // 명소 섹션
+                // 추천 명소 섹션
                 Text("추천 명소")
                     .font(.title)
                     .fontWeight(.bold)
@@ -55,14 +79,14 @@ struct ContentView: View {
                 
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 20) {
-                        ForEach(spotData) { spot in
+                        ForEach(places, id: \.self) { place in
                             CardView(
-                                image: spot.image,
-                                category: spot.category,
-                                heading: spot.name,
-                                author: spot.description
+                                image: "w5",                      // 실제로는 모델에 맞춰 변경
+                                category: place.parking,          // ex) "가능" / "불가"
+                                heading: place.name,              // 명소 이름
+                                author: place.description         // 명소 설명
                             )
-                            .frame(width: 300) // 카드 너비 설정
+                            .frame(width: 300)
                         }
                     }
                     .padding(.horizontal)
@@ -70,14 +94,67 @@ struct ContentView: View {
             }
             .padding(.vertical)
         }
+        .onAppear {
+            // 화면 나타날 때 JSON 로드
+            fetchDataFromServer()
+            // 또는 loadLocalJSON() 등으로 대체
+        }
     }
+    
+    // MARK: - 서버에서 JSON 로드 (예시)
+    func fetchDataFromServer() {
+        guard let url = URL(string: "https://example.com/api/data") else {
+            print("URL이 올바르지 않습니다.")
+            return
+        }
+        
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            if let error = error {
+                print("네트워크 에러:", error.localizedDescription)
+                return
+            }
+            guard let data = data else {
+                print("데이터가 없습니다.")
+                return
+            }
+            
+            do {
+                let decoded = try JSONDecoder().decode(DataModel.self, from: data)
+                // 메인 스레드에서 UI 업데이트
+                DispatchQueue.main.async {
+                    self.restaurants = decoded.restaurants
+                    self.places = decoded.places
+                }
+            } catch {
+                print("JSON 디코딩 에러:", error.localizedDescription)
+            }
+        }.resume()
+    }
+    
+    // MARK: - 로컬 JSON 로드 (선택 예시)
+    // func loadLocalJSON() {
+    //     guard let url = Bundle.main.url(forResource: "data", withExtension: "json") else {
+    //         print("로컬 JSON 파일을 찾을 수 없습니다.")
+    //         return
+    //     }
+    //
+    //     do {
+    //         let data = try Data(contentsOf: url)
+    //         let decoded = try JSONDecoder().decode(DataModel.self, from: data)
+    //         self.restaurants = decoded.restaurants
+    //         self.places = decoded.places
+    //     } catch {
+    //         print("로컬 JSON 디코딩 에러:", error.localizedDescription)
+    //     }
+    // }
 }
 
+// MARK: - CardView
 struct CardView: View {
-    var image: String
-    var category: String
-    var heading: String
-    var author: String
+    let image: String
+    let category: String
+    let heading: String
+    let author: String
 
     var body: some View {
         VStack(alignment: .leading) {
@@ -92,10 +169,12 @@ struct CardView: View {
                     .font(.caption)
                     .fontWeight(.bold)
                     .foregroundColor(.secondary)
+                
                 Text(heading)
                     .font(.title3)
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
+                
                 Text(author)
                     .font(.caption)
                     .foregroundColor(.secondary)
@@ -108,17 +187,7 @@ struct CardView: View {
     }
 }
 
-
-struct Spot: Identifiable {
-    var id = UUID()
-    var image: String
-    var category: String
-    var name: String
-    var description: String
-}
-
-
+// MARK: - 미리보기
 #Preview {
 //    ContentView()
 }
-
