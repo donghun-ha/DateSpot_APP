@@ -36,13 +36,18 @@ func application(_ app: UIApplication, open url: URL, options: [UIApplication.Op
 // MARK: - Main
 @main
 struct DateSpotApp: App {
-    @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
+    @StateObject private var appState = AppState() // AppSate 초기화
+    
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate // AppDelegate 연결
     
     var body: some Scene {
         WindowGroup {
-            NavigationView {
-//                LoginView()
-                ContentView()
+            if appState.isLoggedIn {
+                TabBarView() // 로그인 후 홈 화면으로 이동
+                    .environmentObject(appState) // 앱 상태를 전달
+            } else {
+                LoginView() // 로그인 화면
+                    .environmentObject(appState) // 앱 상태를 전달
             }
         }
     }

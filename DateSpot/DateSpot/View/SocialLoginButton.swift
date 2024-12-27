@@ -14,7 +14,9 @@ struct SocialLoginButton: View {
     let action: () -> Void
     
     var body: some View {
-        Button(action: action) {
+        Button(action: {
+            action()
+        }) {
             HStack(spacing: 8, content: {
                 icon
                     .resizable()
@@ -36,6 +38,7 @@ struct SocialLoginButton: View {
 // 구글 로그인 버튼
 struct GoogleLoginButtonView : View {
     @ObservedObject var viewModel: LoginViewModel
+    @EnvironmentObject var appState: AppState
     
     var body: some View {
         SocialLoginButton(
@@ -51,6 +54,7 @@ struct GoogleLoginButtonView : View {
 // 애플 로그인 버튼
 struct AppleLoginButtonView : View {
     @ObservedObject var viewModel: LoginViewModel
+    @EnvironmentObject var appState: AppState
     
     var body: some View {
         SocialLoginButton(
