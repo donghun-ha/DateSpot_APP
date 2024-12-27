@@ -9,10 +9,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import user
 from pydantic import BaseModel
-from hosts import router as hosts_router
+from user import router as user_router
 from place import router as place_router
-from restaurant import router as restaurant_route
-
+from restaurant import router as restaurant_router
+from rating import router as rating_router
 
 app = FastAPI()
 
@@ -47,17 +47,19 @@ async def health_check():
     """
     await user.get_redis_connection()
     user.connect()
+    user.s
     return {
         "status": "healthy",
         "message": "The server is running fine!",
         "uptime": "100%"  # Example additional info
     }
 
-app.include_router(hosts_router, tags=["User Login"])
+app.include_router(user_router, tags=["User Login"])
 app.include_router(restaurant_router, tags=["Restaurant"], prefix='/restaurant')
 app.include_router(place_router, tags=["Place"], prefix='/place')
+app.include_router(rating_router, tags=["Rating"], prefix='/rating')
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host = "0.0.0.0", port = 8000)
-    hosts.get_redis_connection()
+    user.get_redis_connection()

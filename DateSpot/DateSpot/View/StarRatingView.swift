@@ -31,23 +31,4 @@ struct StarRatingView: View {
     }
 }
 
-struct ContentView: View {
-    @State private var rating: Int = 3 // 기본 별점
 
-    var body: some View {
-        VStack(spacing: 20) {
-            Text("Rating: \(rating)")
-                .font(.headline)
-
-            // 크기 지정하여 StarRatingView 사용
-            StarRatingView(rating: $rating)
-                .frame(width: 200, height: 40) // 크기 지정
-                .background(Color.gray.opacity(0.2)) // 배경 확인용
-        }
-        .padding()
-    }
-}
-
-#Preview {
-    ContentView()
-}
