@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Restaurant: Codable, Hashable{
+struct Restaurant: Codable, Hashable {
     var name: String
     var address: String
     var lat: Double
@@ -16,17 +16,6 @@ struct Restaurant: Codable, Hashable{
     var operatingHour: String
     var closedDays: String
     var contactInfo: String
-    var breakTime: String
-    var lastOrder: String
-    
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(name)
-    }
-    
+    var breakTime: String?
+    var lastOrder: String?
 }
-//
-//extension Restaurant: Hashable{
-//    func hash(into hasher: inout Hasher) {
-//        hasher.combine(name)
-//    }
-//}

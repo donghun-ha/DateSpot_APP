@@ -49,8 +49,8 @@ async def get_booked_rating(name: str):
             "operatingHour": row[5],
             "closedDays": row[6],
             "contactInfo": row[7],
-            "breakTime": row[8],
-            "lastOrder": row[9]
+            "breakTime": row[8],  # 기존 description -> breakTime
+            "lastOrder": row[9]   # 기존 closingTime -> lastOrder
         }
         for row in rows
     ]

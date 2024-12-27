@@ -11,10 +11,10 @@ import Foundation
 class RestaurantViewModel: ObservableObject {
     @Published var restaurants: [Restaurant] = [] // 전체 레스토랑 리스트
     @Published var selectedRestaurant: Restaurant? // 선택된 레스토랑 상세 정보
-    private let baseURL = "https://fastapi.fre.today/restaurant" // 기본 API URL
+    private let baseURL = "https://fastapi.fre.today/restaurant/" // 기본 API URL
 
     // Fetch Restaurants
-    func fetchRestaurants() {
+    func fetchRestaurants() async{
         Task {
             do {
                 let fetchedRestaurants = try await fetchRestaurantsFromAPI()
@@ -26,14 +26,12 @@ class RestaurantViewModel: ObservableObject {
     }
     
     // Fetch Restaurant Detail
-    func fetchRestaurantDetail(name: String = "3대삼계장인") {
+    func fetchRestaurantDetail(name: String = "3대삼계장인") async{
         print("fetching restaurant detail")
         Task {
             do {
                 let fetchedDetail = try await fetchRestaurantDetailFromAPI(name: name)
                 self.selectedRestaurant = fetchedDetail
-                print(fetchedDetail)
-                print(selectedRestaurant!)
             } catch {
                 print("Failed to fetch restaurant detail: \(error.localizedDescription)")
             }
@@ -64,7 +62,7 @@ extension RestaurantViewModel {
 
     // Fetch Restaurant Detail from API
     private func fetchRestaurantDetailFromAPI(name: String) async throws -> Restaurant {
-        guard var urlComponents = URLComponents(string: "https://fastapi.fre.today/restaurant/") else {
+        guard var urlComponents = URLComponents(string: "\(baseURL)go_detail") else {
             throw URLError(.badURL)
         }
 
@@ -92,15 +90,27 @@ extension RestaurantViewModel {
             print("Response JSON: \(jsonString)")
         }
 
+        // JSON 디코딩
         let decoder = JSONDecoder()
-        let decodedResponse = try decoder.decode([String: [Restaurant]].self, from: data)
-
-        // "results" 키의 첫 번째 레스토랑 반환
-        guard let restaurant = decodedResponse["results"]?.first else {
-            throw URLError(.cannotDecodeContentData)
+        decoder.keyDecodingStrategy = .convertFromSnakeCase // JSON 키를 스네이크 케이스에서 카멜 케이스로 자동 변환
+        do {
+            let decodedResponse = try decoder.decode([String: [Restaurant]].self, from: data)
+            print(decodedResponse)
+            // "results" 키의 첫 번째 레스토랑 반환
+            guard let restaurant = decodedResponse["results"]?.first else {
+                throw URLError(.cannotDecodeContentData)
+            }
+            return restaurant
+        } catch {
+            print("Decoding error: \(error)")
+            if let jsonString = String(data: data, encoding: .utf8) {
+                print("Response JSON: \(jsonString)")
+            }
+            throw error
         }
-        print(restaurant)
-        return restaurant
+
+
     }
+
 
 }
