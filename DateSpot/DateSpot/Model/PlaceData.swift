@@ -23,8 +23,8 @@ struct PlaceData: Decodable {
     }
 }
 
-extension PlaceData {
-    func hash (into hasher: inout Hasher) {
-        hasher.combine(name)
-    }
-}
+//extension PlaceData {
+//    func hash(into hasher: inout Hasher) {
+//        hasher.combine(name)
+//    }
+//}
