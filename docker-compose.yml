@@ -1,4 +1,3 @@
-
 services:
   web:
     build: .
@@ -16,5 +15,7 @@ services:
       DATESPOT_PORT: "3306"
       REDIS_HOST: "redis_host"
       REDIS_PORT: "6379"
-      BUCKET_NAME : "datespot-image"
-      REGION : "ap-northeast-2"
+      BUCKET_NAME: "datespot-image"
+      REGION: "ap-northeast-2"
+      AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"  # Jenkins 환경 변수 전달
+      AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"  # Jenkins 환경 변수 전달

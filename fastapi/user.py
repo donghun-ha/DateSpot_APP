@@ -1,24 +1,17 @@
-"""
-Author : 하동훈
-Description : 
-<사용자 로그인 처리 로직>
-Apple/Google 로그인 데이터 기반으로 Redis와 MySQL을 연동하여 사용자 데이터를 관리,
-Apple 로그인 시 이메일 가리기 로직 처리.
-"""
-
+from fastapi import APIRouter, HTTPException, Request
 import os
 import pymysql , json
 from redis.asyncio import Redis
-from fastapi import APIRouter, HTTPException, Request
 import boto3
+from botocore.exceptions import NoCredentialsError, PartialCredentialsError
+
 # FastAPI 라우터 생성
 router = APIRouter()
 
 # 환경 변수에서 불러오기
-
 AWS_ACCESS_KEY = os.getenv('AWS_ACCESS_KEY_ID')
 AWS_SECRET_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
-BUCKET_NAME = os.getenv('AWS_S3_BUCKET_NAME')
+BUCKET_NAME = os.getenv('BUCKET_NAME')
 REGION = os.getenv('AWS_REGION')
 DB = os.getenv('DATESPOT_DB')
 DB_USER = os.getenv('DATESPOT_DB_USER')
@@ -32,14 +25,67 @@ REDIS_PASSWORD = os.getenv("REDIS_PASSWORD")
 # Redis client 초기화
 redis_client = None
 
+def create_s3_client():
+    aws_access_key = os.getenv("AWS_ACCESS_KEY_ID")
+    aws_secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+    region = os.getenv("AWS_REGION", "ap-northeast-2")
 
-s3 = boto3.client(
-    's3',
-    aws_access_key_id=AWS_ACCESS_KEY,
-    aws_secret_access_key=AWS_SECRET_KEY,
-    region_name=REGION
-)
+    if not aws_access_key or not aws_secret_key:
+        raise HTTPException(status_code=400, detail="AWS credentials are not set in environment variables.")
 
+    try:
+        s3 = boto3.client(
+            's3',
+            aws_access_key_id=aws_access_key,
+            aws_secret_access_key=aws_secret_key,
+            region_name=region
+        )
+        return s3
+    except (NoCredentialsError, PartialCredentialsError) as e:
+        raise HTTPException(status_code=401, detail=f"AWS credentials error: {str(e)}")
+
+@router.get("/debug-s3")
+def debug_s3():
+    """S3 연결 테스트 및 지정된 버킷 디버깅"""
+    try:
+        s3 = create_s3_client()
+        if not BUCKET_NAME:
+            raise HTTPException(status_code=400, detail="BUCKET_NAME is not set in environment variables.")
+
+        # 버킷 목록 확인
+        response = s3.list_buckets()
+        buckets = [bucket['Name'] for bucket in response.get('Buckets', [])]
+
+        # BUCKET_NAME 확인
+        if BUCKET_NAME not in buckets:
+            raise HTTPException(status_code=404, detail=f"Bucket '{BUCKET_NAME}' not found.")
+
+        # 버킷에 접근 테스트
+        try:
+            objects = s3.list_objects_v2(Bucket=BUCKET_NAME)
+            object_keys = [obj['Key'] for obj in objects.get('Contents', [])]
+            return {
+                "status": "success",
+                "bucket_name": BUCKET_NAME,
+                "objects": object_keys
+            }
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error accessing bucket '{BUCKET_NAME}': {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error connecting to S3: {str(e)}")
+
+@router.get("/env-debug")
+def debug_env_variables():
+    """환경 변수 확인"""
+    aws_access_key = os.getenv("AWS_ACCESS_KEY_ID")
+    aws_secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+    aws_region = os.getenv("AWS_REGION", "ap-northeast-2")
+    
+    return {
+        "AWS_ACCESS_KEY_ID": aws_access_key,
+        "AWS_SECRET_ACCESS_KEY": "HIDDEN" if aws_secret_key else None,
+        "AWS_REGION": aws_region
+    }
 
 # Redis 연결 함수
 async def get_redis_connection():
@@ -64,7 +110,6 @@ async def get_redis_connection():
             redis_client = None
             raise e
     return redis_client
-
 
 def connect():
     """
@@ -158,8 +203,6 @@ async def user_login(request: Request):
     finally:
         cursor.close()
         mysql_conn.close()
-
-
 
 @router.post("/update_user")
 async def update_user(request: Request):

@@ -48,6 +48,7 @@ async def health_check():
     """
     await user.get_redis_connection()
     user.connect()
+    user.s
     return {
         "status": "healthy",
         "message": "The server is running fine!",

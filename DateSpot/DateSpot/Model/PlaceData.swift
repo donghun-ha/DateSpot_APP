@@ -14,11 +14,17 @@ struct PlaceData: Decodable {
     var lng: Double
     var description: String
     var contact_info: String
-    var operating_hours: String
+    var operating_hour: String
     var parking: String
     var closing_time: String
     
     func hash(into hasher: inout Hasher) {
+        hasher.combine(name)
+    }
+}
+
+extension PlaceData {
+    func hash (into hasher: inout Hasher) {
         hasher.combine(name)
     }
 }

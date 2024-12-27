@@ -20,14 +20,15 @@ struct SocialLoginButton: View {
                     .resizable()
                     .renderingMode(.original) // 원본 색상
                     .frame(width: 20, height: 20)
-                
+                    .padding(40)
                 Text(text)
                     .font(.system(size: 16, weight: .medium))
+                Spacer()
             })
-            .foregroundColor(.white)
-            .frame(width: 250, height: 50)
+            .foregroundColor(.black)
+            .frame(width: 300, height: 50)
             .background(backgroundColor)
-            .cornerRadius(8)
+            .cornerRadius(30)
         }
     }
 }
@@ -40,7 +41,7 @@ struct GoogleLoginButtonView : View {
         SocialLoginButton(
             icon: Image("googleLogo"),
             text: "구글로 로그인",
-            backgroundColor: .black
+            backgroundColor: .white
         ) {
             viewModel.signInWithGoogle()
         }
@@ -55,7 +56,7 @@ struct AppleLoginButtonView : View {
         SocialLoginButton(
             icon: Image(systemName: "applelogo"),
             text: "애플로 로그인",
-            backgroundColor: .black
+            backgroundColor: .white
         ) {
             viewModel.signInWithApple()
         }
