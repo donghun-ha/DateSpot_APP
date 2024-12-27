@@ -11,23 +11,29 @@ import SwiftUI
 import MapKit
 import CoreLocation
 
+//
+//  test.swift
+//  DateSpot
+//
+//  Created by 신정섭 on 12/27/24.
+//
 
-struct TabbarMapView: View {
-    @StateObject private var tabViewModel = TabMapViewModel()
 
+
+struct TabbarMapView : View {
+    @StateObject private var maptest = TabMapViewModel()
     var body: some View {
-        Map(position: $tabViewModel.cameraPosition) {
-            ForEach(tabViewModel.places) { place in
-                Marker(place.name, coordinate: place.coordinate)
-                    .tint(.blue) // 마커 색상 설정
+        NavigationView{
+            Map(position: $maptest.cameraPosition) {
+                ForEach(maptest.places) { place in
+                    Marker(place.name, coordinate: place.coordinate)
+                        .tint(.blue) // 마커 색상 설정
+                }
             }
+            .ignoresSafeArea()
         }
-        .ignoresSafeArea()
     }
 }
-
-
-
 
 #Preview{
     TabbarMapView()
