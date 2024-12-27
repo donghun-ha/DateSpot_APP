@@ -1,42 +1,25 @@
 import SwiftUI
 
-struct PlaceDetailView: View {
-//    let restaurant: Restaurant
-    
-    var images = ["2025 서울 카페&베이커리페어_1_공공1유형", "2025 서울 카페&베이커리페어_2_공공1유형", "2025 서울 카페&베이커리페어_3_공공1유형", "2025 서울 카페&베이커리페어_4_공공1유형"] // 이미지 배열
+struct DetailView: View {
+    var images = ["2025 서울 카페&베이커리페어_1_공공1유형", "2025 서울 카페&베이커리페어_2_공공1유형", "2025 서울 카페&베이커리페어_3_공공1유형", "2025 서울 카페&베이커리페어_4_공공1유형"]
     @State private var selection: Int = 0 // 현재 페이지 인덱스 추적
-    @State private var showTipView = false // 팝업 표시 여부
-    @State private var rates = 5
-    private let fullDescription = """
-        카페&베이커리페어는 카페 창업주와 바이어를 대상으로 한 전문 전시회로, 카페 운영에 필요한 원두, 로스팅 머신, 장비, 인테리어 소품 등 다양한 품목을 선보인다. 전시회에는 커피머신과 장비 판매업체, 원두 납품업체 등 관련 기업들이 주로 참가하며, 방문객은 전시 제품을 체험하고 구매할 수 있다. 카페 관련 최신 트렌드를 한자리에서 확인할 수 있어 카페 창업을 준비하거나 업계 종사자들에게 유익한 기회가 된다. 또한 바리스타 대회, 디저트 대회 등 다양한 부대행사가 진행되어 볼거리가 풍성하다. 매년 새로운 대회와 프로그램이 마련되니 미리 일정을 확인하고 방문하는 것이 좋다.
-        """
-    @State private var aboutTextPosition: CGRect = .zero
-    
+    @StateObject private var restaurantViewModel = RestaurantViewModel()
+    @State private var rates: Int = 0 // StarRatingView와 바인딩할 별점 값
+    @State private var isLoading = true // 로딩 상태를 관리하는 변수
+    var restaurantName: String = "3대삼계장인" // 테스트용 레스토랑 이름
+
     var body: some View {
-        NavigationView {
-            VStack(alignment: .leading, spacing: 16) {
-                // 상단 Navigation Bar 대체
-                HStack {
-                    Button(action: {
-                        // 뒤로 가기 버튼 동작
-                    }) {
-                        Image(systemName: "chevron.left")
-                            .foregroundColor(.black)
-                            .font(.system(size: 20, weight: .bold))
-                    }
-                    Spacer()
-                    Text("Date Spots")
-                        .font(.headline)
-                        .foregroundColor(.black)
-                    Spacer()
-                }
-                .padding(.horizontal)
-                ZStack {
-                    
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 16) {
-                            // 스와이프 가능한 이미지 뷰
-                            ZStack {
+        Group {
+            if isLoading {
+                // 로딩 중 표시
+                ProgressView("Loading...")
+                    .font(.headline)
+            } else {
+                if let restaurant = restaurantViewModel.selectedRestaurant {
+                    NavigationView {
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 16) {
+                                // 이미지 슬라이더
                                 ZStack(alignment: .bottomTrailing) {
                                     InfinitePageView(
                                         selection: $selection,
@@ -47,213 +30,157 @@ struct PlaceDetailView: View {
                                             Image(images[index])
                                                 .resizable()
                                                 .scaledToFill()
-                                                .frame(width: geometry.size.width, height: 250)
+                                                .frame(width: geometry.size.width, height: 260)
                                                 .clipped()
                                         }
-                                        .frame(height: 250)
+                                        .frame(height: 260)
                                     }
-                                    .frame(height: 250)
-                                    
-                                    // 인디케이터 (1/4 형식) - 오른쪽 아래로 이동
+                                    .frame(height: 260)
+                                    .clipShape(RoundedRectangle(cornerRadius: 15))
+                                    .padding(EdgeInsets(top: 10, leading: 10, bottom: 0, trailing: 10))
+                                    // 인디케이터
                                     Text("\(selection + 1)/\(images.count)")
                                         .font(.caption)
                                         .padding(8)
                                         .background(Color.black.opacity(0.6))
                                         .foregroundColor(.white)
                                         .cornerRadius(8)
-                                        .padding([.trailing, .bottom], 16) // 오른쪽 아래로 이동
+                                        .padding([.trailing, .bottom], 16)
                                 }
-                                .frame(height: 250)
-                                
-                                // Heart 아이콘
-                                Button(action: {
-                                }) {
-                                    Image(systemName: "heart")
-                                        .foregroundColor(.white)
-                                        .font(.system(size: 30))
-                                    
-                                }
-                                .padding([.trailing, .top], 16) // 아이콘 위치
-                                .shadow(color: .gray.opacity(0.5), radius: 5, x: 0, y: 2)
-                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                            }
-                            
-                            // 주요 정보
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    Text("서울 카페&베이커리페어")
-                                        .font(.title2)
-                                        .fontWeight(.bold)
-                                    Spacer()
-                                    Button(action: {
-                                    }) {
-                                        HStack {
-                                            Image(systemName: "paperplane.fill")
-                                                .foregroundColor(.white)
-                                                .frame(width: 10, height: 10, alignment: .leading)
-                                            Spacer()
-                                            Text("Navigate")
-                                                .foregroundColor(.white)
-                                        }
-                                        .frame(width: 90, height: 10, alignment: .trailing)
-                                        .padding()
-                                        .background(Color.blue)
-                                        .cornerRadius(8)
-                                    }
-                                }
-                                Text("명소")
-                                    .font(.subheadline)
-                                    .foregroundColor(.gray)
-                                StarRatingView(rating: $rates)
-                                    .frame(width: 100,height: 30)
-                                HStack(spacing: 10) {
+
+                                // 레스토랑 상세 정보
+                                VStack(alignment: .leading) {
                                     HStack {
-                                        Image(systemName: "clock")
-                                            .foregroundColor(.blue)
-                                        Text("9:00 AM - 6:00 PM")
-                                            .font(.subheadline)
-                                            .foregroundColor(.black)
-                                    }
-                                }
-                                
-                                HStack(alignment: .top, spacing: 8) {
-                                    Image(systemName: "mappin.and.ellipse")
-                                        .foregroundColor(.blue)
-                                    Text("서울특별시 강남구 남부순환로 3104 (대치동)SETEC")
-                                        .font(.subheadline)
-                                        .foregroundColor(.black)
-                                        .lineLimit(nil) // 텍스트 줄바꿈 허용
-                                        .fixedSize(horizontal: false, vertical: true) // 텍스트 폭에 맞춰 자동 크기 조정
-                                }
-                            }
-                            .padding(.horizontal)
-                            
-                            
-                            // 설명
-                            ZStack {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    HStack {
-                                        Text("About")
-                                            .font(.headline)
-                                            .background(GeometryReader { geometry in
-                                                // About 텍스트 위치 저장
-                                                Color.clear.onAppear {
-                                                    self.aboutTextPosition = geometry.frame(in: .global)
-                                                }
-                                            })
+                                        Text(restaurant.name)
+                                            .font(.title)
+                                            .fontWeight(.bold)
                                         Spacer()
                                         Button(action: {
-                                            showTipView.toggle() // TipView 표시/숨김 토글
+                                            // Navigate 버튼 동작 추가 가능
                                         }) {
-                                            Image(systemName: "info.circle")
-                                                .font(.headline)
-                                                .foregroundColor(.blue)
+                                            HStack {
+                                                Image(systemName: "paperplane.fill")
+                                                    .foregroundColor(.white)
+                                                Text("Navigate")
+                                                    .foregroundColor(.white)
+                                            }
+                                            .padding()
+                                            .background(Color.blue)
+                                            .cornerRadius(8)
                                         }
                                     }
-                                    .padding(.horizontal)
-                                    // 모델 데이터로 수정 필요
-                                    Text("카페&베이커리페어는 카페 창업주와 바이어를 대상으로 한 전문 전시회로, 카페 운영에 필요한 원두, 로스팅 머신, 장비, 인테리어 소품 등 다양한 품목을 선보인다.")
-                                        .font(.subheadline)
-                                        .foregroundColor(.gray)
-                                        .lineLimit(3) // 최대 3줄로 제한
-                                        .truncationMode(.tail) // 텍스트가 잘릴 경우 말줄임표 추가
-                                        .padding(.horizontal)
-                                    Spacer()
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        HStack {
-                                            // 모델 데이터로 수정 필요
-                                            Text("Nearby Places")
-                                                .font(.headline)
-                                            Spacer()
-                                            Button(action: {
-                                                // 전체 보기 동작
-                                            }) {
-                                                HStack(spacing: 4) { // 텍스트와 아이콘 간 간격 조정
-                                                    Text("View all")
-                                                        .foregroundColor(.blue)
-                                                        .font(.subheadline)
-                                                    Image(systemName: "arrow.right")
-                                                        .foregroundColor(.blue)
-                                                        .font(.subheadline)
-                                                }
-                                            }
-                                        }
-                                        
-                                        ScrollView(.horizontal, showsIndicators: false) {
-                                            HStack(spacing: 16) {
-                                                // 모델 데이터로 수정 필요
-                                                VStack {
-                                                    Image("royal-gardens")
-                                                        .resizable()
-                                                        .frame(width: 100, height: 100)
-                                                        .cornerRadius(8)
-                                                    Text("Royal Gardens")
-                                                        .font(.subheadline)
-                                                    Text("0.3 miles away")
-                                                        .font(.caption)
-                                                        .foregroundColor(.gray)
-                                                }
-                                                
-                                                // 모델 데이터로 수정 필요
-                                                VStack {
-                                                    Image("historic-cafe")
-                                                        .resizable()
-                                                        .frame(width: 100, height: 100)
-                                                        .cornerRadius(8)
-                                                    Text("Historic Café")
-                                                        .font(.subheadline)
-                                                    Text("0.5 miles away")
-                                                        .font(.caption)
-                                                        .foregroundColor(.gray)
-                                                }
-                                            }
-                                        }
-                                    }
-                                    .padding(.horizontal)
-                                }
-                            }
-                        }
-                        if showTipView {
-                            VStack(alignment: .leading) {
-                                HStack {
-                                    Text("서울 카페& 베이커리 페어")
-                                        .font(.headline)
-                                        .foregroundColor(.black)
-                                    Spacer()
-                                    Button(action: {
-                                        showTipView = false // TipView 닫기
-                                    }) {
-                                        Image(systemName: "xmark")
+                                    VStack(alignment: .leading) {
+                                        Text("별점")
                                             .font(.headline)
-                                            .foregroundColor(.gray)
-                                            .padding(8)
-                                            .background(Color.white)
-                                            .clipShape(Circle())
+                                        StarRatingView(rating: Binding(
+                                            get: { rates },
+                                            set: { newRating in
+                                                rates = newRating
+                                                // 서버에 별점 업데이트
+                                            }
+                                        ))
+                                        .frame(height: 20)
+                                        .onAppear {
+                                            rates = 4 // 기본 별점 설정
+                                        }
+                                    }
+                                    Spacer()
+                                    Text(restaurant.address)
+                                    Text("운영 시간: \(restaurant.operatingHour)")
+                                        .font(.subheadline)
+                                    Text("휴무일: \(restaurant.closedDays)")
+                                        .font(.subheadline)
+                                    Text("주차: \(restaurant.parking)")
+                                        .font(.subheadline)
+                                    Text("연락처: \(restaurant.contactInfo)")
+                                        .font(.subheadline)
+                                }
+                                .padding()
+
+                                // 별점 표시
+                               
+                                // About 섹션 (맛집은 About이 없음
+//                                VStack(alignment: .leading, spacing: 8) {
+//                                    Text("About")
+//                                        .font(.headline)
+//                                    Text("카페&베이커리페어는 카페 창업주와 바이어를 대상으로 한 전문 전시회로, 카페 운영에 필요한 원두, 로스팅 머신, 장비, 인테리어 소품 등 다양한 품목을 선보인다.")
+//                                        .font(.subheadline)
+//                                        .foregroundColor(.gray)
+//                                        .lineLimit(3)
+//                                        .truncationMode(.tail)
+//                                }
+//                                .padding()
+
+                                // Nearby Places 섹션
+                                VStack(alignment: .leading, spacing: 8) {
+                                    HStack {
+                                        Text("Nearby Places")
+                                            .font(.headline)
+                                        Spacer()
+                                        Button(action: {
+                                            // View all 동작 추가 가능
+                                        }) {
+                                            HStack {
+                                                Text("View all")
+                                                    .font(.subheadline)
+                                                    .foregroundColor(.blue)
+                                                Image(systemName: "arrow.right")
+                                                    .foregroundColor(.blue)
+                                            }
+                                        }
+                                    }
+
+                                    ScrollView(.horizontal, showsIndicators: false) {
+                                        HStack(spacing: 16) {
+                                            VStack {
+                                                Image("royal-gardens")
+                                                    .resizable()
+                                                    .frame(width: 100, height: 100)
+                                                    .cornerRadius(8)
+                                                Text("Royal Gardens")
+                                                    .font(.subheadline)
+                                                Text("0.3 miles away")
+                                                    .font(.caption)
+                                                    .foregroundColor(.gray)
+                                            }
+                                            VStack {
+                                                Image("historic-cafe")
+                                                    .resizable()
+                                                    .frame(width: 100, height: 100)
+                                                    .cornerRadius(8)
+                                                Text("Historic Café")
+                                                    .font(.subheadline)
+                                                Text("0.5 miles away")
+                                                    .font(.caption)
+                                                    .foregroundColor(.gray)
+                                            }
+                                        }
                                     }
                                 }
-                                Text(fullDescription)
-                                    .font(.subheadline)
-                                    .foregroundColor(.gray)
+                                .padding()
                             }
-                            .padding()
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color.white)
-                                    .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
-                            )
-                            .frame(maxWidth: 370)
-                            .padding()
-                            .position(x: aboutTextPosition.midX + 160, y: aboutTextPosition.maxY-650) // About 기준 위치
-                            .transition(.opacity)
-                            .animation(.easeInOut, value: showTipView)
                         }
+                        .navigationBarHidden(true)
+                        .navigationBarTitleDisplayMode(.inline)
                     }
-                    .edgesIgnoringSafeArea(.all)
+                } else {
+                    Text("Restaurant not found.")
+                        .font(.headline)
+                        .foregroundColor(.gray)
                 }
+            }
+        }
+        .onAppear {
+            Task {
+                isLoading = true
+                await restaurantViewModel.fetchRestaurantDetail(name: restaurantName)
+                isLoading = false
             }
         }
     }
 }
+
+
 #Preview {
-    PlaceDetailView()
+    DetailView()
 }
