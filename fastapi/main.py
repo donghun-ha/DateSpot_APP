@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import user
 from pydantic import BaseModel
-from user import router as hosts_router
+from user import router as user_router
 from place import router as place_router
 from restaurant import router as restaurant_router
 from rating import router as rating_router
@@ -47,6 +47,7 @@ async def health_check():
     """
     await user.get_redis_connection()
     user.connect()
+    user.s
     return {
         "status": "healthy",
         "message": "The server is running fine!",

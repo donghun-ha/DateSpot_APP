@@ -11,6 +11,7 @@ import pymysql , json
 from redis.asyncio import Redis
 from fastapi import APIRouter, HTTPException, Request
 import boto3
+from botocore.exceptions import NoCredentialsError, PartialCredentialsError
 # FastAPI 라우터 생성
 router = APIRouter()
 
@@ -33,12 +34,32 @@ REDIS_PASSWORD = os.getenv("REDIS_PASSWORD")
 redis_client = None
 
 
-s3 = boto3.client(
-    's3',
-    aws_access_key_id=AWS_ACCESS_KEY,
-    aws_secret_access_key=AWS_SECRET_KEY,
-    region_name=REGION
-)
+
+# S3 클라이언트 생성
+def create_s3_client():
+    try:
+        s3 = boto3.client(
+            's3',
+            aws_access_key_id=AWS_ACCESS_KEY,
+            aws_secret_access_key=AWS_SECRET_KEY,
+            region_name=REGION
+        )
+        return s3
+    except (NoCredentialsError, PartialCredentialsError) as e:
+        raise HTTPException(status_code=401, detail=f"AWS credentials error: {str(e)}")
+
+@router.get("/debug-s3")
+def debug_s3():
+    """S3 연결 테스트 및 버킷 목록 반환"""
+    s3 = create_s3_client()
+    try:
+        # 버킷 목록 가져오기
+        response = s3.list_buckets()
+        buckets = [bucket['Name'] for bucket in response.get('Buckets', [])]
+        return {"status": "success", "buckets": buckets}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error connecting to S3: {str(e)}")
+
 
 
 # Redis 연결 함수
