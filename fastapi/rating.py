@@ -23,4 +23,15 @@ async def get_booked_rating(user_email: str):
     if not rows:
         raise HTTPException(status_code=404, detail="즐겨찾기 병원이 없습니다.")
     
-    return {'results': rows}
+    # 데이터를 매핑하여 반환
+    results = [
+        {
+            "id": row[0],
+            "userEmail": row[1],
+            "bookName": row[2],
+            "evaluation": row[3]
+        }
+        for row in rows
+    ]
+    
+    return {"results": results}

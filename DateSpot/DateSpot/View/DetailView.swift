@@ -1,12 +1,14 @@
 import SwiftUI
 
-struct PlaceDetailView: View {
+struct DetailView: View {
 //    let restaurant: Restaurant
     
-    var images = ["2025 서울 카페&베이커리페어_1_공공1유형", "2025 서울 카페&베이커리페어_2_공공1유형", "2025 서울 카페&베이커리페어_3_공공1유형", "2025 서울 카페&베이커리페어_4_공공1유형"] // 이미지 배열
+    var images = ["2025 서울 카페&베이커리페어_1_공공1유형", "2025 서울 카페&베이커리페어_2_공공1유형", "2025 서울 카페&베이커리페어_3_공공1유형", "2025 서울 카페&베이커리페어_4_공공1유형"] // 이미지 배열
     @State private var selection: Int = 0 // 현재 페이지 인덱스 추적
     @State private var showTipView = false // 팝업 표시 여부
-    @State private var rates = 5
+    @StateObject private var viewModel = RatingViewModel() // ViewModel 초기화
+    @State private var rates: Int = 0 // StarRatingView와 바인딩할 별점 값
+    
     private let fullDescription = """
         카페&베이커리페어는 카페 창업주와 바이어를 대상으로 한 전문 전시회로, 카페 운영에 필요한 원두, 로스팅 머신, 장비, 인테리어 소품 등 다양한 품목을 선보인다. 전시회에는 커피머신과 장비 판매업체, 원두 납품업체 등 관련 기업들이 주로 참가하며, 방문객은 전시 제품을 체험하고 구매할 수 있다. 카페 관련 최신 트렌드를 한자리에서 확인할 수 있어 카페 창업을 준비하거나 업계 종사자들에게 유익한 기회가 된다. 또한 바리스타 대회, 디저트 대회 등 다양한 부대행사가 진행되어 볼거리가 풍성하다. 매년 새로운 대회와 프로그램이 마련되니 미리 일정을 확인하고 방문하는 것이 좋다.
         """
@@ -32,7 +34,6 @@ struct PlaceDetailView: View {
                 }
                 .padding(.horizontal)
                 ZStack {
-                    
                     ScrollView {
                         VStack(alignment: .leading, spacing: 16) {
                             // 스와이프 가능한 이미지 뷰
@@ -81,7 +82,7 @@ struct PlaceDetailView: View {
                             // 주요 정보
                             VStack(alignment: .leading, spacing: 8) {
                                 HStack {
-                                    Text("서울 카페&베이커리페어")
+                                    Text("서울 카페&베이커리페어")
                                         .font(.title2)
                                         .fontWeight(.bold)
                                     Spacer()
@@ -104,8 +105,33 @@ struct PlaceDetailView: View {
                                 Text("명소")
                                     .font(.subheadline)
                                     .foregroundColor(.gray)
-                                StarRatingView(rating: $rates)
-                                    .frame(width: 100,height: 30)
+                                if let rating = viewModel.ratings.first { // 테스트를 위해 첫 번째 데이터만 사용
+                                                StarRatingView(rating: Binding(
+                                                    get: {
+                                                        rates // 현재 별점
+                                                    },
+                                                    set: { newRating in
+                                                        rates = newRating // 새 별점 설정
+                                                        Task {
+                                                            var updatedRating = rating
+                                                            updatedRating.evaluation = Double(newRating)
+                                                            try? await viewModel.updateRating(updatedRating) // 서버 업데이트
+                                                        }
+                                                    }
+                                                ))
+                                                .frame(height: 50)
+                                                .onAppear {
+                                                    rates = Int(rating.evaluation) // 초기 값 설정
+                                                }
+                                            } else {
+                                                Text("Loading...") // 데이터가 없는 경우 표시
+                                            }
+                                        }
+                                        .onAppear {
+                                            viewModel.fetchRatings() // 데이터 가져오기
+                                        }
+                                    
+                                    
                                 HStack(spacing: 10) {
                                     HStack {
                                         Image(systemName: "clock")
@@ -253,7 +279,7 @@ struct PlaceDetailView: View {
             }
         }
     }
-}
+
 #Preview {
-    PlaceDetailView()
+    DetailView()
 }

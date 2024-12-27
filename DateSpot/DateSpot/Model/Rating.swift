@@ -7,15 +7,12 @@
 
 import Foundation
 
-struct Rating: Decodable{
+struct Rating: Codable, Hashable {
     var id: Int
     var userEmail: String
     var bookName: String
     var evaluation: Double
     
-}
-
-extension Rating: Hashable{
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
     }
