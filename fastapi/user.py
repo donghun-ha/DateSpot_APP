@@ -1,3 +1,12 @@
+"""
+Author : 하동훈
+Description : 
+<사용자 로그인 처리 로직>
+Apple/Google 로그인 데이터 기반으로 Redis와 MySQL을 연동하여 사용자 데이터를 관리,
+Apple 로그인 시 이메일 가리기 로직 처리.
+Usage: 로그인 시 캐싱을 통한 반환 및 MySQL Insert 처리
+"""
+
 from fastapi import APIRouter, HTTPException, Request
 import os
 import pymysql , json

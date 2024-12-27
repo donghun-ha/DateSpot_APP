@@ -16,13 +16,15 @@ struct TabbarMapView: View {
     @StateObject private var tabViewModel = TabMapViewModel()
 
     var body: some View {
-        Map(position: $tabViewModel.cameraPosition) {
-            ForEach(tabViewModel.places) { place in
-                Marker(place.name, coordinate: place.coordinate)
-                    .tint(.blue) // 마커 색상 설정
+        NavigationView {
+            Map(position: $tabViewModel.cameraPosition) {
+                ForEach(tabViewModel.places) { place in
+                    Marker(place.name, coordinate: place.coordinate)
+                        .tint(.blue) // 마커 색상 설정
+                }
             }
+            .ignoresSafeArea()
         }
-        .ignoresSafeArea()
     }
 }
 

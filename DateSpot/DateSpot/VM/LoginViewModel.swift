@@ -17,7 +17,7 @@ class LoginViewModel: NSObject, ObservableObject {
     // Published : 변수의 변경 사항을 자동으로 알릴 수 있는 프로퍼티 래퍼
     @Published var alertMessage: String = "" // Alert 등에 표시할 메세지
     @Published var showAlert: Bool = false   // Alert 표시 여부
-    
+    @Published var isLoginSuccessful: Bool = false
     // MARK: - Service
     private let loginService = LoginService()
     
@@ -85,6 +85,7 @@ class LoginViewModel: NSObject, ObservableObject {
     func showSuccess(_ message: String) {
         alertMessage = message
         showAlert = true
+        isLoginSuccessful = true
     }
 }
 
