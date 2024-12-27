@@ -41,7 +41,10 @@ struct ContentView: View {
         }
         .onAppear {
             // 화면 나타날 때 JSON 로드
-            viewModel.fetchRestaurants()
+            Task{
+                await viewModel.fetchRestaurants()
+            }
+            
         }
     }
 }
