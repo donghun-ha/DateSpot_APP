@@ -34,15 +34,20 @@ REDIS_PASSWORD = os.getenv("REDIS_PASSWORD")
 redis_client = None
 
 
-
-# S3 클라이언트 생성
 def create_s3_client():
+    aws_access_key = os.getenv("AWS_ACCESS_KEY_ID")
+    aws_secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+    region = os.getenv("AWS_REGION", "ap-northeast-2")
+
+    if not aws_access_key or not aws_secret_key:
+        raise HTTPException(status_code=400, detail="AWS credentials are not set in environment variables.")
+
     try:
         s3 = boto3.client(
             's3',
-            aws_access_key_id=AWS_ACCESS_KEY,
-            aws_secret_access_key=AWS_SECRET_KEY,
-            region_name=REGION
+            aws_access_key_id=aws_access_key,
+            aws_secret_access_key=aws_secret_key,
+            region_name=region
         )
         return s3
     except (NoCredentialsError, PartialCredentialsError) as e:
@@ -51,15 +56,26 @@ def create_s3_client():
 @router.get("/debug-s3")
 def debug_s3():
     """S3 연결 테스트 및 버킷 목록 반환"""
-    s3 = create_s3_client()
     try:
-        # 버킷 목록 가져오기
+        s3 = create_s3_client()
         response = s3.list_buckets()
         buckets = [bucket['Name'] for bucket in response.get('Buckets', [])]
         return {"status": "success", "buckets": buckets}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error connecting to S3: {str(e)}")
 
+@router.get("/env-debug")
+def debug_env_variables():
+    """환경 변수 확인"""
+    aws_access_key = os.getenv("AWS_ACCESS_KEY_ID")
+    aws_secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+    aws_region = os.getenv("AWS_REGION", "ap-northeast-2")
+    
+    return {
+        "AWS_ACCESS_KEY_ID": aws_access_key,
+        "AWS_SECRET_ACCESS_KEY": "HIDDEN" if aws_secret_key else None,
+        "AWS_REGION": aws_region
+    }
 
 
 # Redis 연결 함수
