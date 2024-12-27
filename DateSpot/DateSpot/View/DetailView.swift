@@ -106,31 +106,30 @@ struct DetailView: View {
                                     .font(.subheadline)
                                     .foregroundColor(.gray)
                                 if let rating = viewModel.ratings.first { // 테스트를 위해 첫 번째 데이터만 사용
-                                                StarRatingView(rating: Binding(
-                                                    get: {
-                                                        rates // 현재 별점
-                                                    },
-                                                    set: { newRating in
-                                                        rates = newRating // 새 별점 설정
-                                                        Task {
-                                                            var updatedRating = rating
-                                                            updatedRating.evaluation = Double(newRating)
-                                                            try? await viewModel.updateRating(updatedRating) // 서버 업데이트
-                                                        }
-                                                    }
-                                                ))
-                                                .frame(height: 50)
-                                                .onAppear {
-                                                    rates = Int(rating.evaluation) // 초기 값 설정
-                                                }
-                                            } else {
-                                                Text("Loading...") // 데이터가 없는 경우 표시
+                                    StarRatingView(rating: Binding(
+                                        get: {
+                                            rates // 현재 별점
+                                        },
+                                        set: { newRating in
+                                            rates = newRating // 새 별점 설정
+                                            Task {
+                                                var updatedRating = rating
+                                                updatedRating.evaluation = Double(newRating)
+                                                try? await viewModel.updateRating(updatedRating) // 서버 업데이트
                                             }
                                         }
+                                    ))
+                                        .frame(height: 20)
                                         .onAppear {
-                                            viewModel.fetchRatings() // 데이터 가져오기
+                                            rates = Int(rating.evaluation) // 초기 값 설정
+                                            }
+                                        } else {
+                                            Text("Loading...") // 데이터가 없는 경우 표시
                                         }
-                                    
+                                    }
+                                    .onAppear {
+                                        viewModel.fetchRatings() // 데이터 가져오기
+                                    }
                                     
                                 HStack(spacing: 10) {
                                     HStack {
@@ -152,9 +151,7 @@ struct DetailView: View {
                                         .fixedSize(horizontal: false, vertical: true) // 텍스트 폭에 맞춰 자동 크기 조정
                                 }
                             }
-                            .padding(.horizontal)
-                            
-                            
+                            .padding()
                             // 설명
                             ZStack {
                                 VStack(alignment: .leading, spacing: 8) {

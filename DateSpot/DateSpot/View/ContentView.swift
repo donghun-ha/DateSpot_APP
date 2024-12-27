@@ -10,30 +10,7 @@ import SwiftUI
 import SwiftUI
 
 // MARK: - 모델 정의
-struct Restaurant: Decodable, Hashable {
-    let name: String
-    let address: String
-    let lat: Double
-    let lng: Double
-    let parking: String
-    let operatingHours: String
-    let closedDays: String
-    let contactInfo: String
-    let breakTime: String
-    let lastOrder: String
-}
 
-struct PlaceData: Decodable, Hashable {
-    let name: String
-    let address: String
-    let lat: Double
-    let lng: Double
-    let description: String
-    let contact_info: String
-    let operating_hours: String
-    let parking: String
-    let closing_time: String
-}
 
 // 서버나 로컬 JSON 구조가 {"restaurants": [...], "places": [...]} 형태라고 가정
 struct DataModel: Decodable {
@@ -77,20 +54,20 @@ struct ContentView: View {
                     .fontWeight(.bold)
                     .padding(.horizontal)
                 
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 20) {
-                        ForEach(places, id: \.self) { place in
-                            CardView(
-                                image: "w5",                      // 실제로는 모델에 맞춰 변경
-                                category: place.parking,          // ex) "가능" / "불가"
-                                heading: place.name,              // 명소 이름
-                                author: place.description         // 명소 설명
-                            )
-                            .frame(width: 300)
-                        }
-                    }
-                    .padding(.horizontal)
-                }
+//                ScrollView(.horizontal, showsIndicators: false) {
+//                    HStack(spacing: 20) {
+//                        ForEach(places, id: \.self) { place in
+//                            CardView(
+//                                image: "w5",                      // 실제로는 모델에 맞춰 변경
+//                                category: place.parking,          // ex) "가능" / "불가"
+//                                heading: place.name,              // 명소 이름
+//                                author: place.description         // 명소 설명
+//                            )
+//                            .frame(width: 300)
+//                        }
+//                    }
+//                    .padding(.horizontal)
+//                }
             }
             .padding(.vertical)
         }
