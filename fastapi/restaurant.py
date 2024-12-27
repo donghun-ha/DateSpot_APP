@@ -19,7 +19,7 @@ async def select():
         curs.execute(sql)
         data = curs.fetchall()
         print(data)
-        return data
+        return {"result" : data}
     except Exception as e :
         print("restaurant.py select Error")
         return {"restaurant.py select Error" : e}
