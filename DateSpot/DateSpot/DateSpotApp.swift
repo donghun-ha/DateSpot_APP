@@ -42,7 +42,7 @@ struct DateSpotApp: App {
         WindowGroup {
             NavigationView {
 //                LoginView()
-                ContentView()
+                HomeContentView()
             }
         }
     }
