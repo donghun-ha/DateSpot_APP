@@ -18,28 +18,30 @@ struct HomeContentView: View {
                     .font(.headline)
             } else {
                 if !restaurantViewModel.restaurants.isEmpty {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 20) {
-                            Text("맛집")
-                                .font(.title)
-                                .fontWeight(.bold)
-                                .padding(.horizontal)
-                            
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 20) {
-                                    ForEach(restaurantViewModel.restaurants, id: \.self) { restaurant in
-                                        CardView(
-                                            category: restaurant.parking,
-                                            heading: restaurant.name,
-                                            author: restaurant.address
-                                        )
-                                        .frame(width: 300)
+                    NavigationView {
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 20) {
+                                Text("맛집")
+                                    .font(.title)
+                                    .fontWeight(.bold)
+                                    .padding(.horizontal)
+                                
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 20) {
+                                        ForEach(restaurantViewModel.restaurants, id: \.self) { restaurant in
+                                            CardView(
+                                                category: restaurant.parking,
+                                                heading: restaurant.name,
+                                                author: restaurant.address
+                                            )
+                                            .frame(width: 300)
+                                        }
                                     }
+                                    .padding(.horizontal)
                                 }
-                                .padding(.horizontal)
                             }
+                            .padding(.vertical)
                         }
-                        .padding(.vertical)
                     }
                 } else {
                     Text("No restaurants available.")
