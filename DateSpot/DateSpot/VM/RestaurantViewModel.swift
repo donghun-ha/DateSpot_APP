@@ -2,30 +2,68 @@
 //  RestaurantViewModel.swift
 //  DateSpot
 //
-//  Created by 이원영 on 12/27/24.
-//  Last Fixed: 12/28
-//  Restaurant모델을 관리하는 ViewModel
-//
+//  Created by 이종남 on 12/27/24.
 //
 
+import SwiftUI
 import Foundation
-import UIKit
 
 @MainActor
 class RestaurantViewModel: ObservableObject {
     @Published var restaurants: [Restaurant] = [] // 전체 레스토랑 리스트
     @Published var selectedRestaurant: Restaurant? // 선택된 레스토랑 상세 정보
-    @Published var restaurantImages: [String: [UIImage]] = [:] // 레스토랑별 이미지 리스트
+    @Published var images: [UIImage] = [] // 로드된 이미지 리스트
+    
     private let baseURL = "https://fastapi.fre.today/restaurant/" // 기본 API URL
-    private let imageBaseURL = "https://fastapi.fre.today/stream-images/" // 여러 이미지 API URL
 
+    // 이미지 키 목록 가져오기
+   func fetchImageKeys(for name: String) async -> [String] {
+       guard let url = URL(string: "\(baseURL)/images/?name=\(name)") else { return [] }
+       
+       do {
+           let (data, _) = try await URLSession.shared.data(from: url)
+           let response = try JSONDecoder().decode([String: [String]].self, from: data)
+           return response["images"] ?? []
+       } catch {
+           print("Failed to fetch image keys: \(error)")
+           return []
+       }
+   }
+
+   // S3에서 이미지를 가져오기
+   func fetchImage(fileKey: String) async -> UIImage? {
+       guard let url = URL(string: "\(baseURL)/image/?file_key=\(fileKey)") else { return nil }
+       
+       do {
+           let (data, _) = try await URLSession.shared.data(from: url)
+           return UIImage(data: data)
+       } catch {
+           print("Failed to fetch image: \(error)")
+           return nil
+       }
+   }
+
+   // 전체 이미지 로드
+   func loadImages(for name: String) async {
+       let imageKeys = await fetchImageKeys(for: name)
+       var loadedImages: [UIImage] = []
+
+       for key in imageKeys {
+           if let image = await fetchImage(fileKey: key) {
+               loadedImages.append(image)
+           }
+       }
+
+       self.images = loadedImages
+   }
+
+    
     // Fetch Restaurants
-    func fetchRestaurants() async {
+    func fetchRestaurants() async{
         Task {
             do {
                 let fetchedRestaurants = try await fetchRestaurantsFromAPI()
                 self.restaurants = fetchedRestaurants
-                print(self.restaurants)
             } catch {
                 print("Failed to fetch restaurants: \(error.localizedDescription)")
             }
@@ -33,17 +71,12 @@ class RestaurantViewModel: ObservableObject {
     }
     
     // Fetch Restaurant Detail
-    func fetchRestaurantDetail(name: String = "3대삼계장인") async {
-        print("Fetching restaurant detail")
+    func fetchRestaurantDetail(name: String = "3대삼계장인") async{
+        print("fetching restaurant detail")
         Task {
             do {
                 let fetchedDetail = try await fetchRestaurantDetailFromAPI(name: name)
                 self.selectedRestaurant = fetchedDetail
-
-                // Fetch images for the selected restaurant
-                if let images = await fetchImages(restaurantName: name) {
-                    self.restaurantImages[name] = images
-                }
             } catch {
                 print("Failed to fetch restaurant detail: \(error.localizedDescription)")
             }
@@ -54,64 +87,22 @@ class RestaurantViewModel: ObservableObject {
 extension RestaurantViewModel {
     // Fetch Restaurants from API
     private func fetchRestaurantsFromAPI() async throws -> [Restaurant] {
-        guard let url = URL(string: "\(baseURL)restaurant_select_all") else {
+        guard let url = URL(string: baseURL) else {
             throw URLError(.badURL)
         }
+
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Accept")
 
         let (data, response) = try await URLSession.shared.data(for: request)
 
-        // HTTP 상태 코드 확인
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
             throw URLError(.badServerResponse)
         }
 
         let decoder = JSONDecoder()
-
-        // JSON 데이터를 파싱하여 수동 매핑
-        do {
-            // FastAPI 응답 디코딩
-            if let jsonResponse = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
-               let resultArray = jsonResponse["result"] as? [[Any]] {
-                
-                // `result` 배열의 각 항목을 Restaurant 모델로 변환
-                return resultArray.compactMap { item in
-                    guard item.count == 10,
-                          let name = item[0] as? String,
-                          let address = item[1] as? String,
-                          let lat = item[2] as? Double,
-                          let lng = item[3] as? Double,
-                          let parking = item[4] as? String,
-                          let operatingHour = item[5] as? String,
-                          let closedDays = item[6] as? String,
-                          let contactInfo = item[7] as? String else {
-                        return nil
-                    }
-                    let breakTime = item[8] as? String
-                    let lastOrder = item[9] as? String
-
-                    return Restaurant(
-                        name: name,
-                        address: address,
-                        lat: lat,
-                        lng: lng,
-                        parking: parking,
-                        operatingHour: operatingHour,
-                        closedDays: closedDays,
-                        contactInfo: contactInfo,
-                        breakTime: breakTime,
-                        lastOrder: lastOrder
-                    )
-                }
-            } else {
-                throw URLError(.cannotParseResponse)
-            }
-        } catch {
-            print("Decoding error: \(error)")
-            throw error
-        }
+        return try decoder.decode([Restaurant].self, from: data)
     }
 
     // Fetch Restaurant Detail from API
@@ -139,77 +130,32 @@ extension RestaurantViewModel {
             throw URLError(.badServerResponse)
         }
 
+        // 디버깅용 JSON 응답 출력
+        if let jsonString = String(data: data, encoding: .utf8) {
+            print("Response JSON: \(jsonString)")
+        }
+
+        // JSON 디코딩
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase // JSON 키를 스네이크 케이스에서 카멜 케이스로 자동 변환
-        let decodedResponse = try decoder.decode([String: [Restaurant]].self, from: data)
-
-        guard let restaurant = decodedResponse["results"]?.first else {
-            throw URLError(.cannotDecodeContentData)
-        }
-        return restaurant
-    }
-
-    // Fetch Images for a Restaurant
-    private func fetchImages(restaurantName: String) async -> [UIImage]? {
-        guard var urlComponents = URLComponents(string: imageBaseURL) else {
-            print("Invalid image base URL")
-            return nil
-        }
-
-        // 쿼리 파라미터 추가
-        urlComponents.queryItems = [
-            URLQueryItem(name: "restaurant_name", value: restaurantName)
-        ]
-
-        guard let url = urlComponents.url else {
-            print("Invalid image URL")
-            return nil
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
-
-            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-                print("Failed to fetch images: Invalid server response")
-                return nil
+            let decodedResponse = try decoder.decode([String: [Restaurant]].self, from: data)
+            print(decodedResponse)
+            // "results" 키의 첫 번째 레스토랑 반환
+            guard let restaurant = decodedResponse["results"]?.first else {
+                throw URLError(.cannotDecodeContentData)
             }
-
-            // Parse image names from API response
-            let imageNames = try JSONDecoder().decode([String].self, from: data)
-
-            // Download each image
-            var images: [UIImage] = []
-            for imageName in imageNames {
-                if let image = await fetchImage(imageName: imageName) {
-                    images.append(image)
-                }
-            }
-            return images
+            return restaurant
         } catch {
-            print("Failed to fetch images: \(error.localizedDescription)")
-            return nil
+            print("Decoding error: \(error)")
+            if let jsonString = String(data: data, encoding: .utf8) {
+                print("Response JSON: \(jsonString)")
+            }
+            throw error
         }
+
+
     }
 
-    // Fetch a single image
-    private func fetchImage(imageName: String) async -> UIImage? {
-        guard let url = URL(string: "\(imageBaseURL)?file_key=\(imageName)") else {
-            print("Invalid image URL")
-            return nil
-        }
 
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-
-        do {
-            let (data, _) = try await URLSession.shared.data(for: request)
-            return UIImage(data: data) // 이미지 변환
-        } catch {
-            print("Failed to fetch image: \(error.localizedDescription)")
-            return nil
-        }
-    }
 }
