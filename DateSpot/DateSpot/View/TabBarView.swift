@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct TabBarView: View {
+    @EnvironmentObject var appState: AppState // 전역 상태 사용
+    
     var body: some View {
         TabView {
             HomeContentView()
@@ -30,6 +32,7 @@ struct TabBarView: View {
                     Label("프로필", systemImage: "person.fill")
                 }
         }
+        .environmentObject(appState) // 전역 상태 전달
     }
 }
 
