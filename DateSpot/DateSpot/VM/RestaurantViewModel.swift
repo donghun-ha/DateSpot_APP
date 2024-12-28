@@ -2,23 +2,34 @@
 //  RestaurantViewModel.swift
 //  DateSpot
 //
-//  Created by 이종남 on 12/27/24.
+//  Created by 이원영 on 12/27/24.
 //
 
 import SwiftUI
 import Foundation
 
+protocol RestaurantViewModelProtocol: ObservableObject {
+    var restaurants: [Restaurant] { get } // 전체 레스토랑 리스트
+    var selectedRestaurant: Restaurant? { get } // 선택된 레스토랑 상세 정보
+    var images: [UIImage] { get } // 로드된 이미지 리스트
+
+    func fetchImageKeys(for name: String) async -> [String]
+    func fetchImage(fileKey: String) async -> UIImage?
+    func loadImages(for name: String) async
+    func fetchRestaurants() async
+    func fetchRestaurantDetail(name: String) async
+}
+
 @MainActor
 class RestaurantViewModel: ObservableObject {
-    @Published var restaurants: [Restaurant] = [] // 전체 레스토랑 리스트
-    @Published var selectedRestaurant: Restaurant? // 선택된 레스토랑 상세 정보
-    @Published var images: [UIImage] = [] // 로드된 이미지 리스트
+    @Published private(set) var restaurants: [Restaurant] = [] // 전체 레스토랑 리스트
+    @Published private(set) var selectedRestaurant: Restaurant? // 선택된 레스토랑 상세 정보
+    @Published private(set) var images: [UIImage] = [] // 로드된 이미지 리스트
     
     private let baseURL = "https://fastapi.fre.today/restaurant/" // 기본 API URL
 
-    // 이미지 키 목록 가져오기
+    
     func fetchImageKeys(for name: String) async -> [String] {
-        // 이름 인코딩
         let encodedName = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? name
         guard let url = URL(string: "\(baseURL)images/?name=\(encodedName)") else {
             print("Invalid URL for fetchImageKeys")
@@ -43,7 +54,6 @@ class RestaurantViewModel: ObservableObject {
         }
     }
 
-    // S3에서 이미지를 가져오기
     func fetchImage(fileKey: String) async -> UIImage? {
         guard let url = URL(string: "\(baseURL)image/?file_key=\(fileKey.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? fileKey)") else {
             print("Invalid URL for fetchImage")
@@ -71,7 +81,6 @@ class RestaurantViewModel: ObservableObject {
         }
     }
 
-    // 전체 이미지 로드
     func loadImages(for name: String) async {
         print("Loading images for restaurant: \(name)")
         let imageKeys = await fetchImageKeys(for: name)
@@ -99,9 +108,8 @@ class RestaurantViewModel: ObservableObject {
 
         self.images = loadedImages
     }
-    
-    // Fetch Restaurants
-    func fetchRestaurants() async{
+
+    func fetchRestaurants() async {
         Task {
             do {
                 let fetchedRestaurants = try await fetchRestaurantsFromAPI()
@@ -111,9 +119,8 @@ class RestaurantViewModel: ObservableObject {
             }
         }
     }
-    
-    // Fetch Restaurant Detail
-    func fetchRestaurantDetail(name: String = "3대삼계장인") async{
+
+    func fetchRestaurantDetail(name: String) async {
         Task {
             do {
                 let fetchedDetail = try await fetchRestaurantDetailFromAPI(name: name)
@@ -125,8 +132,8 @@ class RestaurantViewModel: ObservableObject {
     }
 }
 
+// MARK: - Private Methods
 extension RestaurantViewModel {
-    // Fetch Restaurants from API
     private func fetchRestaurantsFromAPI() async throws -> [Restaurant] {
         guard let url = URL(string: baseURL) else {
             throw URLError(.badURL)
@@ -146,16 +153,12 @@ extension RestaurantViewModel {
         return try decoder.decode([Restaurant].self, from: data)
     }
 
-    // Fetch Restaurant Detail from API
     private func fetchRestaurantDetailFromAPI(name: String) async throws -> Restaurant {
         guard var urlComponents = URLComponents(string: "\(baseURL)go_detail") else {
             throw URLError(.badURL)
         }
 
-        // 쿼리 파라미터 추가
-        urlComponents.queryItems = [
-            URLQueryItem(name: "name", value: name)
-        ]
+        urlComponents.queryItems = [URLQueryItem(name: "name", value: name)]
 
         guard let url = urlComponents.url else {
             throw URLError(.badURL)
@@ -171,12 +174,10 @@ extension RestaurantViewModel {
             throw URLError(.badServerResponse)
         }
 
-        // JSON 디코딩
         let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase // JSON 키를 스네이크 케이스에서 카멜 케이스로 자동 변환
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
         do {
             let decodedResponse = try decoder.decode([String: [Restaurant]].self, from: data)
-            // "results" 키의 첫 번째 레스토랑 반환
             guard let restaurant = decodedResponse["results"]?.first else {
                 throw URLError(.cannotDecodeContentData)
             }
@@ -188,9 +189,5 @@ extension RestaurantViewModel {
             }
             throw error
         }
-
-
     }
-
-
 }
