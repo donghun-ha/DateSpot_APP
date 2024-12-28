@@ -67,7 +67,7 @@ async def get_images(name: str):
 
         # S3에서 전체 파일 검색
         response = s3_client.list_objects_v2(Bucket=user.BUCKET_NAME)
-        print(f"S3 Response: {response}")  # 디버깅용 로그
+        print(f"S3 Response Contents: {[content['Key'] for content in response.get('Contents', [])]}")  # 모든 파일 키 출력
 
         if "Contents" not in response or not response["Contents"]:
             print("No files found in the bucket")  # 디버깅용 로그
@@ -77,7 +77,7 @@ async def get_images(name: str):
         filtered_keys = [
             content["Key"]
             for content in response["Contents"]
-            if content["Key"].startswith(f"맛집/{decoded_name}_")
+            if f"/{decoded_name}_" in content["Key"]  # 더 유연한 필터링 조건
         ]
 
         print(f"Filtered keys: {filtered_keys}")  # 디버깅용 로그
@@ -96,6 +96,7 @@ async def get_images(name: str):
         # 기타 에러 처리
         print(f"Error while fetching images: {str(e)}")  # 상세 예외 출력
         raise HTTPException(status_code=500, detail=f"Error fetching images: {str(e)}")
+
 
 
 @router.get("/image")
