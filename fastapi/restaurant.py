@@ -54,7 +54,7 @@ async def get_booked_rating(name: str):
     ]
     return {"results": results}
 
-@router.get("/images/")
+@router.get("/images")
 async def get_images(name: str):
     """
     특정 이름에 해당하는 이미지를 S3에서 가져와 리스트로 반환
@@ -79,7 +79,7 @@ async def get_images(name: str):
         raise HTTPException(status_code=500, detail=f"Error fetching images: {str(e)}")
 
 
-@router.get("/image/")
+@router.get("/image")
 async def stream_image(file_key: str):
     """
     S3에서 단일 이미지 파일 스트리밍
