@@ -64,23 +64,29 @@ async def get_images(name: str):
         # URL 디코딩 및 공백 제거
         decoded_name = unquote(name).strip()
         print(f"Decoded name: {decoded_name}")  # 디버깅용 로그
-        
-        # Prefix 생성 (디렉토리 포함)
-        prefix = f"맛집/{decoded_name}_"
-        print(f"Using Prefix: {prefix}")  # 디버깅용 로그
-        
-        # S3에서 Prefix로 파일 검색
-        response = s3_client.list_objects_v2(Bucket=user.BUCKET_NAME, Prefix=prefix)
+
+        # S3에서 전체 파일 검색
+        response = s3_client.list_objects_v2(Bucket=user.BUCKET_NAME)
         print(f"S3 Response: {response}")  # 디버깅용 로그
-        
+
         if "Contents" not in response or not response["Contents"]:
+            print("No files found in the bucket")  # 디버깅용 로그
+            raise HTTPException(status_code=404, detail="No images found")
+
+        # 검색된 키에서 이름 필터링
+        filtered_keys = [
+            content["Key"]
+            for content in response["Contents"]
+            if content["Key"].startswith(f"맛집/{decoded_name}_")
+        ]
+
+        print(f"Filtered keys: {filtered_keys}")  # 디버깅용 로그
+
+        if not filtered_keys:
             print(f"No images found for: {decoded_name}")  # 디버깅용 로그
             raise HTTPException(status_code=404, detail="No images found")
 
-        # 파일 키 리스트 생성
-        file_keys = [content["Key"] for content in response["Contents"]]
-        print(f"Found keys: {file_keys}")  # 디버깅용 로그
-        return {"images": file_keys}
+        return {"images": filtered_keys}
     
     except ClientError as e:
         # S3 클라이언트 에러 처리
@@ -90,6 +96,7 @@ async def get_images(name: str):
         # 기타 에러 처리
         print(f"Error while fetching images: {str(e)}")  # 상세 예외 출력
         raise HTTPException(status_code=500, detail=f"Error fetching images: {str(e)}")
+
 
 @router.get("/image")
 async def stream_image(file_key: str):
