@@ -59,18 +59,24 @@ async def get_images(name: str):
     """
     특정 이름에 해당하는 이미지를 S3에서 가져와 리스트로 반환
     """
-    s3_client = user.create_s3_client()
+    s3_client = user.create_s3_client()  # S3 클라이언트 생성
     try:
-        # S3에서 해당 이름에 맞는 파일 검색
+        # Prefix로 파일 검색
+        print(f"Fetching images for name: {name}")  # 디버깅용 로그
         response = s3_client.list_objects_v2(Bucket=user.BUCKET_NAME, Prefix=f"{name}_")
+        
         if "Contents" not in response:
+            print(f"No images found for: {name}")  # 디버깅용 로그
             raise HTTPException(status_code=404, detail="No images found")
 
         # 파일 키 리스트 생성
         file_keys = [content["Key"] for content in response["Contents"]]
+        print(f"Found keys: {file_keys}")  # 디버깅용 로그
         return {"images": file_keys}
+    
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Error while fetching images: {str(e)}")  # 상세 예외 출력
+        raise HTTPException(status_code=500, detail=f"Error fetching images: {str(e)}")
 
 
 @router.get("/image/")

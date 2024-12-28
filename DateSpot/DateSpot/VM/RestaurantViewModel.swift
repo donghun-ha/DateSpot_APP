@@ -17,46 +17,88 @@ class RestaurantViewModel: ObservableObject {
     private let baseURL = "https://fastapi.fre.today/restaurant/" // 기본 API URL
 
     // 이미지 키 목록 가져오기
-   func fetchImageKeys(for name: String) async -> [String] {
-       guard let url = URL(string: "\(baseURL)/images/?name=\(name)") else { return [] }
-       
-       do {
-           let (data, _) = try await URLSession.shared.data(from: url)
-           let response = try JSONDecoder().decode([String: [String]].self, from: data)
-           return response["images"] ?? []
-       } catch {
-           print("Failed to fetch image keys: \(error)")
-           return []
-       }
-   }
+    func fetchImageKeys(for name: String) async -> [String] {
+        // 이름 인코딩
+        let encodedName = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? name
+        guard let url = URL(string: "\(baseURL)images/?name=\(encodedName)") else {
+            print("Invalid URL for fetchImageKeys")
+            return []
+        }
+        
+        do {
+            print("Fetching image keys for name: \(name)")
+            let (data, response) = try await URLSession.shared.data(from: url)
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                print("Image keys HTTP response status code: \(httpResponse.statusCode)")
+            }
 
-   // S3에서 이미지를 가져오기
-   func fetchImage(fileKey: String) async -> UIImage? {
-       guard let url = URL(string: "\(baseURL)/image/?file_key=\(fileKey)") else { return nil }
-       
-       do {
-           let (data, _) = try await URLSession.shared.data(from: url)
-           return UIImage(data: data)
-       } catch {
-           print("Failed to fetch image: \(error)")
-           return nil
-       }
-   }
+            let returnresponse = try JSONDecoder().decode([String: [String]].self, from: data)
+            let keys = returnresponse["images"] ?? []
+            print("Fetched image keys: \(keys)")
+            return keys
+        } catch {
+            print("Failed to fetch image keys: \(error)")
+            return []
+        }
+    }
 
-   // 전체 이미지 로드
-   func loadImages(for name: String) async {
-       let imageKeys = await fetchImageKeys(for: name)
-       var loadedImages: [UIImage] = []
+    // S3에서 이미지를 가져오기
+    func fetchImage(fileKey: String) async -> UIImage? {
+        guard let url = URL(string: "\(baseURL)image/?file_key=\(fileKey.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? fileKey)") else {
+            print("Invalid URL for fetchImage")
+            return nil
+        }
+        
+        do {
+            print("Fetching image for fileKey: \(fileKey)")
+            let (data, response) = try await URLSession.shared.data(from: url)
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                print("Image HTTP response status code: \(httpResponse.statusCode)")
+            }
 
-       for key in imageKeys {
-           if let image = await fetchImage(fileKey: key) {
-               loadedImages.append(image)
-           }
-       }
+            guard let image = UIImage(data: data) else {
+                print("Failed to convert data to UIImage for fileKey: \(fileKey)")
+                return nil
+            }
 
-       self.images = loadedImages
-   }
+            print("Successfully fetched image for fileKey: \(fileKey)")
+            return image
+        } catch {
+            print("Failed to fetch image: \(error)")
+            return nil
+        }
+    }
 
+    // 전체 이미지 로드
+    func loadImages(for name: String) async {
+        print("Loading images for restaurant: \(name)")
+        let imageKeys = await fetchImageKeys(for: name)
+
+        guard !imageKeys.isEmpty else {
+            print("No image keys found for restaurant: \(name)")
+            return
+        }
+
+        var loadedImages: [UIImage] = []
+
+        for key in imageKeys {
+            if let image = await fetchImage(fileKey: key) {
+                loadedImages.append(image)
+            } else {
+                print("Failed to load image for key: \(key)")
+            }
+        }
+
+        if loadedImages.isEmpty {
+            print("No images loaded for restaurant: \(name)")
+        } else {
+            print("Successfully loaded \(loadedImages.count) images for restaurant: \(name)")
+        }
+
+        self.images = loadedImages
+    }
     
     // Fetch Restaurants
     func fetchRestaurants() async{
@@ -72,7 +114,6 @@ class RestaurantViewModel: ObservableObject {
     
     // Fetch Restaurant Detail
     func fetchRestaurantDetail(name: String = "3대삼계장인") async{
-        print("fetching restaurant detail")
         Task {
             do {
                 let fetchedDetail = try await fetchRestaurantDetailFromAPI(name: name)
@@ -130,17 +171,11 @@ extension RestaurantViewModel {
             throw URLError(.badServerResponse)
         }
 
-        // 디버깅용 JSON 응답 출력
-        if let jsonString = String(data: data, encoding: .utf8) {
-            print("Response JSON: \(jsonString)")
-        }
-
         // JSON 디코딩
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase // JSON 키를 스네이크 케이스에서 카멜 케이스로 자동 변환
         do {
             let decodedResponse = try decoder.decode([String: [Restaurant]].self, from: data)
-            print(decodedResponse)
             // "results" 키의 첫 번째 레스토랑 반환
             guard let restaurant = decodedResponse["results"]?.first else {
                 throw URLError(.cannotDecodeContentData)
