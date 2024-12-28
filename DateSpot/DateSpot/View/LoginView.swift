@@ -15,7 +15,7 @@ struct LoginView: View {
     // VM (Google 로그인 로직)
     // 새로운 상태 객체를 생성해야 할 때는 @StateObject, 이미 생성된 객체를 감시할 때는 @ObservedObject를 사용합니다.
     @StateObject var viewModel = LoginViewModel()
-    @StateObject var placeViewModel = PlaceViewModel()
+    @EnvironmentObject var appState: AppState
     
     // 이미지 배열
     let images = ["tripImage1", "tripImage2", "tripImage3", "tripImage4"]
@@ -57,6 +57,11 @@ struct LoginView: View {
         .onAppear {
             startImageRotation()
         }
+        .onChange(of: viewModel.isLoginSuccessful) { isSuccess in
+            if isSuccess {
+                appState.isLoggedIn = true // 로그인 성공 시 상태 업데이트
+            }
+        }
     } // body
     
     // 이미지를 주기적으로 변경하는 함수
@@ -72,5 +77,5 @@ struct LoginView: View {
 
 
 #Preview {
-    LoginView()
+    LoginView().environmentObject(AppState())
 }

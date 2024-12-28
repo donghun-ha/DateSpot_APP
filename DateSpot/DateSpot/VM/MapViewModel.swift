@@ -48,55 +48,91 @@ class TabMapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     
+    // 거리 필터링
     func filterNearbyPlaces(currentLocation: CLLocation) {
-            // 장소 거리 필터링
-            self.nearParking = parkingData.filter { parking in
-                let parkingLocation = CLLocation(latitude: parking.lat, longitude: parking.lng)
-                return currentLocation.distance(from: parkingLocation) <= 5000 // 5km 이내
-            }
-        }
-    
-    
-    // 주차장 목록 API 호출
-    func fetchParkingInfo(region: String) {
-        guard let url = URL(string: "http://127.0.0.1:8000/select_parkinginfo?region=\(region)") else {
-            print("Invalid URL")
-            return
-        }
-
-        URLSession.shared.dataTask(with: url) { data, response, error in
-            if let error = error {
-                print("Error fetching data:", error)
-                return
-            }
-
-            guard let data = data else {
-                print("No data returned")
-                return
-            }
-
-            do {
-                // FastAPI 응답 데이터 디코딩
-                let decodedResponse = try JSONDecoder().decode([String: [Parking]].self, from: data)
-                DispatchQueue.main.async {
-                    self.parkingData = decodedResponse["result"] ?? []
+        //            self.nearParking = parkingData.filter { parking in
+        //                let parkingLocation = CLLocation(latitude: parking.lat, longitude: parking.lng)
+        //                return currentLocation.distance(from: parkingLocation) <= 5000 // 5km 이내
+        //            }
                 }
-            } catch {
-                print("Error decoding JSON:", error)
+        
+        
+        // 주차장 목록 API 호출
+        func fetchParkingInfo(region: String) {
+            guard let url = URL(string: "http://127.0.0.1:8000/select_parkinginfo?region=\(region)") else {
+                print("Invalid URL")
+                return
             }
-        }.resume()
+            
+            URLSession.shared.dataTask(with: url) { data, response, error in
+                if let error = error {
+                    print("Error fetching data:", error)
+                    return
+                }
+                
+                guard let data = data else {
+                    print("No data returned")
+                    return
+                }
+                
+                do {
+                    // FastAPI 응답 데이터 디코딩
+                    let decodedResponse = try JSONDecoder().decode([String: [Parking]].self, from: data)
+                    DispatchQueue.main.async {
+                        self.parkingData = decodedResponse["result"] ?? []
+                    }
+                } catch {
+                    print("Error decoding JSON:", error)
+                }
+            }.resume()
+        }
+        
+//            func fetchParkingInfo(region: String) {
+//                guard let url = URL(string: "http://127.0.0.1:8000/select_parkinginfo?region=\(region)") else {
+//                    print("Invalid URL")
+//                    return
+//                }
+//        
+//                URLSession.shared.dataTask(with: url) { data, response, error in
+//                    if let error = error {
+//                        print("Error fetching data:", error)
+//                        return
+//                    }
+//        
+//                    guard let data = data else {
+//                        print("No data returned")
+//                        return
+//                    }
+//        
+//                    do {
+//                        // FastAPI 응답 데이터 디코딩
+//                        let decodedResponse = try JSONDecoder().decode([String: [Parking]].self, from: data)
+//                        DispatchQueue.main.async {
+//                            self.parkingData = decodedResponse["result"] ?? []
+//        
+//                            // 현재 위치를 기준으로 필터링 (userLocation이 nil이 아닌 경우)
+//                            if let userLocation = self.locationManager.location {
+//                                self.filterNearbyPlaces(currentLocation: userLocation)
+//                            }
+//                        }
+//                    } catch {
+//                        print("Error decoding JSON:", error)
+//                    }
+//                }.resume()
+//            }
+//        
+        
+        
+        
+        
+        
+        
+        
+        // map에 사용될 장소 모델
+        struct Place: Identifiable {
+            let id = UUID()
+            let name: String
+            let coordinate: CLLocationCoordinate2D
+        }
     }
-    
-    
-    
-    
-    
-    
-    
-// map에 사용될 장소 모델
-    struct Place: Identifiable {
-        let id = UUID()
-        let name: String
-        let coordinate: CLLocationCoordinate2D
-    }
-}
+
