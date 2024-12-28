@@ -1,72 +1,129 @@
-// UserView.swift
-// DateSpot
 //
-// Created by 하동훈 on 27/12/2024.
+//  UserView.swift
+//  DateSpot
 //
-// 이 뷰는 사용자의 기본 프로필 정보를 보여주는 간소화된 화면입니다.
-// 회색 기본 프로필 이미지와 사용자 이름, 설정 아이콘을 포함합니다.
-// 사용자에게 편안한 메시지를 제공하여 사용자 경험을 개선합니다.
+//  Created by 하동훈 on 27/12/2024.
+//
+// 이 뷰는 사용자의 프로필 정보를 표시하며, 프로필 이미지를 눌러 사진 앨범에서 이미지를 선택할 수 있는 기능을 제공합니다.
+//
 
 import SwiftUI
+import PhotosUI
 
 struct UserView: View {
-    var username: String = "daytrip-fiqmonpsy"  // 사용자 이름
-    var profileImage: Image = Image(systemName: "person.crop.circle.fill")  // iOS 기본 제공 회색 프로필 이미지
+    @EnvironmentObject var appState: AppState // 전역 상태 사용
+    @State private var profileImage: UIImage? = nil // 사용자가 선택한 프로필 이미지
+    @State private var isPhotoPickerPresented: Bool = false // 사진 선택 화면 표시 여부
 
     var body: some View {
         NavigationView {
-            VStack {
-                HStack {
+            VStack(alignment: .leading, spacing: 20) {
+                HStack(spacing: 20) {
                     // 프로필 이미지
-                    profileImage
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 100, height: 100)
-                        .foregroundColor(.gray)
-                        .clipShape(Circle())
-                        .padding(.leading, 20)
-                    
-                    Spacer()
-                    
-                    // 설정 버튼
+                    Button(action: {
+                        isPhotoPickerPresented = true // 사진 선택 화면 열기
+                    }) {
+                        if let profileImage = appState.userImage {
+                            // 사용자가 선택한 이미지 표시
+                            Image(uiImage: profileImage)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 100, height: 100)
+                                .clipShape(Circle())
+                        } else {
+                            // 기본 프로필 이미지
+                            Image(systemName: "person.crop.circle.fill")
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 100, height: 100)
+                                .foregroundColor(.gray)
+                                .clipShape(Circle())
+                        }
+                    }
+                    .buttonStyle(PlainButtonStyle()) // 버튼 스타일 기본값 제거
+                    .sheet(isPresented: $isPhotoPickerPresented) {
+                        PhotoPicker(selectedImage: $profileImage)
+                    }
+
+                    VStack(alignment: .leading, spacing: 5) {
+                        // 이메일
+                        Text(appState.userEmail)
+                            .font(.headline)
+                            .foregroundColor(.gray)
+
+                        // 이름
+                        Text(appState.userName)
+                            .font(.title)
+                            .fontWeight(.bold)
+                    }
+
+                    Spacer() // 오른쪽 정렬용
+                }
+                .padding(.top, 30)
+
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("프로필")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                // 설정 버튼
+                ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
                         // 설정 화면으로 이동
                     }) {
                         Image(systemName: "gear")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 24, height: 24)
-                            .padding(.trailing, 20)
                     }
                 }
-                .padding(.top, 30)
-
-                // 사용자 이름
-                Text(username)
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .padding(.top, 20)
-
-                Spacer()
-
-                // 인사 메시지
-                Text("새로운 경험을 탐험하세요")
-                    .font(.headline)
-                    .padding()
-                    .background(Color.gray.opacity(0.1))
-                    .cornerRadius(10)
-                    .padding()
-
-                Spacer()
             }
-            .navigationBarHidden(true)
+        }
+    }
+}
+
+// MARK: - PhotoPicker: 사진 선택기
+struct PhotoPicker: UIViewControllerRepresentable {
+    @Binding var selectedImage: UIImage?
+
+    func makeUIViewController(context: Context) -> PHPickerViewController {
+        var configuration = PHPickerConfiguration()
+        configuration.filter = .images // 이미지만 선택 가능
+        configuration.selectionLimit = 1 // 한 번에 하나의 이미지 선택
+
+        let picker = PHPickerViewController(configuration: configuration)
+        picker.delegate = context.coordinator
+        return picker
+    }
+
+    func updateUIViewController(_ uiViewController: PHPickerViewController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    class Coordinator: NSObject, PHPickerViewControllerDelegate {
+        let parent: PhotoPicker
+
+        init(_ parent: PhotoPicker) {
+            self.parent = parent
+        }
+
+        func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+            picker.dismiss(animated: true)
+
+            guard let provider = results.first?.itemProvider, provider.canLoadObject(ofClass: UIImage.self) else {
+                return
+            }
+
+            provider.loadObject(ofClass: UIImage.self) { image, _ in
+                DispatchQueue.main.async {
+                    self.parent.selectedImage = image as? UIImage
+                }
+            }
         }
     }
 }
 
 // 미리보기 제공
-struct UserView_Previews: PreviewProvider {
-    static var previews: some View {
-        UserView()
-    }
+#Preview{
+    UserView().environmentObject(AppState())
 }

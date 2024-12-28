@@ -60,6 +60,9 @@ struct LoginView: View {
         .onChange(of: viewModel.isLoginSuccessful) { isSuccess in
             if isSuccess {
                 appState.isLoggedIn = true // 로그인 성공 시 상태 업데이트
+                appState.userEmail = viewModel.loggedInUserEmail // 로그인한 사용자 이메일
+                appState.userName = viewModel.loggedInUserName  // 로그인한 사용자 이름
+                appState.userImage = viewModel.loggedInUserImage // 로그인한 사용자 이미지
             }
         }
     } // body

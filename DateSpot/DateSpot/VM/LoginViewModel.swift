@@ -18,6 +18,11 @@ class LoginViewModel: NSObject, ObservableObject {
     @Published var alertMessage: String = "" // Alert 등에 표시할 메세지
     @Published var showAlert: Bool = false   // Alert 표시 여부
     @Published var isLoginSuccessful: Bool = false
+    
+    // Login AppState
+    @Published var loggedInUserEmail: String = ""    // 로그인한 사용자 이메일
+    @Published var loggedInUserName : String = ""    // 로그인한 사용자 이름
+    @Published var loggedInUserImage: UIImage? = nil // 로그인한 사용자 프로필 이미지
     // MARK: - Service
     private let loginService = LoginService()
     
@@ -42,10 +47,29 @@ class LoginViewModel: NSObject, ObservableObject {
             // 사용자 정보
           guard let user = result?.user,
                 let email = user.profile?.email,
-                let name = user.profile?.name
+                let name = user.profile?.name,
+                let imageURL = user.profile?.imageURL(withDimension: 100)
             else {
                 self.showError("Google 사용자 정보 누락")
                 return
+            }
+            
+            // 사용자 정보 저장
+            self.loggedInUserEmail = email
+            self.loggedInUserName = name
+            
+            // 구글은 기본적으로 URL로 이미지를 전송해주기 때문에 비동기로 이미지를 로드하는 방식을 사용
+            Task {
+                do {
+                    let (data, _) = try await URLSession.shared.data(from: imageURL)
+                    if let image = UIImage(data: data) {
+                        DispatchQueue.main.async {
+                            self.loggedInUserImage = image
+                        }
+                    }
+                } catch {
+                    print("Google 프로필 이미지 로드 실패: \(error.localizedDescription)")
+                }
             }
             
             // 서버로 전송
@@ -102,6 +126,11 @@ extension LoginViewModel: ASAuthorizationControllerDelegate {
             let userIdentifier = credential.user
             let email = credential.email ?? "No email provided" // 이메일이 없으면 기본 문자열 사용
             let fullName = credential.fullName?.formatted() ?? "No full name provided" // 이름이 없으면 기본 문자열 사용
+            
+            // 사용자 정보 저장
+            self.loggedInUserEmail = email
+            self.loggedInUserName = fullName
+            self.loggedInUserImage = nil // Apple 로그인에서는 이미지 제공하지 않음.
 
             // 디버깅 정보 출력
             print("User Identifier: \(userIdentifier)")
