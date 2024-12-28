@@ -2,9 +2,9 @@ import SwiftUI
 
 struct DetailView: View {
     @StateObject private var restaurantViewModel = RestaurantViewModel()
-    @State private var selection: Int = 0 // 현재 페이지 인덱스 추적
-    @State private var isLoading = true // 로딩 상태를 관리하는 변수
-    var restaurantName: String = "3대삼계장인" // 테스트용 레스토랑 이름
+    @State private var selection: Int = 0
+    @State private var isLoading = true
+    var restaurantName: String = "[백년가게]만석장"
 
     var body: some View {
         Group {
@@ -14,8 +14,8 @@ struct DetailView: View {
                 NavigationView {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 16) {
-                            // 이미지 슬라이더
                             if !restaurantViewModel.images.isEmpty {
+                                // 이미지 슬라이더
                                 ZStack(alignment: .bottomTrailing) {
                                     InfinitePageView(
                                         selection: $selection,
@@ -87,6 +87,7 @@ struct DetailView: View {
                 print("DetailView appeared. Loading data for: \(restaurantName)")
                 isLoading = true
                 await restaurantViewModel.fetchRestaurantDetail(name: restaurantName)
+                print("Restaurant detail fetched: \(String(describing: restaurantViewModel.selectedRestaurant))")
                 await restaurantViewModel.loadImages(for: restaurantName)
                 isLoading = false
                 print("Images loaded: \(restaurantViewModel.images.count)")
