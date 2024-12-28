@@ -46,7 +46,7 @@ struct DateSpotApp: App {
                 TabBarView() // 로그인 후 홈 화면으로 이동
                     .environmentObject(appState) // 앱 상태를 전달
             } else {
-                LoginView() // 로그인 화면
+                DetailView() // 로그인 화면
                     .environmentObject(appState) // 앱 상태를 전달
             }
         }
