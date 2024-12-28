@@ -24,11 +24,13 @@ class DetailMapViewModel : NSObject, ObservableObject, CLLocationManagerDelegate
     override init() {
         super.init()
         locationManager.delegate = self
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.requestWhenInUseAuthorization()
         locationManager.startUpdatingLocation()
     }
 
+    
+    
+    // 지도 설정
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
         userLocation = location
@@ -47,31 +49,31 @@ class DetailMapViewModel : NSObject, ObservableObject, CLLocationManagerDelegate
         }
     }
 
-
-    func fetchParkingInfo(region: String) {
-        guard let url = URL(string: "http://127.0.0.1:8000/select_parkinginfo?region=\(region)") else {
+    // 주차장 정보 불러오기
+    func fetchParkingInfo() {
+        guard let url = URL(string: "http://fastapi.fre.today/parking/select_parkinginfo?") else {
             print("Invalid URL")
             return
         }
 
         URLSession.shared.dataTask(with: url) { data, response, error in
             if let error = error {
-                print("Error fetching data:", error)
+                print("주차장 로드 에러", error)
                 return
             }
 
             guard let data = data else {
-                print("No data returned")
+                print("일치하는 주차장 데이터 없음")
                 return
             }
 
             do {
-                // FastAPI 응답 데이터 디코딩
+                // FastAPI
                 let decodedResponse = try JSONDecoder().decode([String: [Parking]].self, from: data)
                 DispatchQueue.main.async {
                     self.parkingData = decodedResponse["result"] ?? []
                     
-                    // 주차장 데이터를 가져온 후 근처 주차장 필터링
+                    // 주차장 필터링
                     if let userLocation = self.userLocation {
                         self.filterNearbyParking(currentLocation: userLocation)
                     }
@@ -82,6 +84,8 @@ class DetailMapViewModel : NSObject, ObservableObject, CLLocationManagerDelegate
         }.resume()
     }
 
+    
+    // 마커 거리 필터링
     func filterNearbyParking(currentLocation: CLLocation) {
         self.nearParking = parkingData.filter { parking in
             let parkingLocation = CLLocation(latitude: parking.latitude, longitude: parking.longitude)

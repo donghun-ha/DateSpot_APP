@@ -1,11 +1,12 @@
 from fastapi import APIRouter
 import user
-import requests
+
+
 
 router =  APIRouter()
 
 
-# @router.get('/select_parkinginfo')
+# @app.get('/api_parkinginfo')
 # def fetch_pakring(): # 자치구 입력
 #     try:
 #         url = f'http://openapi.seoul.go.kr:8088/496c726e54746c733132325669414e57/json/GetParkingInfo/3/1000'
@@ -26,3 +27,32 @@ router =  APIRouter()
 #     except Exception as e :
 #         print("parking_info", e)
 #         return {"result" : e}
+
+
+
+
+
+
+
+@router.get("/select_parkinginfo")
+async def select():
+    try:
+        conn = user.connect()
+        curs = conn.cursor()
+        sql = "select * from parking"
+        curs.execute(sql)
+        data = curs.fetchall()  
+        results = []
+        for row in data:
+            results.append({
+                "name": row[0],       
+                "address": row[1],    
+                "latitude": row[2],   
+                "longitude": row[3]   
+            })
+        return {"result": results}
+    except Exception as e:
+        print("parking.py select Error", e)
+        return {"parking.py select Error": str(e)}
+
+
