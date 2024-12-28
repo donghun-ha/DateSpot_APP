@@ -98,7 +98,6 @@ async def get_images(name: str):
         raise HTTPException(status_code=500, detail=f"Error fetching images: {str(e)}")
 
 
-
 @router.get("/image")
 async def stream_image(file_key: str):
     """
@@ -106,12 +105,24 @@ async def stream_image(file_key: str):
     """
     s3_client = user.create_s3_client()
     try:
-        s3_object = s3_client.get_object(Bucket=user.BUCKET_NAME, Key=file_key)
+        # 보이지 않는 문자 제거
+        cleaned_key = remove_invisible_characters(file_key)
+        print(f"Original key: {file_key}")
+        print(f"Cleaned key: {cleaned_key}")
+
+        # S3 객체 가져오기
+        s3_object = s3_client.get_object(Bucket=user.BUCKET_NAME, Key=cleaned_key)
         return StreamingResponse(
             content=s3_object["Body"],
             media_type="image/jpeg"
         )
     except s3_client.exceptions.NoSuchKey:
+        print(f"NoSuchKey error for key: {file_key}")
         raise HTTPException(status_code=404, detail="File not found in S3")
     except Exception as e:
+        print(f"Error while streaming image: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+def remove_invisible_characters(input_str: str) -> str:
+    # 모든 비표시 가능 문자를 제거 (공백, 제어 문자 포함)
+    return ''.join(ch for ch in input_str if ch.isprintable())
