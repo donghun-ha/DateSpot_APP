@@ -13,15 +13,17 @@ struct DetailMap : View {
     var body: some View {
         NavigationView {
             Map(position: $viewModel.cameraPosition) {
-                ForEach(viewModel.nearParking) { parking in
-                    Marker(parking.name, coordinate: parking.coordinate)
-                        .tint(.blue) // 마커 색상 설정 가능
+                UserAnnotation() // 내위치 표시
+                
+                ForEach(viewModel.nearParking, id: \.id) { parking in
+                    Marker(parking.name, systemImage: "car.fill", coordinate: parking.coordinate)
+                        .tint(.blue) // 마커 설정
                 }
             }
             .ignoresSafeArea()
             .onAppear {
                 // 지역 정보를 입력하여 주차장 데이터 가져오기
-                viewModel.fetchParkingInfo(region: "강남구")
+                viewModel.fetchParkingInfo()
             }
         }
     }
