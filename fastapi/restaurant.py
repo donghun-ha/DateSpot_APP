@@ -74,6 +74,7 @@ def normalize_restaurant_name(name: str) -> str:
     # Unicode 정규화 (NFC 적용)
     return unicodedata.normalize("NFC", name)
 
+
 @router.get("/images")
 async def get_images(name: str):
     """
@@ -93,26 +94,30 @@ async def get_images(name: str):
         print(f"Using Prefix: {prefix}")
 
         # S3에서 파일 검색
-        response = s3_client.list_objects_v2(Bucket=user.BUCKET_NAME, Prefix=prefix)
-        all_keys = [content["Key"] for content in response.get("Contents", [])]
+        response = s3_client.list_objects_v2(Bucket=user.BUCKET_NAME)
+        all_keys = [
+            content["Key"] for content in response.get("Contents", [])
+        ]
         print(f"All S3 Keys: {all_keys}")
 
-        # 디버깅: S3 키와 입력값 비교
-        for key in all_keys:
-            print(f"S3 Key (repr): {repr(key)}")
-            print(f"Matching with: {repr(normalized_name)}")
-            print(f"Match status: {normalized_name in key}")
+        # S3 키 정규화 및 매칭
+        filtered_keys = [
+            key for key in all_keys
+            if normalize_restaurant_name(key).startswith(prefix)
+        ]
+        print(f"Filtered keys after normalization: {filtered_keys}")
 
         # 결과 확인
-        if not all_keys:
+        if not filtered_keys:
             print(f"No images found for: {normalized_name}")
             raise HTTPException(status_code=404, detail="No images found")
 
-        return {"images": all_keys}
+        return {"images": filtered_keys}
 
     except Exception as e:
         print(f"Error while fetching images: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error fetching images: {str(e)}")
+
 
 @router.get("/images_old")
 async def get_images_old(name: str):
