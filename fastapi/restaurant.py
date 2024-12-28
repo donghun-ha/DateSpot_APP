@@ -133,7 +133,6 @@ async def get_images_old(name: str):
         # S3에서 전체 파일 검색
         response = s3_client.list_objects_v2(Bucket=user.BUCKET_NAME)
         all_keys = [content["Key"] for content in response.get("Contents", [])]
-        print(f"All S3 Keys: {all_keys}")  # S3 버킷 내 모든 파일 출력
 
         if "Contents" not in response or not response["Contents"]:
             print("No files found in the bucket")  # 디버깅용 로그
