@@ -7,75 +7,58 @@ struct DetailView: View {
     var restaurantName: String = "[백년가게]만석장"
 
     var body: some View {
-        Group {
+        NavigationView {
             if isLoading {
-                ProgressView("Loading...").font(.headline)
+                ProgressView("Loading...")
+                    .font(.headline)
             } else if let restaurant = restaurantViewModel.selectedRestaurant {
-                NavigationView {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 16) {
-                            if !restaurantViewModel.images.isEmpty {
-                                // 이미지 슬라이더
-                                ZStack(alignment: .bottomTrailing) {
-                                    InfinitePageView(
-                                        selection: $selection,
-                                        before: { $0 == 0 ? restaurantViewModel.images.count - 1 : $0 - 1 },
-                                        after: { $0 == restaurantViewModel.images.count - 1 ? 0 : $0 + 1 }
-                                    ) { index in
-                                        GeometryReader { geometry in
-                                            Image(uiImage: restaurantViewModel.images[index])
-                                                .resizable()
-                                                .scaledToFill()
-                                                .frame(width: geometry.size.width, height: 260)
-                                                .clipped()
-                                        }
-                                        .frame(height: 260)
-                                    }
-                                    .frame(height: 260)
-                                    .clipShape(RoundedRectangle(cornerRadius: 15))
-                                    .padding(EdgeInsets(top: 10, leading: 10, bottom: 0, trailing: 10))
-
-                                    Text("\(selection + 1)/\(restaurantViewModel.images.count)")
-                                        .font(.caption)
-                                        .padding(8)
-                                        .background(Color.black.opacity(0.6))
-                                        .foregroundColor(.white)
-                                        .cornerRadius(8)
-                                        .padding([.trailing, .bottom], 16)
-                                }
-                            } else {
-                                Text("No images available")
-                                    .foregroundColor(.gray)
-                                    .frame(height: 260)
-                                    .frame(maxWidth: .infinity)
-                                    .background(Color(.systemGray5))
-                                    .clipShape(RoundedRectangle(cornerRadius: 15))
-                                    .padding()
-                            }
-
-                            // 레스토랑 상세 정보
-                            VStack(alignment: .leading) {
-                                Text(restaurant.name)
-                                    .font(.title)
-                                    .fontWeight(.bold)
-
-                                Text(restaurant.address)
-                                    .font(.subheadline)
-                                Text("운영 시간: \(restaurant.operatingHour)")
-                                    .font(.subheadline)
-                                Text("휴무일: \(restaurant.closedDays)")
-                                    .font(.subheadline)
-                                Text("주차: \(restaurant.parking)")
-                                    .font(.subheadline)
-                                Text("연락처: \(restaurant.contactInfo)")
-                                    .font(.subheadline)
-                            }
-                            .padding()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        // 이미지 슬라이더
+                        if !restaurantViewModel.images.isEmpty {
+                            ImageSliderView(
+                                images: restaurantViewModel.images,
+                                selection: $selection
+                            )
+                        } else {
+                            Text("No images available")
+                                .foregroundColor(.gray)
+                                .frame(height: 260)
+                                .frame(maxWidth: .infinity)
+                                .background(Color(.systemGray5))
+                                .clipShape(RoundedRectangle(cornerRadius: 15))
+                                .padding()
                         }
+                        let samplePlaces = [
+                                    PlaceData(
+                                        name: "(재)환기재단·환기미술관",
+                                        address: "서울 종로구",
+                                        lat: 37.5822,
+                                        lng: 126.9835,
+                                        description: "현대 미술 전시장",
+                                        contact_info: "02-123-4567",
+                                        operating_hour: "9:00 AM - 6:00 PM",
+                                        parking: "가능",
+                                        closing_time: "6:00 PM"
+                                    ),
+                                    PlaceData(
+                                        name: "윤동주 문학관",
+                                        address: "서울 종로구",
+                                        lat: 37.5803,
+                                        lng: 126.9817,
+                                        description: "윤동주 시인을 기리는 문학관",
+                                        contact_info: "02-765-1234",
+                                        operating_hour: "10:00 AM - 5:00 PM",
+                                        parking: "불가능",
+                                        closing_time: "5:00 PM"
+                                    )
+                                ]
+                        // 레스토랑 상세 정보
+                        RestaurantDetailInfoView(restaurant: restaurant)
+                        NearFromDetails(nearbyPlaces: samplePlaces)
                     }
-                    .navigationBarHidden(true)
-                    .navigationBarTitleDisplayMode(.inline)
                 }
+                .navigationBarTitle("Date Spots", displayMode: .inline)
             } else {
                 Text("Restaurant not found.")
                     .font(.headline)
