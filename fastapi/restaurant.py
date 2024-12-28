@@ -58,42 +58,54 @@ import unicodedata
 from fastapi import FastAPI, HTTPException
 from urllib.parse import unquote
 
+import re
+
+def normalize_restaurant_name(name: str) -> str:
+    """
+    입력된 이름을 S3에서 사용한 규칙에 맞게 변환
+    """
+    # 정규표현식을 사용하여 파일명을 S3 키에 맞게 변환
+    match = re.match(r'^(.*?)(_.*)?$', name.strip(), re.IGNORECASE)
+    if match:
+        return match.group(1).strip()
+    return name.strip()
+
 @router.get("/images")
 async def get_images(name: str):
     """
-    정규화 제거 후 테스트
+    특정 이름에 해당하는 이미지를 S3에서 가져와 리스트로 반환
     """
     s3_client = user.create_s3_client()
     try:
-        # URL 디코딩만 수행
+        # 이름 변환 및 URL 디코딩
         decoded_name = unquote(name).strip()
-        print(f"Decoded name: {decoded_name}")
+        normalized_name = normalize_restaurant_name(decoded_name)
+        print(f"Original input (repr): {repr(name)}")
+        print(f"Decoded name (repr): {repr(decoded_name)}")
+        print(f"Normalized name (repr): {repr(normalized_name)}")
+
 
         # Prefix 생성
-        prefix = f"맛집/{decoded_name}_"
+        prefix = f"맛집/{normalized_name}_"
         print(f"Using Prefix: {prefix}")
 
-        response = s3_client.list_objects_v2(Bucket=user.BUCKET_NAME, Prefix="맛집/")
+        # S3에서 파일 검색
+        response = s3_client.list_objects_v2(Bucket=user.BUCKET_NAME, Prefix=prefix)
         all_keys = [content["Key"] for content in response.get("Contents", [])]
         print(f"All S3 Keys: {all_keys}")
-
-        # 검색된 키에서 이름 필터링
-        filtered_keys = [
-            key for key in all_keys if f"{decoded_name}_" in key
-        ]
-
-        print(f"Filtered keys: {filtered_keys}")
-
-        if not filtered_keys:
-            print(f"No images found for: {decoded_name}")
+        for key in all_keys:
+            print(f"S3 Key (repr): {repr(key)}")
+            print(f"Matching with: {repr(normalized_name)}")
+            print(f"Match status: {normalized_name in key}")
+        if not all_keys:
+            print(f"No images found for: {normalized_name}")
             raise HTTPException(status_code=404, detail="No images found")
 
-        return {"images": filtered_keys}
+        return {"images": all_keys}
 
     except Exception as e:
         print(f"Error while fetching images: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error fetching images: {str(e)}")
-
 
 
 
