@@ -70,6 +70,10 @@ def normalize_restaurant_name(name: str) -> str:
         return match.group(1).strip()
     return name.strip()
 
+def normalize_restaurant_name(name: str) -> str:
+    # Unicode 정규화 (NFC 적용)
+    return unicodedata.normalize("NFC", name)
+
 @router.get("/images")
 async def get_images(name: str):
     """
@@ -77,13 +81,12 @@ async def get_images(name: str):
     """
     s3_client = user.create_s3_client()
     try:
-        # 이름 변환 및 URL 디코딩
+        # 입력값 디코딩 및 정규화
         decoded_name = unquote(name).strip()
         normalized_name = normalize_restaurant_name(decoded_name)
         print(f"Original input (repr): {repr(name)}")
         print(f"Decoded name (repr): {repr(decoded_name)}")
         print(f"Normalized name (repr): {repr(normalized_name)}")
-
 
         # Prefix 생성
         prefix = f"맛집/{normalized_name}_"
@@ -93,10 +96,14 @@ async def get_images(name: str):
         response = s3_client.list_objects_v2(Bucket=user.BUCKET_NAME, Prefix=prefix)
         all_keys = [content["Key"] for content in response.get("Contents", [])]
         print(f"All S3 Keys: {all_keys}")
+
+        # 디버깅: S3 키와 입력값 비교
         for key in all_keys:
             print(f"S3 Key (repr): {repr(key)}")
             print(f"Matching with: {repr(normalized_name)}")
             print(f"Match status: {normalized_name in key}")
+
+        # 결과 확인
         if not all_keys:
             print(f"No images found for: {normalized_name}")
             raise HTTPException(status_code=404, detail="No images found")
@@ -107,6 +114,37 @@ async def get_images(name: str):
         print(f"Error while fetching images: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error fetching images: {str(e)}")
 
+@router.get("/images_old")
+async def get_images_old(name: str):
+    """
+    이전에 동작했던 코드: URL 디코딩만 사용, 정규화 없음
+    """
+    s3_client = user.create_s3_client()
+    try:
+        # 입력값 디코딩
+        decoded_name = unquote(name).strip()
+        print(f"Original input (repr): {repr(name)}")
+        print(f"Decoded name (repr): {repr(decoded_name)}")
+
+        # Prefix 생성
+        prefix = f"맛집/{decoded_name}_"
+        print(f"Using Prefix: {prefix}")
+
+        # S3에서 파일 검색
+        response = s3_client.list_objects_v2(Bucket=user.BUCKET_NAME, Prefix=prefix)
+        all_keys = [content["Key"] for content in response.get("Contents", [])]
+        print(f"All S3 Keys: {all_keys}")
+
+        # 결과 확인
+        if not all_keys:
+            print(f"No images found for: {decoded_name}")
+            raise HTTPException(status_code=404, detail="No images found")
+
+        return {"images": all_keys}
+
+    except Exception as e:
+        print(f"Error while fetching images: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching images: {str(e)}")
 
 
 @router.get("/image")
