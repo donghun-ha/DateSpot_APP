@@ -15,10 +15,12 @@ class LoginService {
      - Parameters:
         - email : 사용자 이메일
         - name : 사용자 이름
+        - user_identifier : 사용자 고유 식별번호
+        - loginType: 로그인 타입 (구글, 애플)
      */
     
     // 서버에 이메일, 이름 전송 후 JSON 응답
-    func sendUserData(email: String, name: String) async throws -> [String: Any]{
+    func sendUserData(email: String, name: String, userIdentifier: String, loginType: String) async throws -> [String: Any]{
         // FastApi 주소 설정
         guard let url = URL(string: "https://fastapi.fre.today/login") else {
             throw URLError(.badURL)
@@ -31,7 +33,12 @@ class LoginService {
         
         
         // JSON 바디 구성
-        let requestBody: [String: Any] = ["email": email, "name": name]
+        let requestBody: [String: Any] = [
+            "email": email,
+            "name": name,
+            "user_identifier": userIdentifier,
+            "login_type": loginType
+        ]
         request.httpBody = try JSONSerialization.data(withJSONObject: requestBody, options: [])
         
         // 비동기 네트워크 통신
