@@ -37,6 +37,7 @@ async def get_booked_rating(user_email: str, book_name):
     ]
     
     return {"results": results}
+
 # 별점 데이터를 위한 Pydantic 모델
 class Rating(BaseModel):
     userEmail: str

@@ -37,16 +37,9 @@ class RestaurantViewModel: ObservableObject {
         }
         
         do {
-            print("Fetching image keys for name: \(name)")
-            let (data, response) = try await URLSession.shared.data(from: url)
-            
-            if let httpResponse = response as? HTTPURLResponse {
-                print("Image keys HTTP response status code: \(httpResponse.statusCode)")
-            }
-
+            let (data, _) = try await URLSession.shared.data(from: url)
             let returnresponse = try JSONDecoder().decode([String: [String]].self, from: data)
             let keys = returnresponse["images"] ?? []
-            print("Fetched image keys: \(keys)")
             return keys
         } catch {
             print("Failed to fetch image keys: \(error)")
@@ -61,19 +54,13 @@ class RestaurantViewModel: ObservableObject {
         }
         
         do {
-            print("Fetching image for fileKey: \(fileKey)")
-            let (data, response) = try await URLSession.shared.data(from: url)
+            let (data, _) = try await URLSession.shared.data(from: url)
             
-            if let httpResponse = response as? HTTPURLResponse {
-                print("Image HTTP response status code: \(httpResponse.statusCode)")
-            }
-
             guard let image = UIImage(data: data) else {
                 print("Failed to convert data to UIImage for fileKey: \(fileKey)")
                 return nil
             }
 
-            print("Successfully fetched image for fileKey: \(fileKey)")
             return image
         } catch {
             print("Failed to fetch image: \(error)")
@@ -82,7 +69,6 @@ class RestaurantViewModel: ObservableObject {
     }
 
     func loadImages(for name: String) async {
-        print("Loading images for restaurant: \(name)")
         let imageKeys = await fetchImageKeys(for: name)
 
         guard !imageKeys.isEmpty else {
@@ -102,8 +88,6 @@ class RestaurantViewModel: ObservableObject {
 
         if loadedImages.isEmpty {
             print("No images loaded for restaurant: \(name)")
-        } else {
-            print("Successfully loaded \(loadedImages.count) images for restaurant: \(name)")
         }
 
         self.images = loadedImages
@@ -135,7 +119,7 @@ class RestaurantViewModel: ObservableObject {
 // MARK: - Private Methods
 extension RestaurantViewModel {
     private func fetchRestaurantsFromAPI() async throws -> [Restaurant] {
-        guard let url = URL(string: baseURL) else {
+        guard let url = URL(string: "\(baseURL)restaurant_select_all") else {
             throw URLError(.badURL)
         }
 
