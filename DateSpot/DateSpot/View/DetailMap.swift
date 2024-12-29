@@ -7,114 +7,28 @@
 import SwiftUI
 import MapKit
 
-struct DetailMapView : View {
-    
-    @StateObject private var detailMapViewModel = TabMapViewModel()
-
-    @State private var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 37.465618, longitude: 127.0232),
-        span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01) // 줌 레벨
-    )
+struct DetailMap : View {
+    @StateObject private var viewModel = DetailMapViewModel()
     
     var body: some View {
-        VStack(spacing: 0) {
-            // 상단 헤더
-            HStack {
-                Text("Date Spots")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.red)
-                Spacer()
-                Image(systemName: "heart")
-                    .foregroundColor(.red)
+        NavigationView {
+            Map(position: $viewModel.cameraPosition) {
+                UserAnnotation() // 내위치 표시
+                
+                ForEach(viewModel.nearParking, id: \.id) { parking in
+                    Marker(parking.name, systemImage: "car.fill", coordinate: parking.coordinate)
+                        .tint(.blue) // 마커 설정
+                }
             }
-            .padding()
+            .ignoresSafeArea()
+            .onAppear {
+                // 지역 정보를 입력하여 주차장 데이터 가져오기
+                viewModel.fetchParkingInfo()
+            }
+        }
+    }
+}
+
+
             
-            // 지도와 CardView
-            ZStack {
-                // 지도
-                Map(coordinateRegion: $region)
-                
-                    .edgesIgnoringSafeArea(.all)
-                
-                // 위치 핀
-               
-                    
-                    // 카드 뷰
-                    DetailMapCardView()
-                        .padding(.bottom, 80) // 카드뷰와 탭바 간격 조정
-                }
-            }
-            .onAppear{
-                detailMapViewModel.fetchParkingInfo(region: "강남구")
-            }
-        }
-    }
 
-
-struct DetailMapCardView: View {
-    var body: some View {
-        VStack(alignment: .leading) {
-            HStack {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("The Italian Corner")
-                        .font(.headline)
-                    
-                    HStack {
-                        Image(systemName: "bookmark")
-                            .foregroundColor(.black)
-                        Text("231 • Italian")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    Text("\n")
-                    
-                    HStack {
-                        Image(systemName: "pin")
-                            .foregroundColor(.blue)
-                        Text("123 Downtown St, Los Angeles")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    HStack {
-                        Image(systemName: "clock")
-                            .foregroundColor(.green)
-                        Text("11:00 AM - 10:00 PM")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    HStack {
-                        Image(systemName: "phone.fill")
-                            .foregroundColor(.purple)
-                        Text("(213) 555-0123")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                
-                Spacer()
-                
-                // 이미지 추가
-                Image("2025 서울 카페&베이커리페어_1_공공1유형") // 프로젝트 내 이미지 파일 이름 사용
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 100, height: 80)
-                    .cornerRadius(10)
-            }
-        }
-        .padding()
-        .background(Color.white)
-        .cornerRadius(15)
-        .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
-    }
-}
-
-
-
-
-#Preview{
-    DetailMapView()
-}

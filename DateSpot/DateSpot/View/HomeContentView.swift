@@ -30,9 +30,10 @@ struct HomeContentView: View {
                                         )
                                         .frame(width: 300)
                                     }
+                                    .padding(.horizontal)
                                 }
-                                .padding(.horizontal)
                             }
+                            .padding(.vertical)
                         }
 
                         // 명소 섹션

@@ -17,7 +17,12 @@ class LoginViewModel: NSObject, ObservableObject {
     // Published : 변수의 변경 사항을 자동으로 알릴 수 있는 프로퍼티 래퍼
     @Published var alertMessage: String = "" // Alert 등에 표시할 메세지
     @Published var showAlert: Bool = false   // Alert 표시 여부
+    @Published var isLoginSuccessful: Bool = false
     
+    // Login AppState
+    @Published var loggedInUserEmail: String = ""    // 로그인한 사용자 이메일
+    @Published var loggedInUserName : String = ""    // 로그인한 사용자 이름
+    @Published var loggedInUserImage: UIImage? = nil // 로그인한 사용자 프로필 이미지
     // MARK: - Service
     private let loginService = LoginService()
     
@@ -42,16 +47,40 @@ class LoginViewModel: NSObject, ObservableObject {
             // 사용자 정보
           guard let user = result?.user,
                 let email = user.profile?.email,
-                let name = user.profile?.name
+                let name = user.profile?.name,
+                let imageURL = user.profile?.imageURL(withDimension: 100)
             else {
                 self.showError("Google 사용자 정보 누락")
                 return
             }
             
+            // 사용자 정보 저장
+            self.loggedInUserEmail = email
+            self.loggedInUserName = name
+            
+            // 구글은 기본적으로 URL로 이미지를 전송해주기 때문에 비동기로 이미지를 로드하는 방식을 사용
+            Task {
+                do {
+                    let (data, _) = try await URLSession.shared.data(from: imageURL)
+                    if let image = UIImage(data: data) {
+                        DispatchQueue.main.async {
+                            self.loggedInUserImage = image
+                        }
+                    }
+                } catch {
+                    print("Google 프로필 이미지 로드 실패: \(error.localizedDescription)")
+                }
+            }
+            
             // 서버로 전송
             Task {
                 do {
-                    let response = try await self.loginService.sendUserData(email: email, name: name)
+                    let response = try await self.loginService.sendUserData(
+                        email: email,
+                        name: name,
+                        userIdentifier: email, // 구글은 이메일 가리기가 없으므로 user_identifier에 이메일 사용
+                        loginType: "google" // 로그인 타입으로 고유식별자 사용
+                    )
                     self.showSuccess("Google 로그인 성공: \(response)")
                 } catch {
                     self.showError("Google 로그인 서버 전송 실패: \(error.localizedDescription)")
@@ -85,6 +114,7 @@ class LoginViewModel: NSObject, ObservableObject {
     func showSuccess(_ message: String) {
         alertMessage = message
         showAlert = true
+        isLoginSuccessful = true
     }
 }
 
@@ -92,22 +122,38 @@ class LoginViewModel: NSObject, ObservableObject {
 extension LoginViewModel: ASAuthorizationControllerDelegate {
     func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
         // Apple 로그인 성공 시
-        guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential else {
-            showError("Apple 로그인 실패: Credential 없음")
-            return
-        }
-        
-        let email = credential.email ?? "hidden@appleid.com"
-        let fullName = credential.fullName?.formatted() ?? "Unknown"
-        
-        // 서버 전송
-        Task {
-            do {
-                let response = try await loginService.sendUserData(email: email, name: fullName)
-                showSuccess("Apple 로그인 성공: \(response)")
-            } catch {
-                showError("Apple 로그인 서버 전송 실패: \(error.localizedDescription)")
+        if let credential = authorization.credential as? ASAuthorizationAppleIDCredential {
+            let userIdentifier = credential.user
+            let email = credential.email ?? "No email provided" // 이메일이 없으면 기본 문자열 사용
+            let fullName = credential.fullName?.formatted() ?? "No full name provided" // 이름이 없으면 기본 문자열 사용
+            
+            // 사용자 정보 저장
+            self.loggedInUserEmail = email
+            self.loggedInUserName = fullName
+            self.loggedInUserImage = nil // Apple 로그인에서는 이미지 제공하지 않음.
+
+            // 디버깅 정보 출력
+            print("User Identifier: \(userIdentifier)")
+            print("Email received: \(email)")
+            print("Full name: \(fullName)")
+
+            // 서버 전송
+            Task {
+                do {
+                    let response = try await loginService.sendUserData(
+                        email: email,
+                        name: fullName,
+                        userIdentifier: userIdentifier,
+                        loginType: "apple" // 로그인 타입 설정 
+                    )
+                    showSuccess("Apple 로그인 성공: \(response)")
+                } catch {
+                    showError("Apple 로그인 서버 전송 실패: \(error.localizedDescription)")
+                }
             }
+        } else {
+            // 크리덴셜이 제대로 받아지지 않았을 경우
+            showError("Apple 로그인 실패: Credential 없음")
         }
     }
     

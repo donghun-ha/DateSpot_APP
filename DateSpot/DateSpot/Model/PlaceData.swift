@@ -17,4 +17,8 @@ struct PlaceData: Decodable {
     var operating_hour: String
     var parking: String
     var closing_time: String
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(name)
+    }
 }

@@ -11,17 +11,17 @@ router = APIRouter()
 
 # Detail Page에서 별점을 메긴 기록이 있으면 별점 가져오기
 @router.get('/')
-async def get_booked_rating(user_email: str):
+async def get_booked_rating(user_email: str, book_name):
     conn = user.connect()
     curs = conn.cursor()
 
-    sql = "SELECT * FROM rating WHERE user_email = %s"
-    curs.execute(sql, (user_email,))
+    sql = "SELECT * FROM rating WHERE user_email = %s and book_name = %s"
+    curs.execute(sql, (user_email, book_name))
     rows = curs.fetchall()
     conn.close()
 
     if not rows:
-        raise HTTPException(status_code=404, detail="즐겨찾기 병원이 없습니다.")
+        raise HTTPException(status_code=404, detail="해당 페이지에 해당하는 별점이 없습니다.")
     
     # 데이터를 매핑하여 반환
     results = [

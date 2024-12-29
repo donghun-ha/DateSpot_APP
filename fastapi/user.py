@@ -1,3 +1,12 @@
+"""
+Author : 하동훈
+Description : 
+<사용자 로그인 처리 로직>
+Apple/Google 로그인 데이터 기반으로 Redis와 MySQL을 연동하여 사용자 데이터를 관리,
+Apple 로그인 시 이메일 가리기 로직 처리.
+Usage: 로그인 시 캐싱을 통한 반환 및 MySQL Insert 처리
+"""
+
 from fastapi import APIRouter, HTTPException, Request
 import os
 import pymysql , json
@@ -143,14 +152,22 @@ async def user_login(request: Request):
     data = await request.json()
     email = data.get("email")
     name = data.get("name")
+    login_type = data.get("login_type")
 
     if not email:
         raise HTTPException(status_code=400, detail="email이 누락되었습니다.")
     
-    # Apple 이메일 가리기 처리 로직
-    user_identifier = email
-    if email.endswith("privaterelay.appleid.com"):
-        user_identifier = email.split('@')[0] + "@hidden.appleid.com"
+    if login_type == "apple":
+        # Apple 로그인 처리
+        if email.endswith("privaterelay.appleid.com"):
+            user_identifier = data.get("user_identifier", email)  # Apple의 user_identifier 필드 사용
+        else:
+            user_identifier = email  # 실제 이메일이 제공된 경우 그대로 사용
+    elif login_type == "google":
+        # Google 로그인 처리
+        user_identifier = email  # Google 이메일을 그대로 식별자로 사용
+    else:
+        raise HTTPException(status_code=400, detail="지원되지 않는 로그인 유형입니다.")
 
     # Redis 키 설정 (이메일 기반)
     redis_key = f"user:{user_identifier}"
