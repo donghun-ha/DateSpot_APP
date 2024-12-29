@@ -15,39 +15,37 @@ struct HomeContentView: View {
                     VStack(alignment: .leading, spacing: 20) {
                         // 맛집 섹션
                         if !restaurantViewModel.restaurants.isEmpty {
-                            Text("맛집")
-                                .font(.title)
-                                .fontWeight(.bold)
-                                .padding(.horizontal)
-
+                            SectionHeaderView(title: "맛집")
+                            
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 20) {
-                                    ForEach(restaurantViewModel.restaurants, id: \.self) { restaurant in
+                                    ForEach(restaurantViewModel.restaurants, id: \.id) { restaurant in
                                         CardView(
-                                            category: restaurant.parking,
+                                            category: restaurant.parking ?? "N/A",
                                             heading: restaurant.name,
                                             author: restaurant.address
                                         )
                                         .frame(width: 300)
                                     }
-                                    .padding(.horizontal)
                                 }
+                                .padding(.horizontal)
                             }
-                            .padding(.vertical)
+                        } else {
+                            Text("맛집 데이터를 불러올 수 없습니다.")
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                                .padding(.horizontal)
                         }
 
                         // 명소 섹션
                         if !placeViewModel.places.isEmpty {
-                            Text("명소")
-                                .font(.title)
-                                .fontWeight(.bold)
-                                .padding(.horizontal)
-
+                            SectionHeaderView(title: "명소")
+                            
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 20) {
                                     ForEach(placeViewModel.places, id: \.name) { place in
                                         CardView(
-                                            category: place.parking,
+                                            category: place.parking ?? "N/A",
                                             heading: place.name,
                                             author: place.address
                                         )
@@ -56,6 +54,11 @@ struct HomeContentView: View {
                                 }
                                 .padding(.horizontal)
                             }
+                        } else {
+                            Text("명소 데이터를 불러올 수 없습니다.")
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                                .padding(.horizontal)
                         }
                     }
                     .padding(.vertical)
@@ -65,11 +68,25 @@ struct HomeContentView: View {
         .onAppear {
             Task {
                 isLoading = true
+                // 맛집 데이터 로드
                 await restaurantViewModel.fetchRestaurants()
+                // 명소 데이터 로드
                 await placeViewModel.fetchPlaces()
                 isLoading = false
             }
         }
+    }
+}
+
+// Reusable Section Header
+struct SectionHeaderView: View {
+    var title: String
+
+    var body: some View {
+        Text(title)
+            .font(.title)
+            .fontWeight(.bold)
+            .padding(.horizontal)
     }
 }
 
