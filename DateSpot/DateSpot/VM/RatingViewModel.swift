@@ -3,138 +3,81 @@
 //  DateSpot
 //
 
+import SwiftUI
 import Foundation
+
+
+protocol RatingViewModelProtocol {
+    var ratings: [Rating] { get } // 별점 리스트
+    var userRating: Int? { get }  // 현재 사용자의 별점
+    
+    func fetchUserRating(for email: String, restaurantName: String) async
+    func updateUserRating(for email: String, restaurantName: String, rating: Int) async
+}
+
+
 
 @MainActor
 class RatingViewModel: ObservableObject {
-    @Published var ratings: [Rating] = [] // View에서 바인딩 가능
+    @Published var ratings: [Rating] = [] // 서버에서 가져온 별점 리스트
+    @Published var userRating: Int? // 현재 사용자의 별점
     private let baseURL = "https://fastapi.fre.today/rating" // API URL
-    private let defaultEmail = "dnjsd97@gmail.com" // 테스트용 이메일
-    
-    // Fetch Ratings
-    func fetchRatings(for email: String? = nil) async {
-        let userEmail = email ?? defaultEmail
-        Task {
-            do {
-                let ratings = try await fetchRatingsFromAPI(userEmail: userEmail)
-                self.ratings = ratings
-            } catch {
-                print("Failed to fetch ratings: \(error.localizedDescription)")
-            }
-        }
-    }
-    
-    // Insert Rating
-    func insertRating(_ rating: Rating) {
-        Task {
-            do {
-                let success = try await insertRatingToAPI(rating)
-                if success {
-                    print("Rating successfully inserted")
-                    // Fetch 업데이트된 데이터
-                    Task{
-                        await fetchRatings(for: rating.userEmail)
-                    }
-                }
-            } catch {
-                print("Failed to insert rating: \(error.localizedDescription)")
-            }
-        }
-    }
-}
 
-extension RatingViewModel {
-    // Fetch Ratings from API
-    private func fetchRatingsFromAPI(userEmail: String) async throws -> [Rating] {
-        guard var urlComponents = URLComponents(string: baseURL) else {
-            throw URLError(.badURL)
+    // 특정 레스토랑의 별점 가져오기
+    func fetchUserRating(for email: String, restaurantName: String) async {
+        guard let url = URL(string: "\(baseURL)?user_email=\(email)&book_name=\(restaurantName)") else {
+            print("Invalid URL for fetchUserRating")
+            return
         }
-
-        urlComponents.queryItems = [
-            URLQueryItem(name: "user_email", value: userEmail)
-        ]
         
-        guard let url = urlComponents.url else {
-            throw URLError(.badURL)
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                print("Failed to fetch user rating: Server error")
+                return
+            }
+
+            let decodedResponse = try JSONDecoder().decode([String: [Rating]].self, from: data)
+            if let userRating = decodedResponse["results"]?.first?.evaluation {
+                self.userRating = Int(userRating)
+                print("Fetched user rating: \(userRating)")
+            }
+        } catch {
+            print("Failed to fetch user rating: \(error.localizedDescription)")
         }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw URLError(.badServerResponse)
-        }
-
-        // 디버깅: 응답 데이터 출력
-        if let jsonString = String(data: data, encoding: .utf8) {
-            print("Response JSON: \(jsonString)")
-        }
-
-        let decoder = JSONDecoder()
-        let decodedResponse = try decoder.decode([String: [Rating]].self, from: data)
-        return decodedResponse["results"] ?? []
     }
     
-    // Insert Rating to API
-    private func insertRatingToAPI(_ rating: Rating) async throws -> Bool {
+    // 별점 업데이트
+    func updateUserRating(for email: String, restaurantName: String, rating: Int) async {
         guard let url = URL(string: baseURL) else {
-            throw URLError(.badURL)
+            print("Invalid URL for updateUserRating")
+            return
         }
-        
+
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        
-        let encoder = JSONEncoder()
-        request.httpBody = try encoder.encode(rating)
-        
-        let (data, response) = try await URLSession.shared.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw URLError(.badServerResponse)
-        }
-        
-        guard httpResponse.statusCode == 201 else {
-            let errorMessage = String(data: data, encoding: .utf8) ?? "No error message"
-            print("Failed response: \(httpResponse.statusCode), Message: \(errorMessage)")
-            throw URLError(.badServerResponse)
-        }
-        
-        return true
-    }
-    
-    func updateRating(_ rating: Rating) async throws {
-        guard let url = URL(string: "\(baseURL)/\(rating.id)") else { // ID를 기반으로 URL 생성
-            throw URLError(.badURL)
-        }
 
-        var request = URLRequest(url: url)
-        request.httpMethod = "PUT"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-
-        let encoder = JSONEncoder()
-        request.httpBody = try encoder.encode(rating)
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw URLError(.badServerResponse)
-        }
+        let newRating = Rating(
+            userEmail: email,
+            bookName: restaurantName,
+            evaluation: Double(rating)
+        )
         
-        guard httpResponse.statusCode == 200 else {
-            let errorMessage = String(data: data, encoding: .utf8) ?? "No error message"
-            print("Failed response: \(httpResponse.statusCode), Message: \(errorMessage)")
-            throw URLError(.badServerResponse)
-        }
-
-        // 서버 업데이트 성공 후, 로컬 데이터를 갱신
-        Task{
-            await fetchRatings(for: rating.userEmail)
+        do {
+            let encoder = JSONEncoder()
+            request.httpBody = try encoder.encode(newRating)
+            
+            let (_, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 201 else {
+                print("Failed to update user rating: Server error")
+                return
+            }
+            print("User rating updated successfully.")
+            // 업데이트 후 새로 가져오기
+            await fetchUserRating(for: email, restaurantName: restaurantName)
+        } catch {
+            print("Failed to update user rating: \(error.localizedDescription)")
         }
     }
 }
