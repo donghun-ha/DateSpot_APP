@@ -51,42 +51,30 @@ def remove_invisible_characters(input_str: str) -> str:
 @router.get("/image")
 async def stream_image(name: str, category: str = "명소"):
     """
-    단일 이미지를 S3에서 검색 및 스트리밍 반환
-    - name: 이미지와 연관된 이름 (예: 장소 이름 또는 식당 이름)
+    단일 이미지를 S3에서 검색하고 스트리밍 반환
     """
     s3 = hosts.create_s3_client()
     try:
         # 입력값 정리 및 디코딩
         decoded_name = unquote(name).strip()
         normalized_name = normalize_name(decoded_name)
+        prefix = f"{category}/{normalized_name}_"
         print(f"Original input: {repr(name)}")
         print(f"Decoded name: {decoded_name}")
         print(f"Normalized name: {normalized_name}")
-
-        # Prefix 설정 (카테고리에 따라 달라짐)
-        prefix = f"{category}/{normalized_name}_"
         print(f"Using Prefix: {prefix}")
 
-        # S3에서 파일 검색
-        response = s3.list_objects_v2(Bucket=hosts.BUCKET_NAME)
-        all_keys = [content["Key"] for content in response.get("Contents", [])]
-
-        # S3 키 정규화 및 매칭
-        filtered_keys = [
-            key for key in all_keys
-            if normalize_name(key).startswith(prefix)
-        ]
-
-        # 파일이 없을 경우 처리
-        if not filtered_keys:
-            print(f"No images found for {normalized_name} in category {category}")
+        # S3에서 파일 검색 (Prefix를 사용하여 제한)
+        response = s3.list_objects_v2(Bucket=hosts.BUCKET_NAME, Prefix=prefix)
+        if "Contents" not in response or not response["Contents"]:
+            print(f"No images found for prefix: {prefix}")
             raise HTTPException(status_code=404, detail="Image not found")
-        
+
         # 첫 번째 파일 키 가져오기
-        file_key = all_keys[0]
+        file_key = response["Contents"][0]["Key"]
         print(f"Selected file key: {file_key}")
 
-        # 보이지 않는 문자 제거 후 파일 가져오기
+        # S3 객체 가져오기
         cleaned_key = remove_invisible_characters(file_key)
         s3_object = s3.get_object(Bucket=hosts.BUCKET_NAME, Key=cleaned_key)
 
