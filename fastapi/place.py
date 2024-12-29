@@ -49,7 +49,7 @@ def remove_invisible_characters(input_str: str) -> str:
     return ''.join(ch for ch in input_str if ch.isprintable())
 
 @router.get("/image")
-async def stream_image(name: str, category: str = "명소"):
+async def stream_image(name: str):
     """
     단일 이미지를 S3에서 검색하고 스트리밍 반환
     """
@@ -58,12 +58,16 @@ async def stream_image(name: str, category: str = "명소"):
         # 입력값 정리 및 디코딩
         decoded_name = unquote(name).strip()
         normalized_name = normalize_name(decoded_name)
-        prefix = f"{category}/{normalized_name}_"
+        prefix = f"명소/{normalized_name}_"
+        decoded_prefix = unquote(prefix).strip()
+        normalized_prefix = normalize_name(prefix)
         print(f"Original input: {repr(name)}")
         print(f"Decoded name: {decoded_name}")
         print(f"Normalized name: {normalized_name}")
         print(f"Using Prefix: {prefix}")
-
+        print(f"Original input: {repr(prefix)}")
+        print(f"Decoded name: {decoded_prefix}")
+        print(f"Normalized name: {normalized_prefix}")
         # S3에서 파일 검색 (Prefix를 사용하여 제한)
         response = s3.list_objects_v2(Bucket=hosts.BUCKET_NAME, Prefix=prefix)
         if "Contents" not in response or not response["Contents"]:
