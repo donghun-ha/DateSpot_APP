@@ -62,11 +62,10 @@ def remove_invisible_characters(input_str: str) -> str:
     return ''.join(ch for ch in input_str if ch.isprintable())
 
 @router.get("/image")
-async def stream_image(name: str, category: str = "place"):
+async def stream_image(name: str, category: str = "명소"):
     """
     단일 이미지를 S3에서 검색 및 스트리밍 반환
     - name: 이미지와 연관된 이름 (예: 장소 이름 또는 식당 이름)
-    - category: 'place' 또는 'restaurant' (기본값: 'place')
     """
     try:
         # 입력값 정리 및 디코딩
