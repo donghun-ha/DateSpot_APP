@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DetailView: View {
     @StateObject private var restaurantViewModel = RestaurantViewModel()
+    
     @State private var selection: Int = 0
     @State private var isLoading = true
     var restaurantName: String = "[백년가게]만석장"

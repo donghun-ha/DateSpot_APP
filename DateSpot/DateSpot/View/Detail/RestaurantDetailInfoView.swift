@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RestaurantDetailInfoView: View {
     var restaurant: Restaurant
+    @EnvironmentObject var appState: AppState
     @State private var rates: Int = 0 // StarRatingView와 바인딩할 별점 값
 
     var body: some View {
@@ -15,6 +16,7 @@ struct RestaurantDetailInfoView: View {
 
                 Button(action: {
                     // Navigate 버튼 동작 추가 가능
+                    print(appState.userEmail)
                 }) {
                     HStack {
                         Image(systemName: "paperplane.fill")
