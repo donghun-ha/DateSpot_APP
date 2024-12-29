@@ -1,26 +1,33 @@
-//
-//  CardView.swift
-//  DateSpot
-//
-//  Created by 이종남 on 12/27/24.
-//
-
 import SwiftUI
 
 struct CardView: View {
-    //    var image: String
+    var image: UIImage? // 이미지를 UIImage로 받음
     var category: String
     var heading: String
     var author: String
-    
+
     var body: some View {
         VStack(alignment: .leading) {
-            //            Image(image)
-            //                .resizable()
-            //                .scaledToFill()
-            //                .frame(height: 150)
-            //                .clipped()
-            //
+            // 이미지가 있을 경우 표시
+            if let image = image {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(height: 150)
+                    .clipped()
+            } else {
+                // 기본 플레이스홀더 이미지
+                Rectangle()
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(height: 150)
+                    .overlay(
+                        Text("No Image")
+                            .foregroundColor(.white)
+                            .font(.caption)
+                    )
+            }
+
+            // 텍스트 정보
             VStack(alignment: .leading) {
                 Text(category)
                     .font(.caption)
@@ -41,3 +48,4 @@ struct CardView: View {
         .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
     }
 }
+
