@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-import user
+import hosts
 
 
 
@@ -37,7 +37,7 @@ router =  APIRouter()
 @router.get("/select_parkinginfo")
 async def select():
     try:
-        conn = user.connect()
+        conn = hosts.connect()
         curs = conn.cursor()
         sql = "select * from parking"
         curs.execute(sql)

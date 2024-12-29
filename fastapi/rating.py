@@ -6,15 +6,15 @@ Usage: 별점 읽어오고 별점 수정하기 기능을 제공하는 라우터
 """
 
 from fastapi import APIRouter, HTTPException 
-import user
+import hosts
 from pydantic import BaseModel
 
 router = APIRouter()
 
 # Detail Page에서 별점을 메긴 기록이 있으면 별점 가져오기
-@router.get('/')
+@router.get('/get_detail')
 async def get_booked_rating(user_email: str, book_name):
-    conn = user.connect()
+    conn = hosts.connect()
     curs = conn.cursor()
 
     sql = "SELECT * FROM rating WHERE user_email = %s and book_name = %s"
@@ -43,9 +43,9 @@ class Rating(BaseModel):
     bookName: str
     evaluation: float
 
-@router.post("/")
+@router.post("/update_detail")
 async def update_user_rating(rating: Rating):
-    conn = user.connect()
+    conn = hosts.connect()
     curs = conn.cursor()
 
     # 기존 데이터 확인

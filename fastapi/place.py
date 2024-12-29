@@ -1,26 +1,15 @@
 from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-import pymysql
+import hosts
 
 
 router = APIRouter()
 
-def connect():
-    # MySQL Connection
-    conn = pymysql.connect(
-        host='3.34.18.250',
-        user='datespot',
-        password='qwer1234',
-        db='datespot',
-        charset='utf8'
-    )
-    return conn
-
 
 @router.get("/select")
 async def select():
-    conn = connect()
+    conn = hosts.connect()
     curs = conn.cursor()
 
     # SQL 문장
