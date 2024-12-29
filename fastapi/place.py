@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from urllib.parse import unquote
-from image import s3  # 이미 초기화된 S3 클라이언트 사용
+
 import unicodedata, hosts
 
 
@@ -54,6 +54,7 @@ async def stream_image(name: str, category: str = "명소"):
     단일 이미지를 S3에서 검색 및 스트리밍 반환
     - name: 이미지와 연관된 이름 (예: 장소 이름 또는 식당 이름)
     """
+    s3 = hosts.create_s3_client()
     try:
         # 입력값 정리 및 디코딩
         decoded_name = unquote(name).strip()
