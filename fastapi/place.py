@@ -48,6 +48,14 @@ def remove_invisible_characters(input_str: str) -> str:
     """
     return ''.join(ch for ch in input_str if ch.isprintable())
 
+import unicodedata
+
+def normalize_to_nfd(text: str) -> str:
+    """
+    입력된 문자열을 NFD (Normalization Form D)로 변환
+    """
+    return unicodedata.normalize("NFD", text)
+
 @router.get("/image")
 async def stream_image(name: str):
     """
@@ -57,21 +65,19 @@ async def stream_image(name: str):
     try:
         # 입력값 정리 및 디코딩
         decoded_name = unquote(name).strip()
-        normalized_name = normalize_name(decoded_name)
+        normalized_name = normalize_to_nfd(decoded_name)
         prefix = f"명소/{normalized_name}_"
-        decoded_prefix = unquote(prefix).strip()
-        normalized_prefix = normalize_name(prefix)
+        normalized_prefix = normalize_to_nfd(prefix)
+
         print(f"Original input: {repr(name)}")
         print(f"Decoded name: {decoded_name}")
-        print(f"Normalized name: {normalized_name}")
-        print(f"Using Prefix: {prefix}")
-        print(f"Original input: {repr(prefix)}")
-        print(f"Decoded name: {decoded_prefix}")
-        print(f"Normalized name: {normalized_prefix}")
+        print(f"Normalized name (NFD): {normalized_name}")
+        print(f"Using Prefix: {normalized_prefix}")
+
         # S3에서 파일 검색 (Prefix를 사용하여 제한)
-        response = s3.list_objects_v2(Bucket=hosts.BUCKET_NAME, Prefix=prefix)
+        response = s3.list_objects_v2(Bucket=hosts.BUCKET_NAME, Prefix=normalized_prefix)
         if "Contents" not in response or not response["Contents"]:
-            print(f"No images found for prefix: {prefix}")
+            print(f"No images found for prefix: {normalized_prefix}")
             raise HTTPException(status_code=404, detail="Image not found")
 
         # 첫 번째 파일 키 가져오기
