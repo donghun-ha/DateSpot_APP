@@ -2,28 +2,15 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from urllib.parse import unquote
 from image import s3  # 이미 초기화된 S3 클라이언트 사용
-import unicodedata
-import pymysql
-import user
+import unicodedata, hosts
 
 
 router = APIRouter()
 
-def connect():
-    # MySQL Connection
-    conn = pymysql.connect(
-        host='3.34.18.250',
-        user='datespot',
-        password='qwer1234',
-        db='datespot',
-        charset='utf8'
-    )
-    return conn
-
 
 @router.get("/select")
 async def select():
-    conn = connect()
+    conn = hosts.connect()
     curs = conn.cursor()
 
     # SQL 문장
@@ -80,7 +67,7 @@ async def stream_image(name: str, category: str = "명소"):
         print(f"Using Prefix: {prefix}")
 
         # S3에서 파일 검색
-        response = s3.list_objects_v2(Bucket=user.BUCKET_NAME, Prefix=prefix)
+        response = s3.list_objects_v2(Bucket=hosts.BUCKET_NAME, Prefix=prefix)
         all_keys = [content["Key"] for content in response.get("Contents", [])]
 
         # 파일이 없을 경우 처리
@@ -94,7 +81,7 @@ async def stream_image(name: str, category: str = "명소"):
 
         # 보이지 않는 문자 제거 후 파일 가져오기
         cleaned_key = remove_invisible_characters(file_key)
-        s3_object = s3.get_object(Bucket=user.BUCKET_NAME, Key=cleaned_key)
+        s3_object = s3.get_object(Bucket=hosts.BUCKET_NAME, Key=cleaned_key)
 
         # 이미지 스트리밍 반환
         return StreamingResponse(
