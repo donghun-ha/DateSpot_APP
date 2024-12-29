@@ -1,30 +1,25 @@
-//
-//  SocialLoginButton.swift
-//  DateSpot
-//
-//  Created by 이종남 on 26/12/2024.
-//
-
 import SwiftUI
 
 struct HomeContentView: View {
     @StateObject private var restaurantViewModel = RestaurantViewModel()
+    @StateObject private var placeViewModel = PlaceViewModel()
     @State private var isLoading = true
-    
+
     var body: some View {
         Group {
             if isLoading {
                 ProgressView("Loading...")
                     .font(.headline)
             } else {
-                if !restaurantViewModel.restaurants.isEmpty {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 20) {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        // 맛집 섹션
+                        if !restaurantViewModel.restaurants.isEmpty {
                             Text("맛집")
                                 .font(.title)
                                 .fontWeight(.bold)
                                 .padding(.horizontal)
-                            
+
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 20) {
                                     ForEach(restaurantViewModel.restaurants, id: \.self) { restaurant in
@@ -39,13 +34,30 @@ struct HomeContentView: View {
                                 .padding(.horizontal)
                             }
                         }
-                        .padding(.vertical)
+
+                        // 명소 섹션
+                        if !placeViewModel.places.isEmpty {
+                            Text("명소")
+                                .font(.title)
+                                .fontWeight(.bold)
+                                .padding(.horizontal)
+
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 20) {
+                                    ForEach(placeViewModel.places, id: \.name) { place in
+                                        CardView(
+                                            category: place.parking,
+                                            heading: place.name,
+                                            author: place.address
+                                        )
+                                        .frame(width: 300)
+                                    }
+                                }
+                                .padding(.horizontal)
+                            }
+                        }
                     }
-                } else {
-                    Text("No restaurants available.")
-                        .font(.headline)
-                        .foregroundColor(.gray)
-                        .padding()
+                    .padding(.vertical)
                 }
             }
         }
@@ -53,14 +65,14 @@ struct HomeContentView: View {
             Task {
                 isLoading = true
                 await restaurantViewModel.fetchRestaurants()
+                await placeViewModel.fetchPlaces()
                 isLoading = false
             }
         }
     }
 }
 
-    // MARK: - 미리보기
-    #Preview {
-        HomeContentView()
-    }
+#Preview {
+    HomeContentView()
+}
 
