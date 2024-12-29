@@ -47,7 +47,7 @@ struct UserView: View {
 
                     VStack(alignment: .leading, spacing: 5) {
                         // 이메일
-                        Text(appState.userEmail)
+                        Text(appState.userEmail!)
                             .font(.headline)
                             .foregroundColor(.gray)
 

@@ -8,7 +8,7 @@
 import Foundation
 
 struct Rating: Codable, Hashable {
-    var id: Int
+    var id: Int?
     var userEmail: String
     var bookName: String
     var evaluation: Double

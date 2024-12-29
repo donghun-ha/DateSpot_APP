@@ -68,13 +68,10 @@ struct DetailView: View {
         }
         .onAppear {
             Task {
-                print("DetailView appeared. Loading data for: \(restaurantName)")
                 isLoading = true
                 await restaurantViewModel.fetchRestaurantDetail(name: restaurantName)
-                print("Restaurant detail fetched: \(String(describing: restaurantViewModel.selectedRestaurant))")
                 await restaurantViewModel.loadImages(for: restaurantName)
                 isLoading = false
-                print("Images loaded: \(restaurantViewModel.images.count)")
             }
         }
     }

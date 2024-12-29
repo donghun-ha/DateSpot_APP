@@ -3,6 +3,7 @@ import SwiftUI
 struct RestaurantDetailInfoView: View {
     var restaurant: Restaurant
     @EnvironmentObject var appState: AppState
+    @StateObject private var ratingViewModel = RatingViewModel()
     @State private var rates: Int = 0 // StarRatingView와 바인딩할 별점 값
 
     var body: some View {
@@ -12,11 +13,10 @@ struct RestaurantDetailInfoView: View {
                     .font(.title)
                     .fontWeight(.bold)
 
-                Spacer() // 이름과 버튼 사이 간격 확보
+                Spacer()
 
                 Button(action: {
-                    // Navigate 버튼 동작 추가 가능
-                    print(appState.userEmail)
+                    print(appState.userEmail ?? "")
                 }) {
                     HStack {
                         Image(systemName: "paperplane.fill")
@@ -27,9 +27,7 @@ struct RestaurantDetailInfoView: View {
                     .padding()
                     .background(Color.blue)
                     .cornerRadius(8)
-                    .frame(height: 15)
                 }
-
             }
 
             VStack(alignment: .leading) {
@@ -37,15 +35,32 @@ struct RestaurantDetailInfoView: View {
                     get: { rates },
                     set: { newRating in
                         rates = newRating
-                        // 서버에 별점 업데이트
                     }
-                ))
-                .frame(height: 15)
+                )) { newRating in
+                    Task {
+                        if let email = appState.userEmail {
+                            print("Updating rating to \(newRating)")
+                            await ratingViewModel.updateUserRating(for: email, restaurantName: restaurant.name, rating: newRating)
+                            await ratingViewModel.fetchUserRating(for: email, restaurantName: restaurant.name)
+                            rates = ratingViewModel.userRating ?? 0
+                        } else {
+                            print("User email is not available")
+                        }
+                    }
+                }
+                .frame(height: 20)
                 .onAppear {
-                    rates = 4 // 기본 별점 설정
+                    Task {
+                        if let email = appState.userEmail {
+                            await ratingViewModel.fetchUserRating(for: email, restaurantName: restaurant.name)
+                            rates = ratingViewModel.userRating ?? 0
+                        }
+                    }
                 }
             }
+
             Spacer()
+
             HStack(spacing: 4) {
                 Image(systemName: "clock")
                     .foregroundColor(.blue)
