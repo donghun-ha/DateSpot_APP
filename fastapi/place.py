@@ -68,14 +68,20 @@ async def stream_image(name: str, category: str = "명소"):
         print(f"Using Prefix: {prefix}")
 
         # S3에서 파일 검색
-        response = s3.list_objects_v2(Bucket=hosts.BUCKET_NAME, Prefix=prefix)
+        response = s3.list_objects_v2(Bucket=hosts.BUCKET_NAME)
         all_keys = [content["Key"] for content in response.get("Contents", [])]
 
+        # S3 키 정규화 및 매칭
+        filtered_keys = [
+            key for key in all_keys
+            if normalize_name(key).startswith(prefix)
+        ]
+
         # 파일이 없을 경우 처리
-        if not all_keys:
+        if not filtered_keys:
             print(f"No images found for {normalized_name} in category {category}")
             raise HTTPException(status_code=404, detail="Image not found")
-
+        
         # 첫 번째 파일 키 가져오기
         file_key = all_keys[0]
         print(f"Selected file key: {file_key}")
