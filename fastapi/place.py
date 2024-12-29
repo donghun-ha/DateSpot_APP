@@ -36,11 +36,6 @@ async def select():
         )
     return dict_list
 
-def normalize_name(name: str) -> str:
-    """
-    입력된 이름을 Unicode 정규화하여 S3 검색에 적합한 형태로 변환
-    """
-    return unicodedata.normalize("NFC", name.strip())
 
 def remove_invisible_characters(input_str: str) -> str:
     """
@@ -69,11 +64,6 @@ async def stream_image(name: str):
         prefix = f"명소/{normalized_name}_"
         normalized_prefix = normalize_to_nfd(prefix)
 
-        print(f"Original input: {repr(name)}")
-        print(f"Decoded name: {decoded_name}")
-        print(f"Normalized name (NFD): {normalized_name}")
-        print(f"Using Prefix: {normalized_prefix}")
-
         # S3에서 파일 검색 (Prefix를 사용하여 제한)
         response = s3.list_objects_v2(Bucket=hosts.BUCKET_NAME, Prefix=normalized_prefix)
         if "Contents" not in response or not response["Contents"]:
@@ -82,7 +72,6 @@ async def stream_image(name: str):
 
         # 첫 번째 파일 키 가져오기
         file_key = response["Contents"][0]["Key"]
-        print(f"Selected file key: {file_key}")
 
         # S3 객체 가져오기
         cleaned_key = remove_invisible_characters(file_key)

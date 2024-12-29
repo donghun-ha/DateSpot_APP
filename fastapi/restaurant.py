@@ -117,19 +117,21 @@ async def stream_image(file_key: str):
     """
     s3_client = hosts.create_s3_client()
     try:
-        # 보이지 않는 문자 제거
-        cleaned_key = remove_invisible_characters(file_key)
-
+        # 입력값 정리 및 유니코드 정규화 (NFD 적용)
+        decoded_key = unquote(file_key).strip()
+        normalized_key = unicodedata.normalize("NFD", decoded_key)
+        cleaned_key = remove_invisible_characters(normalized_key)
         # S3 객체 가져오기
         s3_object = s3_client.get_object(Bucket=hosts.BUCKET_NAME, Key=cleaned_key)
+        # 이미지 스트리밍 반환
         return StreamingResponse(
             content=s3_object["Body"],
             media_type="image/jpeg"
         )
+
     except s3_client.exceptions.NoSuchKey:
         print(f"NoSuchKey error for key: {file_key}")
         raise HTTPException(status_code=404, detail="File not found in S3")
     except Exception as e:
         print(f"Error while streaming image: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
