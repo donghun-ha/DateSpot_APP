@@ -14,7 +14,10 @@ import SwiftUI
                     ScrollView {
                         VStack(alignment: .leading, spacing: 20) {
                             // 맛집 섹션
-                            RestaurantSectionView(restaurants: restaurantViewModel.restaurants)
+                            RestaurantSectionView(
+                                restaurants: restaurantViewModel.restaurants, // 레스토랑 데이터 전달
+                                viewModel: restaurantViewModel // ViewModel 전달
+                            )
 
                             // 명소 섹션
                             PlaceSectionView(places: placeViewModel.places)
