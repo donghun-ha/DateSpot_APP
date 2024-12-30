@@ -1,11 +1,10 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from urllib.parse import unquote
-from image import s3  # 이미 초기화된 S3 클라이언트 사용
+import hosts
 from botocore.exceptions import ClientError
 import unicodedata
 import pymysql
-import user
 
 
 router = APIRouter()
@@ -88,7 +87,7 @@ async def get_images(name: str):
     """
     특정 이름에 해당하는 이미지를 S3에서 가져와 리스트로 반환
     """
-    s3_client = user.create_s3_client()
+    s3_client = hosts.create_s3_client()
     try:
         # 입력값 디코딩 및 정규화
         decoded_name = unquote(name).strip()
@@ -102,7 +101,7 @@ async def get_images(name: str):
         print(f"Using Prefix: {prefix}")
 
         # S3에서 파일 검색
-        response = s3_client.list_objects_v2(Bucket=user.BUCKET_NAME)
+        response = s3_client.list_objects_v2(Bucket=hosts.BUCKET_NAME)
         all_keys = [
             content["Key"] for content in response.get("Contents", [])
         ]
@@ -132,7 +131,7 @@ async def get_images_old(name: str):
     """
     이전에 동작했던 코드: URL 디코딩만 사용, 정규화 없음
     """
-    s3_client = user.create_s3_client()  # S3 클라이언트 생성
+    s3_client = hosts.create_s3_client()  # S3 클라이언트 생성
     try:
         # URL 디코딩 및 공백 제거
         decoded_name = unquote(name).strip()
@@ -144,7 +143,7 @@ async def get_images_old(name: str):
         print(f"Using Prefix: {prefix}")  # 디버깅용 로그
 
         # S3에서 전체 파일 검색
-        response = s3_client.list_objects_v2(Bucket=user.BUCKET_NAME)
+        response = s3_client.list_objects_v2(Bucket=hosts.BUCKET_NAME)
         all_keys = [content["Key"] for content in response.get("Contents", [])]
 
         if "Contents" not in response or not response["Contents"]:
@@ -183,7 +182,7 @@ async def stream_image(file_key: str):
     """
     S3에서 단일 이미지 파일 스트리밍
     """
-    s3_client = user.create_s3_client()
+    s3_client = hosts.create_s3_client()
     try:
         # 보이지 않는 문자 제거
         cleaned_key = remove_invisible_characters(file_key)
@@ -191,7 +190,7 @@ async def stream_image(file_key: str):
         print(f"Cleaned key: {cleaned_key}")
 
         # S3 객체 가져오기
-        s3_object = s3_client.get_object(Bucket=user.BUCKET_NAME, Key=cleaned_key)
+        s3_object = s3_client.get_object(Bucket=hosts.BUCKET_NAME, Key=cleaned_key)
         return StreamingResponse(
             content=s3_object["Body"],
             media_type="image/jpeg"
