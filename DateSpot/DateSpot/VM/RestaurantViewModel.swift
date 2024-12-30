@@ -135,7 +135,7 @@ extension RestaurantViewModel {
         }
 
         let decoder = JSONDecoder()
-        return try decoder.decode([Restaurant].self, from: data)
+        return try decoder.decode([String:[Restaurant]].self, from: data)["results"] ?? []
     }
 
     private func fetchRestaurantDetailFromAPI(name: String) async throws -> Restaurant {
