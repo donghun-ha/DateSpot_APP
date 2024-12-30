@@ -3,7 +3,6 @@ import SwiftUI
 struct ImageSliderView: View {
     var images: [UIImage]
     @Binding var selection: Int
-    @StateObject private var viewModel = RestaurantViewModel()
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
@@ -25,16 +24,12 @@ struct ImageSliderView: View {
             .clipShape(RoundedRectangle(cornerRadius: 15))
             .padding(EdgeInsets(top: 10, leading: 10, bottom: 0, trailing: 10))
             Button(action: {
-               viewModel.addBookmark(
-                   userEmail: "test@example.com",
-                   restaurantName: "Delicious Restaurant",
-                   name: "My Favorite Spot"
-               )
-           }) {
-               Image(systemName: viewModel.isBookmarked ? "bookmark.fill" : "bookmark")
+            }) {
+               Image(systemName: "bookmark")
                    .foregroundColor(.white)
                    .font(.system(size: 30))
-           }
+               
+            }
             .padding([.trailing, .top], 16) // 아이콘 위치
             .shadow(color: .gray.opacity(0.5), radius: 5, x: 0, y: 2)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)

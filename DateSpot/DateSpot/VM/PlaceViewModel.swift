@@ -71,8 +71,7 @@ class PlaceViewModel: ObservableObject {
     // 이미지 로드
     func fetchImage(for placeName: String) async {
         guard images[placeName] == nil else { return } // 이미 로드된 경우
-        print(placeName)
-        let imageUrl = "https://fastapi.fre.today/place/image?name=\(placeName)"
+        let imageUrl = "https://fastapi.fre.today/place/image?\(placeName)"
         guard let url = URL(string: imageUrl) else { return }
 
         do {
@@ -86,24 +85,31 @@ class PlaceViewModel: ObservableObject {
             print("❌ 이미지 다운로드 실패: \(error.localizedDescription)")
         }
     }
-
-    func fetchDetailImage(for placeName: String) async {
-        guard images[placeName] == nil else { return } // 이미 로드된 경우
-        print(placeName)
-        let imageUrl = "https://fastapi.fre.today/place/image_thumb?name=\(placeName)"
-        guard let url = URL(string: imageUrl) else { return }
-
-        do {
-            let (data, _) = try await URLSession.shared.data(from: url)
-            if let image = UIImage(data: data) {
-                DispatchQueue.main.async {
-                    self.images[placeName] = image // 메인 스레드에서 업데이트
-                }
+    
+    // Fetch first image for a given place name
+        func fetchFirstImage(for name: String) async {
+            guard images[name] == nil else { return } // 이미 로드된 경우 스킵
+            print("들어가는 이미지 : \(name)")
+            let encodedName = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? name
+            guard let url = URL(string: "\(urlPath)/image_thumb?name=\(encodedName)") else {
+                print("Invalid URL for \(name)")
+                return
             }
-        } catch {
-            print("❌ 이미지 다운로드 실패: \(error.localizedDescription)")
+
+            do {
+                let (data, _) = try await URLSession.shared.data(from: url)
+                if let image = UIImage(data: data) {
+                    await MainActor.run {
+                        self.images[name] = image // 명소 이름별로 이미지 저장
+                    }
+                } else {
+                    print("Failed to decode image for \(name)")
+                }
+            } catch {
+                print("Error fetching image for \(name): \(error)")
+            }
         }
-    }
+
 
     // 거리 계산 함수
     func calculateDistance(lat: Double, lng: Double, currentLat: Double, currentLng: Double) -> Double {

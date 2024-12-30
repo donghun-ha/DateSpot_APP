@@ -21,7 +21,8 @@ REDIS_PASSWORD = os.getenv("REDIS_PASSWORD")
 
 
 def create_s3_client():
-    if not AWS_ACCESS_KEY or not AWS_SECRET_KEY:
+
+    if not AWS_SECRET_KEY or not AWS_SECRET_KEY:
         raise HTTPException(status_code=400, detail="AWS credentials are not set in environment variables.")
 
     try:

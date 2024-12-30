@@ -7,15 +7,12 @@
 
 import SwiftUI
 import Foundation
-import Combine
 
 protocol RestaurantViewModelProtocol: ObservableObject {
     var restaurants: [Restaurant] { get } // 전체 레스토랑 리스트
     var selectedRestaurant: Restaurant? { get } // 선택된 레스토랑 상세 정보
     var images: [UIImage] { get } // 로드된 이미지 리스트
 
-
-    
     func fetchImageKeys(for name: String) async -> [String]
     func fetchImage(fileKey: String) async -> UIImage?
     func loadImages(for name: String) async
@@ -28,29 +25,30 @@ class RestaurantViewModel: ObservableObject {
     @Published private(set) var restaurants: [Restaurant] = [] // 전체 레스토랑 리스트
     @Published private(set) var selectedRestaurant: Restaurant? // 선택된 레스토랑 상세 정보
     @Published private(set) var images: [UIImage] = [] // 로드된 이미지 리스트
-    @Published var isBookmarked: Bool = false
-    private var cancellables = Set<AnyCancellable>()
+    @Published private(set) var images1: [String: UIImage] = [:] // 맛집 이름별 첫 번째 이미지를 저장
+    @Published var homeimage: [String: UIImage] = [:] // 레스토랑 이름별 이미지 저장
+
     
     private let baseURL = "https://fastapi.fre.today/restaurant/" // 기본 API URL
 
     
-    func fetchImageKeys(for name: String) async -> [String] {
-        let encodedName = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? name
-        guard let url = URL(string: "\(baseURL)images/?name=\(encodedName)") else {
-            print("Invalid URL for fetchImageKeys")
-            return []
-        }
-        
-        do {
-            let (data, _) = try await URLSession.shared.data(from: url)
-            let returnresponse = try JSONDecoder().decode([String: [String]].self, from: data)
-            let keys = returnresponse["images"] ?? []
-            return keys
-        } catch {
-            print("Failed to fetch image keys: \(error)")
-            return []
-        }
-    }
+//    func fetchImageKeys(for name: String) async -> [String] {
+//        let encodedName = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? name
+//        guard let url = URL(string: "\(baseURL)images/?name=\(encodedName)") else {
+//            print("Invalid URL for fetchImageKeys")
+//            return []
+//        }
+//        
+//        do {
+//            let (data, _) = try await URLSession.shared.data(from: url)
+//            let returnresponse = try JSONDecoder().decode([String: [String]].self, from: data)
+//            let keys = returnresponse["images"] ?? []
+//            return keys
+//        } catch {
+//            print("Failed to fetch image keys: \(error)")
+//            return []
+//        }
+//    }
     
     func fetchRestaurants() async {
         Task {
@@ -64,39 +62,55 @@ class RestaurantViewModel: ObservableObject {
     }
 
     
-    func fetchFirstImage(for name: String) async -> UIImage? {
-        // 1. 이미지 키를 가져옴
-        let imageKeys = await fetchImageKeys(for: name)
-        guard let firstKey = imageKeys.first else {
-            print("No image keys found for restaurant: \(name)")
-            return nil
+    func fetchFirstImage(for name: String) async {
+        guard homeimage[name] == nil else { return } // 이미 로드된 경우 스킵
+
+            let imageKeys = await fetchImageKeys(for: name)
+            guard let firstKey = imageKeys.first else {
+                print("No image keys found for restaurant: \(name)")
+                return
+            }
+
+            if let image = await fetchImage(fileKey: firstKey) {
+                await MainActor.run {
+                    self.homeimage[name] = image // 레스토랑 이름별 이미지 저장
+                }
+            }
         }
 
-        // 2. 첫 번째 키로 이미지를 가져옴
-        return await fetchImage(fileKey: firstKey)
-    }
+        /// 이미지 키 가져오기
+        func fetchImageKeys(for name: String) async -> [String] {
+            let encodedName = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? name
+            guard let url = URL(string: "\(baseURL)images?name=\(encodedName)") else {
+                print("Invalid URL for fetchImageKeys")
+                return []
+            }
 
-    func fetchImage(fileKey: String) async -> UIImage? {
-        guard let url = URL(string: "\(baseURL)image/?file_key=\(fileKey.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? fileKey)") else {
-            print("Invalid URL for fetchImage")
-            return nil
+            do {
+                let (data, _) = try await URLSession.shared.data(from: url)
+                let response = try JSONDecoder().decode([String: [String]].self, from: data)
+                return response["images"] ?? []
+            } catch {
+                print("Failed to fetch image keys: \(error)")
+                return []
+            }
         }
-        
-        do {
-            let (data, _) = try await URLSession.shared.data(from: url)
-            
-            guard let image = UIImage(data: data) else {
-                print("Failed to convert data to UIImage for fileKey: \(fileKey)")
+
+        /// 특정 이미지 키로 이미지 가져오기
+        func fetchImage(fileKey: String) async -> UIImage? {
+            guard let url = URL(string: "\(baseURL)image?file_key=\(fileKey.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? fileKey)") else {
+                print("Invalid URL for fetchImage")
                 return nil
             }
 
-            return image
-        } catch {
-            print("Failed to fetch image: \(error)")
-            return nil
+            do {
+                let (data, _) = try await URLSession.shared.data(from: url)
+                return UIImage(data: data)
+            } catch {
+                print("Failed to fetch image: \(error)")
+                return nil
+            }
         }
-    }
-
     func loadImages(for name: String) async {
         let imageKeys = await fetchImageKeys(for: name)
 
@@ -208,51 +222,4 @@ extension RestaurantViewModel {
             throw error
         }
     }
-    
-    
-    
-    func addBookmark(userEmail: String, restaurantName: String, name: String) {
-        // API URL
-        guard let url = URL(string: "\(baseURL)add_bookmark/") else { return }
-
-        // 요청 데이터
-        let requestBody: [String: Any] = [
-            "user_email": userEmail,
-            "restaurant_name": restaurantName,
-            "name": name
-        ]
-
-        // JSON 데이터 생성
-        guard let jsonData = try? JSONSerialization.data(withJSONObject: requestBody) else { return }
-
-        // URLRequest 생성
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = jsonData
-
-        // API 호출
-        URLSession.shared.dataTaskPublisher(for: request)
-            .tryMap { output -> Data in
-                guard let response = output.response as? HTTPURLResponse,
-                      response.statusCode == 200 else {
-                    throw URLError(.badServerResponse)
-                }
-                return output.data
-            }
-            .decode(type: [String: String].self, decoder: JSONDecoder())
-            .receive(on: DispatchQueue.main)
-            .sink(receiveCompletion: { completion in
-                switch completion {
-                case .finished:
-                    print("Bookmark added successfully")
-                case .failure(let error):
-                    print("Failed to add bookmark: \(error.localizedDescription)")
-                }
-            }, receiveValue: { [weak self] _ in
-                self?.isBookmarked = true
-            })
-            .store(in: &cancellables)
-    }
-    
 }

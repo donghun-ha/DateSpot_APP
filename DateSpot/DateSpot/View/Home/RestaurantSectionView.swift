@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct RestaurantSectionView: View {
-    let restaurants: [Restaurant]                      // 상위에서 주입받은 레스토랑 리스트
-    @ObservedObject var viewModel: RestaurantViewModel // ViewModel을 받아옴
+    let restaurants: [Restaurant]
+    @ObservedObject var viewModel: RestaurantViewModel
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -12,29 +12,32 @@ struct RestaurantSectionView: View {
                 .padding(.horizontal)
 
             ScrollView(.horizontal, showsIndicators: false) {
+                let limitedRestaurants = Array(restaurants.prefix(20))
+
                 HStack(spacing: 20) {
-                    ForEach(restaurants, id: \.name) { restaurant in
+                    ForEach(limitedRestaurants, id: \.name) { restaurant in
                         ZStack {
-                            if let image = viewModel.images.first { // 이미지가 있는 경우
+                            // 이미 로드된 첫 번째 이미지를 표시
+                            if let image = viewModel.homeimage[restaurant.name] {
                                 CardView(
                                     image: image,
-                                    category: restaurant.parking ?? "N/A",
+                                    category: restaurant.parking,
                                     heading: restaurant.name,
                                     author: restaurant.address
                                 )
                                 .frame(width: 300)
                             } else {
-                                // 로드 중인 경우 기본 이미지 표시
+                                // 기본 이미지를 표시하며 첫 번째 이미지를 비동기로 로드
                                 CardView(
                                     image: UIImage(systemName: "photo"), // 기본 이미지
-                                    category: restaurant.parking ?? "N/A",
+                                    category: restaurant.parking,
                                     heading: restaurant.name,
                                     author: restaurant.address
                                 )
                                 .frame(width: 300)
                                 .onAppear {
                                     Task {
-                                        await viewModel.loadImages(for: restaurant.name)
+                                        await viewModel.fetchFirstImage(for: restaurant.name)
                                     }
                                 }
                             }
@@ -46,4 +49,3 @@ struct RestaurantSectionView: View {
         }
     }
 }
-
