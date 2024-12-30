@@ -164,7 +164,7 @@ extension RestaurantViewModel {
         
         // JSON 응답 디버깅용 출력
             if let jsonString = String(data: data, encoding: .utf8) {
-                print("Response JSON: \(jsonString)")
+//                print("Response JSON: \(jsonString)")
             }
 
         let decoder = JSONDecoder()
@@ -203,7 +203,7 @@ extension RestaurantViewModel {
         } catch {
             print("Decoding error: \(error)")
             if let jsonString = String(data: data, encoding: .utf8) {
-                print("Response JSON: \(jsonString)")
+//                print("Response JSON: \(jsonString)")
             }
             throw error
         }

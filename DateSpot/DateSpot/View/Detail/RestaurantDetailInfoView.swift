@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct RestaurantDetailInfoView: View {
-    var restaurant: Restaurant
+    @State var restaurant: Restaurant
     @EnvironmentObject var appState: AppState
     @StateObject private var ratingViewModel = RatingViewModel()
     @State private var rates: Int = 0 // StarRatingView와 바인딩할 별점 값
@@ -14,20 +14,23 @@ struct RestaurantDetailInfoView: View {
                     .fontWeight(.bold)
 
                 Spacer()
-
+                
                 Button(action: {
                     print(appState.userEmail ?? "")
                 }) {
+                    NavigationLink(destination: DetailMap(restaurants: $restaurant), label: {
                     HStack {
                         Image(systemName: "paperplane.fill")
                             .foregroundColor(.white)
                         Text("Navigate")
                             .foregroundColor(.white)
                     }
+                    })
                     .padding()
                     .background(Color.blue)
                     .cornerRadius(8)
                 }
+                
             }
 
             VStack(alignment: .leading) {
@@ -90,4 +93,8 @@ struct RestaurantDetailInfoView: View {
         }
         .padding()
     }
+    
 }
+
+
+
