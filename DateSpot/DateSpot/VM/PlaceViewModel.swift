@@ -1,129 +1,99 @@
+//
+//  PlaceViewModel.swift
+//  DateSpot
+//
+//  Created by 하동훈 on 26/12/2024.
+//
+//
+
+
 import SwiftUI
-import Foundation
 
-@MainActor
+protocol PlaceQueryModelProtocol {
+    func itemDownloaded(items: [PlaceData])
+}
+
 class PlaceViewModel: ObservableObject {
-    @Published private(set) var places: [PlaceData] = [] // 전체 장소 리스트
-    @Published private(set) var images: [UIImage] = [] // 로드된 이미지 리스트
-    private let baseURL = "https://fastapi.fre.today/place/" // 기본 API URL
+    var delegate: PlaceQueryModelProtocol?
+    @Published var places: [PlaceData] = [] // 전체 장소 리스트
+    @Published var nearbyPlaces: [PlaceData] = [] // 가까운 장소 리스트
+    @Published var images: [String: UIImage] = [:] // 장소 이름을 키로 하는 이미지 딕셔너리
+    let urlPath = "https://fastapi.fre.today/place"
 
-    // Fetch Places
-    func fetchPlaces() async {
+    func downloadItems() async {
+        let url = URL(string: "\(urlPath)/select")!
+        
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            if let decodedData = try? JSONDecoder().decode([PlaceData].self, from: data) {
+                print("✅ 데이터 다운로드 성공: \(decodedData)")
+                delegate?.itemDownloaded(items: decodedData)
+            } else {
+                print("❌ 데이터 파싱 실패")
+            }
+        } catch {
+            print("❌ 데이터 다운로드 실패: \(error.localizedDescription)")
+        }
+    }
+    
+    // 전체 데이터를 다운로드하고 가까운 5개의 명소를 필터링
+    func fetchPlaces(currentLat: Double, currentLng: Double) async {
         do {
             let fetchedPlaces = try await fetchPlacesFromAPI()
-            self.places = fetchedPlaces
-            print("✅ 데이터 다운로드 성공: \(self.places)")
+            let sortedPlaces = fetchedPlaces.sorted {
+                calculateDistance(lat: $0.lat, lng: $0.lng, currentLat: currentLat, currentLng: currentLng) <
+                calculateDistance(lat: $1.lat, lng: $1.lng, currentLat: currentLat, currentLng: currentLng)
+            }
+            
+            // 메인 스레드에서 UI 상태 업데이트
+            await MainActor.run {
+                self.places = fetchedPlaces
+                self.nearbyPlaces = Array(sortedPlaces.prefix(5))
+            }
         } catch {
             print("❌ 데이터 다운로드 실패: \(error.localizedDescription)")
         }
     }
 
-    // Fetch Image Keys
-    func fetchImageKeys(for name: String) async -> [String] {
-        let encodedName = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? name
-        guard let url = URL(string: "\(baseURL)images/?name=\(encodedName)") else {
-            print("Invalid URL for fetchImageKeys")
-            return []
-        }
-        
+    
+    // 이미지 로드
+    func fetchImage(for placeName: String) async {
+        guard images[placeName] == nil else { return } // 이미 로드된 경우
+        let imageUrl = "https://fastapi.fre.today/place/image?name=\(placeName)"
+        guard let url = URL(string: imageUrl) else { return }
+
         do {
-            print("Fetching image keys for name: \(name)")
-            let (data, response) = try await URLSession.shared.data(from: url)
-            
-            if let httpResponse = response as? HTTPURLResponse {
-                print("Image keys HTTP response status code: \(httpResponse.statusCode)")
+            let (data, _) = try await URLSession.shared.data(from: url)
+            if let image = UIImage(data: data) {
+                images[placeName] = image // @MainActor 적용으로 안전하게 업데이트
             }
-
-            let returnresponse = try JSONDecoder().decode([String: [String]].self, from: data)
-            let keys = returnresponse["images"] ?? []
-            print("Fetched image keys: \(keys)")
-            return keys
         } catch {
-            print("Failed to fetch image keys: \(error)")
-            return []
+            print("❌ 이미지 다운로드 실패: \(error.localizedDescription)")
         }
     }
 
-    // Fetch Single Image
-    func fetchImage(fileKey: String) async -> UIImage? {
-        guard let url = URL(string: "\(baseURL)image/?file_key=\(fileKey.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? fileKey)") else {
-            print("Invalid URL for fetchImage")
-            return nil
-        }
-        
-        do {
-            print("Fetching image for fileKey: \(fileKey)")
-            let (data, response) = try await URLSession.shared.data(from: url)
-            
-            if let httpResponse = response as? HTTPURLResponse {
-                print("Image HTTP response status code: \(httpResponse.statusCode)")
-            }
 
-            guard let image = UIImage(data: data) else {
-                print("Failed to convert data to UIImage for fileKey: \(fileKey)")
-                return nil
-            }
-
-            print("Successfully fetched image for fileKey: \(fileKey)")
-            return image
-        } catch {
-            print("Failed to fetch image: \(error)")
-            return nil
-        }
+    // 거리 계산 함수
+    func calculateDistance(lat: Double, lng: Double, currentLat: Double, currentLng: Double) -> Double {
+        let deltaLat = lat - currentLat
+        let deltaLng = lng - currentLng
+        return sqrt(deltaLat * deltaLat + deltaLng * deltaLng) * 111 // 대략적인 거리(km)
     }
-
-    // Load Images for Place
-    func loadImages(for name: String) async {
-        print("Loading images for place: \(name)")
-        let imageKeys = await fetchImageKeys(for: name)
-
-        guard !imageKeys.isEmpty else {
-            print("No image keys found for place: \(name)")
-            return
-        }
-
-        var loadedImages: [UIImage] = []
-
-        for key in imageKeys {
-            if let image = await fetchImage(fileKey: key) {
-                loadedImages.append(image)
-            } else {
-                print("Failed to load image for key: \(key)")
-            }
-        }
-
-        if loadedImages.isEmpty {
-            print("No images loaded for place: \(name)")
-        } else {
-            print("Successfully loaded \(loadedImages.count) images for place: \(name)")
-        }
-
-        self.images = loadedImages
-    }
-}
-
-extension PlaceViewModel {
-    // Fetch Places from API
+    
     private func fetchPlacesFromAPI() async throws -> [PlaceData] {
-        guard let url = URL(string: "\(baseURL)select") else {
-            throw URLError(.badURL)
-        }
+       guard let url = URL(string: "\(urlPath)/select") else {
+           throw URLError(.badURL)
+       }
 
-        let (data, response) = try await URLSession.shared.data(from: url)
+       let (data, response) = try await URLSession.shared.data(from: url)
 
-        // HTTP 상태 코드 확인
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw URLError(.badServerResponse)
-        }
+       guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+           throw URLError(.badServerResponse)
+       }
 
-        // JSON 디코딩
-        do {
-            let decoder = JSONDecoder()
-            return try decoder.decode([PlaceData].self, from: data)
-        } catch {
-            print("❌ 데이터 파싱 실패: \(error)")
-            throw error
-        }
-    }
+       let decoder = JSONDecoder()
+       return try decoder.decode([PlaceData].self, from: data)
+   }
+
 }
 

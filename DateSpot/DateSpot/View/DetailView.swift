@@ -2,9 +2,11 @@ import SwiftUI
 
 struct DetailView: View {
     @StateObject private var restaurantViewModel = RestaurantViewModel()
+    @StateObject private var placeViewModel = PlaceViewModel()
     
     @State private var selection: Int = 0
     @State private var isLoading = true
+    @State private var nearbyPlaces: [PlaceData] = []
     var restaurantName: String = "[백년가게]만석장"
 
     var body: some View {
@@ -30,33 +32,18 @@ struct DetailView: View {
                                 .clipShape(RoundedRectangle(cornerRadius: 15))
                                 .padding()
                         }
-                        let samplePlaces = [
-                                    PlaceData(
-                                        name: "(재)환기재단·환기미술관",
-                                        address: "서울 종로구",
-                                        lat: 37.5822,
-                                        lng: 126.9835,
-                                        description: "현대 미술 전시장",
-                                        contact_info: "02-123-4567",
-                                        operating_hour: "9:00 AM - 6:00 PM",
-                                        parking: "가능",
-                                        closing_time: "6:00 PM"
-                                    ),
-                                    PlaceData(
-                                        name: "윤동주 문학관",
-                                        address: "서울 종로구",
-                                        lat: 37.5803,
-                                        lng: 126.9817,
-                                        description: "윤동주 시인을 기리는 문학관",
-                                        contact_info: "02-765-1234",
-                                        operating_hour: "10:00 AM - 5:00 PM",
-                                        parking: "불가능",
-                                        closing_time: "5:00 PM"
-                                    )
-                                ]
+                        
                         // 레스토랑 상세 정보
                         RestaurantDetailInfoView(restaurant: restaurant)
-                        NearFromDetails(nearbyPlaces: samplePlaces)
+
+                        // 근처 명소
+                        if !nearbyPlaces.isEmpty {
+                            NearFromDetails()
+                        } else {
+                            Text("No nearby places found.")
+                                .foregroundColor(.gray)
+                                .padding()
+                        }
                     }
                 }
                 .navigationBarTitle("Date Spots", displayMode: .inline)
@@ -69,14 +56,40 @@ struct DetailView: View {
         .onAppear {
             Task {
                 isLoading = true
+                // 레스토랑 세부 정보 및 이미지 가져오기
                 await restaurantViewModel.fetchRestaurantDetail(name: restaurantName)
                 await restaurantViewModel.loadImages(for: restaurantName)
+
+                // 명소 데이터 가져오기
+                await placeViewModel.fetchPlaces(currentLat: restaurantViewModel.selectedRestaurant?.lat ?? 37.5665, currentLng: restaurantViewModel.selectedRestaurant?.lng ?? 126.9780)
+                if let restaurant = restaurantViewModel.selectedRestaurant {
+                    // 가까운 5개의 명소 계산
+                    nearbyPlaces = calculateNearbyPlaces(
+                        places: placeViewModel.places,
+                        restaurantLat: restaurant.lat,
+                        restaurantLng: restaurant.lng
+                    )
+                }
                 isLoading = false
             }
         }
     }
-}
 
-#Preview {
-    DetailView()
+    // 근처 명소 계산 함수
+    private func calculateNearbyPlaces(places: [PlaceData], restaurantLat: Double, restaurantLng: Double) -> [PlaceData] {
+        return places
+            .map { place in
+                (place, calculateDistance(lat1: restaurantLat, lng1: restaurantLng, lat2: place.lat, lng2: place.lng))
+            }
+            .sorted(by: { $0.1 < $1.1 }) // 거리 기준 정렬
+            .prefix(5) // 가장 가까운 5개 선택
+            .map { $0.0 }
+    }
+
+    // 거리 계산 함수
+    private func calculateDistance(lat1: Double, lng1: Double, lat2: Double, lng2: Double) -> Double {
+        let deltaLat = lat2 - lat1
+        let deltaLng = lng2 - lng1
+        return sqrt(deltaLat * deltaLat + deltaLng * deltaLng) * 111 // 대략적인 거리(km)
+    }
 }

@@ -25,7 +25,7 @@ struct ImageSliderView: View {
             .padding(EdgeInsets(top: 10, leading: 10, bottom: 0, trailing: 10))
             Button(action: {
             }) {
-               Image(systemName: "heart")
+               Image(systemName: "bookmark")
                    .foregroundColor(.white)
                    .font(.system(size: 30))
                

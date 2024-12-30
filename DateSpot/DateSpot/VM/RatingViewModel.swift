@@ -25,7 +25,7 @@ class RatingViewModel: ObservableObject {
 
     // 특정 레스토랑의 별점 가져오기
     func fetchUserRating(for email: String, restaurantName: String) async {
-        guard let url = URL(string: "\(baseURL)?user_email=\(email)&book_name=\(restaurantName)") else {
+        guard let url = URL(string: "\(baseURL)/get_detail?user_email=\(email)&book_name=\(restaurantName)") else {
             print("Invalid URL for fetchUserRating")
             return
         }
@@ -40,7 +40,6 @@ class RatingViewModel: ObservableObject {
             let decodedResponse = try JSONDecoder().decode([String: [Rating]].self, from: data)
             if let userRating = decodedResponse["results"]?.first?.evaluation {
                 self.userRating = Int(userRating)
-                print("Fetched user rating: \(userRating)")
             }
         } catch {
             print("Failed to fetch user rating: \(error.localizedDescription)")
@@ -49,7 +48,7 @@ class RatingViewModel: ObservableObject {
     
     // 별점 업데이트
     func updateUserRating(for email: String, restaurantName: String, rating: Int) async {
-        guard let url = URL(string: baseURL) else {
+        guard let url = URL(string: "\(baseURL)/update_detail") else {
             print("Invalid URL for updateUserRating")
             return
         }
@@ -69,11 +68,10 @@ class RatingViewModel: ObservableObject {
             request.httpBody = try encoder.encode(newRating)
             
             let (_, response) = try await URLSession.shared.data(for: request)
-            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 201 else {
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
                 print("Failed to update user rating: Server error")
                 return
             }
-            print("User rating updated successfully.")
             // 업데이트 후 새로 가져오기
             await fetchUserRating(for: email, restaurantName: restaurantName)
         } catch {

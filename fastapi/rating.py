@@ -14,6 +14,9 @@ router = APIRouter()
 # Detail Page에서 별점을 메긴 기록이 있으면 별점 가져오기
 @router.get('/get_detail')
 async def get_booked_rating(user_email: str, book_name):
+    """
+    Detail 페이지로 갈 때 같이 가져올 별점을 query하는 엔드포인트
+    """
     conn = hosts.connect()
     curs = conn.cursor()
 
@@ -37,14 +40,19 @@ async def get_booked_rating(user_email: str, book_name):
     ]
     
     return {"results": results}
+
 # 별점 데이터를 위한 Pydantic 모델
 class Rating(BaseModel):
     userEmail: str
     bookName: str
     evaluation: float
 
+# 별점 업데이트하는 api
 @router.post("/update_detail")
-async def update_user_rating(rating: Rating):
+async def update_booked_rating(rating: Rating):
+    """
+    터치해서 별점을 업데이트 할떄 작동하는 엔드포인트
+    """
     conn = hosts.connect()
     curs = conn.cursor()
 
