@@ -9,10 +9,13 @@ import SwiftUI
 struct PlaceSectionView: View {
     let places: [PlaceData]
     @State private var loadedImages: [String: UIImage] = [:] // 명소 이름별로 이미지를 저장
-    private let imageBaseUrl = "https://fastapi.fre.today/place/images?name=" // 이미지 URL 기본 경로
+    private let imageBaseUrl = "https://fastapi.fre.today/place/image?name=" // 이미지 URL 기본 경로
 
     var body: some View {
-        if !places.isEmpty {
+        // places 배열을 20개로 제한
+        let limitedPlaces = Array(places.prefix(30))
+
+        if !limitedPlaces.isEmpty {
             VStack(alignment: .leading, spacing: 10) {
                 Text("명소")
                     .font(.title)
@@ -21,7 +24,7 @@ struct PlaceSectionView: View {
 
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 20) {
-                        ForEach(places, id: \.name) { place in
+                        ForEach(limitedPlaces, id: \.name) { place in
                             let image = loadedImages[place.name] // 이미 로드된 이미지를 가져옴
                             CardView(
                                 image: image, // UIImage 전달

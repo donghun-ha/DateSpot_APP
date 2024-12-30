@@ -8,122 +8,92 @@
 //
 
 import SwiftUI
-import PhotosUI
 
 struct UserView: View {
-    @EnvironmentObject var appState: AppState // 전역 상태 사용
-    @State private var profileImage: UIImage? = nil // 사용자가 선택한 프로필 이미지
-    @State private var isPhotoPickerPresented: Bool = false // 사진 선택 화면 표시 여부
+    @EnvironmentObject var appState: AppState
+    @StateObject private var viewModel = UserViewModel()
+    @State private var isImagePickerPresented = false
+    @State private var selectedImage: UIImage?
 
     var body: some View {
-        NavigationView {
-            VStack(alignment: .leading, spacing: 20) {
-                HStack(spacing: 20) {
-                    // 프로필 이미지
-//                    Button(action: {
-//                        isPhotoPickerPresented = true // 사진 선택 화면 열기
-//                    }) {
-//                        if let profileImage = appState.userImage {
-//                            // 사용자가 선택한 이미지 표시
-//                            Image(uiImage: profileImage)
-//                                .resizable()
-//                                .scaledToFill()
-//                                .frame(width: 100, height: 100)
-//                                .clipShape(Circle())
-//                        } else {
-//                            // 기본 프로필 이미지
-//                            Image(systemName: "person.crop.circle.fill")
-//                                .resizable()
-//                                .scaledToFill()
-//                                .frame(width: 100, height: 100)
-//                                .foregroundColor(.gray)
-//                                .clipShape(Circle())
-//                        }
-//                    }
-//                    .buttonStyle(PlainButtonStyle()) // 버튼 스타일 기본값 제거
-//                    .sheet(isPresented: $isPhotoPickerPresented) {
-//                        PhotoPicker(selectedImage: $profileImage)
-//                    }
+        VStack(spacing: 16) {
+            // 사용자 정보 섹션
+            if let currentUser = appState.userEmail {
+                VStack(spacing: 16) {
+                    Text("사용자 정보")
+                        .font(.title)
+                        .padding()
 
-                    VStack(alignment: .leading, spacing: 5) {
-                        // 이메일
-                        Text(appState.userEmail!)
-                            .font(.headline)
-                            .foregroundColor(.gray)
+                    HStack {
+                        if let selectedImage = selectedImage {
+                            Image(uiImage: selectedImage)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 100, height: 100)
+                                .clipShape(Circle())
+                                .overlay(Circle().stroke(Color.gray, lineWidth: 2))
+                        } else {
+                            Image(systemName: "person.circle.fill")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 100, height: 100)
+                                .foregroundColor(.gray)
+                        }
 
-                        // 이름
-                        Text(appState.userName)
-                            .font(.title)
-                            .fontWeight(.bold)
+                        Button(action: {
+                            isImagePickerPresented = true
+                        }) {
+                            Text("Change Image")
+                                .padding()
+                                .background(Color.blue)
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                        }
                     }
+                    .padding()
 
-                    Spacer() // 오른쪽 정렬용
-                }
-                .padding(.top, 30)
+                    TextField("Email", text: .constant(currentUser))
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .disabled(true)
+                        .padding()
 
-                Spacer()
-            }
-            .padding()
-            .navigationTitle("프로필")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                // 설정 버튼
-                ToolbarItem(placement: .navigationBarTrailing) {
+                    TextField("Name", text: $appState.userName)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .padding()
+
                     Button(action: {
-                        // 설정 화면으로 이동
+                        guard let selectedImage = selectedImage else { return }
+                        viewModel.uploadProfileImage(
+                            email: currentUser,
+                            name: appState.userName,
+                            image: selectedImage
+                        )
                     }) {
-                        Image(systemName: "gear")
+                        Text("Save Changes")
+                            .padding()
+                            .background(Color.green)
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
                     }
                 }
+                .padding()
+            } else {
+                Text("로그인된 사용자 정보가 없습니다.")
+                    .foregroundColor(.red)
             }
+        }
+        .onAppear {
+            // 초기 데이터 로드
+            appState.userName = appState.userName
+            appState.userImage = appState.userImage
+        }
+        .sheet(isPresented: $isImagePickerPresented) {
+            ImagePicker(selectedImage: $selectedImage)
         }
     }
 }
 
-// MARK: - PhotoPicker: 사진 선택기
-struct PhotoPicker: UIViewControllerRepresentable {
-    @Binding var selectedImage: UIImage?
 
-    func makeUIViewController(context: Context) -> PHPickerViewController {
-        var configuration = PHPickerConfiguration()
-        configuration.filter = .images // 이미지만 선택 가능
-        configuration.selectionLimit = 1 // 한 번에 하나의 이미지 선택
-
-        let picker = PHPickerViewController(configuration: configuration)
-        picker.delegate = context.coordinator
-        return picker
-    }
-
-    func updateUIViewController(_ uiViewController: PHPickerViewController, context: Context) {}
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-
-    class Coordinator: NSObject, PHPickerViewControllerDelegate {
-        let parent: PhotoPicker
-
-        init(_ parent: PhotoPicker) {
-            self.parent = parent
-        }
-
-        func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-            picker.dismiss(animated: true)
-
-            guard let provider = results.first?.itemProvider, provider.canLoadObject(ofClass: UIImage.self) else {
-                return
-            }
-
-            provider.loadObject(ofClass: UIImage.self) { image, _ in
-                DispatchQueue.main.async {
-                    self.parent.selectedImage = image as? UIImage
-                }
-            }
-        }
-    }
-}
-
-// 미리보기 제공
-#Preview{
+#Preview {
     UserView().environmentObject(AppState())
 }

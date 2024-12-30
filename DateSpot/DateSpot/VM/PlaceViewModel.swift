@@ -62,7 +62,7 @@ class PlaceViewModel: ObservableObject {
         do {
             let fetchedPlace = try await fetchPlacesFromAPI()
             self.places = fetchedPlace
-            print("✅ 데이터 다운로드 성공: \(self.places)")
+            print("✅ 데이터 다운로드 성공")
         } catch {
             print("❌ 데이터 다운로드 실패: \(error.localizedDescription)")
         }

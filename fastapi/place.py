@@ -147,18 +147,18 @@ async def stream_image(name: str):
         file_key = response["Contents"][0]["Key"]
 
         # S3 객체 가져오기
-        cleaned_key = remove_invisible_characters(file_key)
-        s3_object = s3.get_object(Bucket=hosts.BUCKET_NAME, Key=cleaned_key)
+        s3_object = s3_client.get_object(Bucket=hosts.BUCKET_NAME, Key=cleaned_key)
 
-        # 이미지 스트리밍 반환
+        # 디버깅: 가져온 객체 출력
+        print(f"Streaming file: {cleaned_key}")
+
         return StreamingResponse(
             content=s3_object["Body"],
             media_type="image/jpeg"
         )
-
-    except s3.exceptions.NoSuchKey:
-        print(f"NoSuchKey error for key: {name}")
+    except s3_client.exceptions.NoSuchKey:
+        print(f"File not found in S3: {file_key}")
         raise HTTPException(status_code=404, detail="File not found in S3")
     except Exception as e:
         print(f"Error while streaming image: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
