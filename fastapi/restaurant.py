@@ -199,7 +199,7 @@ async def check_bookmark(request: checkRestaurantBook):
             # 북마크 존재 여부 확인
             sql = """
                 SELECT COUNT(*) AS count
-                FROM rrestaurant_bookmark
+                FROM restaurant_bookmark
                 WHERE user_email = %s AND restaurant_name = %s
             """
             cursor.execute(sql, (request.user_email, request.restaurant_name))
