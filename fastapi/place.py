@@ -138,24 +138,24 @@ async def stream_image(name: str):
 
 
 # Pydantic 모델
-class RestaurantBookRequest(BaseModel):
+class PlaceBookRequest(BaseModel):
     user_email: str
-    restaurant_name: str
+    place_name: str
     name: str
 
 @router.post("/add_bookmark/")
-async def add_bookmark(bookmark: RestaurantBookRequest):
+async def add_bookmark(bookmark: PlaceBookRequest):
     connection =hosts.connect()
     try:
         with connection.cursor() as cursor:
             # 북마크 추가
             sql = """
-                INSERT INTO restaurant_book (user_email, restaurant_name, name, created_at)
+                INSERT INTO place_bookmark (user_email, restaurant_name, name, created_at)
                 VALUES (%s, %s, %s, %s)
             """
             cursor.execute(sql, (
                 bookmark.user_email,
-                bookmark.restaurant_name,
+                bookmark.place_name,
                 bookmark.name,
                 datetime.now()
             ))

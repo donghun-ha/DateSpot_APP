@@ -213,7 +213,7 @@ extension RestaurantViewModel {
     
     func addBookmark(userEmail: String, restaurantName: String, name: String) {
         // API URL
-        guard let url = URL(string: "http://your-api-url/add_bookmark/") else { return }
+        guard let url = URL(string: "\(baseURL)add_bookmark/") else { return }
 
         // 요청 데이터
         let requestBody: [String: Any] = [
