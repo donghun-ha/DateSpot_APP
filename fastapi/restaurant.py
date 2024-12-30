@@ -24,7 +24,10 @@ async def select():
     
 # 디테일 페이지로 이동할때 클릭한 restaurant 정보 쿼리
 @router.get('/go_detail')
-async def get_booked_rating(name: str):
+async def get_detail(name: str):
+    """
+    북마크한 매장 또는 맛집의 정보 가져오기
+    """
     conn = hosts.connect()
     curs = conn.cursor()
 
