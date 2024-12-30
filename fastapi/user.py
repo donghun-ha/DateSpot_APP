@@ -114,6 +114,7 @@ async def upload_profile_image(
     try:
         # S3 클라이언트 생성
         s3_client = hosts.create_s3_client()
+        region = hosts.REGIONE or "ap-northeast-2"
 
         # S3에 업로드할 파일 이름 생성
         file_extension = image.filename.split(".")[-1] #파일 확장자 추출
@@ -128,7 +129,9 @@ async def upload_profile_image(
         )
 
         # S3 URL 생성
-        image_url = f"https://{hosts.BUCKET_NAME}.s3.{hosts.REGION}.amazonaws.com/{file_name}"
+        image_url = f"https://{hosts.BUCKET_NAME}.s3.{region}.amazonaws.com/{file_name}"
+        print(image_url)
+
 
         # MySQL에 URL 저장
         mysql_conn = hosts.connect()
