@@ -13,9 +13,10 @@ import RealmSwift
 
 // Login 화면
 struct LoginView: View {
+    let realm = try! Realm() // Realm 초기화
     @StateObject var viewModel = LoginViewModel()
     @EnvironmentObject var appState: AppState
-
+    
     // 이미지 배열
     let images = ["tripImage1", "tripImage2", "tripImage3", "tripImage4"]
     @State private var currentImageIndex = 0
@@ -33,7 +34,7 @@ struct LoginView: View {
                     .scaledToFill()
                     .ignoresSafeArea()
                     .animation(.easeInOut, value: currentImageIndex)
-
+                
                 VStack {
                     Text("""
                          오늘, 어디로 떠나볼까요?
@@ -60,8 +61,17 @@ struct LoginView: View {
             startImageRotation()
             loadUserDataIfAvailable() // Realm에서 데이터 로드
         }
-        .onChange(of: viewModel.isLoginSuccessful) {
-            handleLoginSuccess()
+        .onChange(of: viewModel.isLoginSuccessful) { isSuccess in
+            if isSuccess {
+                appState.isLoggedIn = true
+                appState.userEmail = viewModel.loggedInUserEmail
+                appState.userName = viewModel.loggedInUserName
+                appState.userImage = viewModel.loggedInUserImage
+                Task {
+                    await saveUserData()
+                    navigateToTabBar = true
+                }
+            }
         }
     }
 
@@ -74,47 +84,37 @@ struct LoginView: View {
         }
     }
 
-    // 로그인 성공 시 처리
-    private func handleLoginSuccess() {
-        guard viewModel.isLoginSuccessful else { return }
-        appState.isLoggedIn = true
-        appState.userEmail = viewModel.loggedInUserEmail
-        appState.userName = viewModel.loggedInUserName
-        appState.userImage = viewModel.loggedInUserImage
-        Task {
-            await saveUserData()
-            navigateToTabBar = true
-        }
-    }
-
     // Realm에 저장된 데이터 확인 및 AppState 업데이트
     private func loadUserDataIfAvailable() {
-        if let user = RealmService.shared.fetchAllUsers().first {
-            DispatchQueue.main.async {
-                appState.isLoggedIn = true
-                appState.userEmail = user.userEmail
-                appState.userName = user.userName
-                appState.userImage = user.userImage
-                navigateToTabBar = true
-            }
+        let users = realm.objects(UserData.self)
+        guard let user = users.first else { return } // 저장된 사용자 데이터가 없는 경우 종료
+
+        DispatchQueue.main.async {
+            appState.isLoggedIn = true
+            appState.userEmail = user.userEmail
+            appState.userName = user.userName
+            appState.userImage = user.userImage
+            navigateToTabBar = true // TabBarView로 이동
         }
     }
 
     // Realm에 사용자 데이터 저장
     func saveUserData() async {
-        guard !viewModel.loggedInUserEmail.isEmpty,
-              !viewModel.loggedInUserName.isEmpty,
-              !viewModel.loggedInUserImage.isEmpty else {
-            print("필수 값이 비어 있습니다.")
-            return
+        let data = UserData(userEmail: viewModel.loggedInUserEmail, userName: viewModel.loggedInUserName, userImage: viewModel.loggedInUserImage)
+        DispatchQueue.main.async {
+            do {
+                try realm.write {
+                    realm.add(data, update: .modified) // 중복 데이터 업데이트
+                }
+                print("✅ UserData 저장 성공")
+            } catch {
+                print("❌ UserData 저장 실패: \(error.localizedDescription)")
+            }
         }
-        
-        
-        let user = UserData(
-            userEmail: viewModel.loggedInUserEmail,
-            userName: viewModel.loggedInUserName,
-            userImage: viewModel.loggedInUserImage
-        )
-        RealmService.shared.saveUser(user)
     }
+}
+
+
+#Preview {
+    LoginView().environmentObject(AppState())
 }
