@@ -47,6 +47,30 @@ class RestaurantViewModel: ObservableObject {
             return []
         }
     }
+    
+    func fetchRestaurants() async {
+        Task {
+            do {
+                let fetchedRestaurants = try await fetchRestaurantsFromAPI()
+                self.restaurants = Array(fetchedRestaurants.prefix(30)) // 최대 30개로 제한
+            } catch {
+                print("Failed to fetch restaurants: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    
+    func fetchFirstImage(for name: String) async -> UIImage? {
+        // 1. 이미지 키를 가져옴
+        let imageKeys = await fetchImageKeys(for: name)
+        guard let firstKey = imageKeys.first else {
+            print("No image keys found for restaurant: \(name)")
+            return nil
+        }
+
+        // 2. 첫 번째 키로 이미지를 가져옴
+        return await fetchImage(fileKey: firstKey)
+    }
 
     func fetchImage(fileKey: String) async -> UIImage? {
         guard let url = URL(string: "\(baseURL)image/?file_key=\(fileKey.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? fileKey)") else {
@@ -94,16 +118,16 @@ class RestaurantViewModel: ObservableObject {
         self.images = loadedImages
     }
 
-    func fetchRestaurants() async {
-        Task {
-            do {
-                let fetchedRestaurants = try await fetchRestaurantsFromAPI()
-                self.restaurants = fetchedRestaurants
-            } catch {
-                print("Failed to fetch restaurants: \(error.localizedDescription)")
-            }
-        }
-    }
+//    func fetchRestaurants() async {
+//        Task {
+//            do {
+//                let fetchedRestaurants = try await fetchRestaurantsFromAPI()
+//                self.restaurants = fetchedRestaurants
+//            } catch {
+//                print("Failed to fetch restaurants: \(error.localizedDescription)")
+//            }
+//        }
+//    }
 
     func fetchRestaurantDetail(name: String) async {
         Task {
@@ -133,6 +157,11 @@ extension RestaurantViewModel {
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
             throw URLError(.badServerResponse)
         }
+        
+        // JSON 응답 디버깅용 출력
+            if let jsonString = String(data: data, encoding: .utf8) {
+                print("Response JSON: \(jsonString)")
+            }
 
         let decoder = JSONDecoder()
         return try decoder.decode([String:[Restaurant]].self, from: data)["results"] ?? []
