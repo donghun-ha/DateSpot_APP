@@ -41,6 +41,9 @@ struct UserView: View {
                             }
                         }
                         .padding()
+                        .onAppear {
+                            print("✅ S3 이미지 로드 성공: \(appState.userImage)")
+                        }
                     } else {
                         // 기본 이미지 표시
                         Image(systemName: "person.circle.fill")
@@ -49,9 +52,13 @@ struct UserView: View {
                             .frame(width: 100, height: 100)
                             .foregroundColor(.gray)
                             .padding()
+                            .onAppear {
+                                print("❌ 기본 이미지 표시: 이미지 URL이 비어있음")
+                            }
                     }
 
                     Button("Change Image") {
+                        print("ℹ️ Change Image 버튼 클릭됨")
                         isImagePickerPresented = true
                     }
                     .padding()
@@ -70,15 +77,20 @@ struct UserView: View {
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .padding()
 
-                    Button("Save Changes", action: {
+                    Button("Save Changes") {
+                        print("ℹ️ Save Changes 버튼 클릭됨")
+                        guard let selectedImage = selectedImage else {
+                            print("❌ Save Changes 실패: 선택된 이미지가 없음")
+                            return
+                        }
                         Task {
-                            guard let selectedImage = selectedImage else { return }
+                            print("ℹ️ Save Changes 작업 시작: 이메일 - \(email)")
                             await viewModel.uploadProfileImage(
                                 email: email,
                                 image: selectedImage
                             )
                         }
-                    })
+                    }
                     .padding()
                     .background(viewModel.isUploading ? Color.gray : Color.green)
                     .foregroundColor(.white)
@@ -89,12 +101,16 @@ struct UserView: View {
             } else {
                 Text("로그인된 사용자 정보가 없습니다.")
                     .foregroundColor(.red)
+                .onAppear {
+                    print("❌ 로그인된 사용자 정보가 없음")
+                }
             }
         }
         .onAppear {
             Task {
-                // Realm에서 사용자 데이터 로드
+                print("ℹ️ UserView가 나타남. 데이터 로드 시작")
                 await viewModel.loadUserDataFromBackend(email: appState.userEmail ?? "")
+                print("✅ 데이터 로드 완료")
             }
         }
         .sheet(isPresented: $isImagePickerPresented) {

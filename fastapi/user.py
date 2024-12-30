@@ -111,7 +111,7 @@ async def upload_profile_image(
     print(f"Received file name: {image.filename}")  # 파일 정보 출력
     print(f"Received file content type: {image.content_type}")
 
-    
+
     """
     프로필 이미지를 업로드하고 S3 URL을 MySQL에 저장
     1. 멀티파트로 전송된 이미지를 S3에 업로드
@@ -161,3 +161,23 @@ async def upload_profile_image(
         raise HTTPException(
             status_code=500, detail="Failed to upload profile image"
         )
+    
+@router.post("/get-profile-image")
+async def get_profile_image(user_id: str = Form(...)):
+    try:
+        # MySQL에서 사용자 이미지 URL 가져오기
+        mysql_conn = hosts.connect()
+        cursor = mysql_conn.cursor()
+        query = "SELECT image FROM user WHERE email = %s"
+        cursor.execute(query, (user_id,))
+        result = cursor.fetchone()
+        cursor.close()
+        mysql_conn.close()
+
+        if result:
+            return {"status": "success", "image_url": result[0]}
+        else:
+            raise HTTPException(status_code=404, detail="User not found")
+    except Exception as e:
+        print(f"Error fetching user image: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch user image")

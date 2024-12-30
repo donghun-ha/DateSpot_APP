@@ -32,12 +32,21 @@ class UserViewModel: ObservableObject {
         // 요청 본문에 user_id 추가
         let requestBody: [String: String] = ["user_id": email]
         request.httpBody = try? JSONSerialization.data(withJSONObject: requestBody)
+        print("ℹ️ 요청 본문: \(requestBody)")
 
         do {
             // URLSession으로 요청 실행
+            print("ℹ️ 백엔드로 데이터 요청 시작")
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("❌ 응답이 HTTP 응답이 아님")
+                return
+            }
+
+            print("ℹ️ 서버 응답 코드: \(httpResponse.statusCode)")
+            if httpResponse.statusCode != 200 {
                 print("❌ 서버 응답 오류: \(response)")
+                print("❌ 응답 데이터: \(String(data: data, encoding: .utf8) ?? "No Data")")
                 return
             }
 
@@ -47,9 +56,11 @@ class UserViewModel: ObservableObject {
 
             // AppState와 Realm 업데이트
             DispatchQueue.main.async {
+                print("ℹ️ AppState와 Realm 업데이트 시작")
                 self.appState.userName = json.name
                 self.appState.userImage = json.image
                 self.updateUserInRealm(email: email, imageUrl: json.image)
+                print("✅ AppState와 Realm 업데이트 완료")
             }
         } catch {
             print("❌ 사용자 데이터 로드 실패: \(error.localizedDescription)")
@@ -74,6 +85,7 @@ class UserViewModel: ObservableObject {
 
         // Boundary 생성
         let boundary = UUID().uuidString
+        print("ℹ️ 생성된 Boundary: \(boundary)")
 
         // URLRequest 설정
         var request = URLRequest(url: url)
@@ -87,6 +99,7 @@ class UserViewModel: ObservableObject {
         body.append("--\(boundary)\r\n".data(using: .utf8)!)
         body.append("Content-Disposition: form-data; name=\"user_id\"\r\n\r\n".data(using: .utf8)!)
         body.append("\(email)\r\n".data(using: .utf8)!)
+        print("ℹ️ user_id 추가 완료")
 
         // image 필드 추가
         body.append("--\(boundary)\r\n".data(using: .utf8)!)
@@ -94,18 +107,28 @@ class UserViewModel: ObservableObject {
         body.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
         body.append(imageData)
         body.append("\r\n".data(using: .utf8)!)
+        print("ℹ️ 이미지 데이터 추가 완료")
 
         // Boundary 종료
         body.append("--\(boundary)--\r\n".data(using: .utf8)!)
 
         // Body 설정
         request.httpBody = body
+        print("ℹ️ HTTP 요청 Body 구성 완료")
 
         // URLSession으로 요청 전송
         do {
+            print("ℹ️ 이미지 업로드 요청 시작")
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("❌ 응답이 HTTP 응답이 아님")
+                return
+            }
+
+            print("ℹ️ 서버 응답 코드: \(httpResponse.statusCode)")
+            if httpResponse.statusCode != 200 {
                 print("❌ 서버 응답 오류: \(response)")
+                print("❌ 응답 데이터: \(String(data: data, encoding: .utf8) ?? "No Data")")
                 return
             }
 
@@ -116,8 +139,10 @@ class UserViewModel: ObservableObject {
 
                 // AppState와 Realm 업데이트
                 DispatchQueue.main.async {
+                    print("ℹ️ AppState와 Realm 업데이트 시작")
                     self.appState.userImage = imageUrl
                     self.updateUserInRealm(email: email, imageUrl: imageUrl)
+                    print("✅ AppState와 Realm 업데이트 완료")
                 }
             } else {
                 print("❌ JSON 응답 파싱 실패")
@@ -128,8 +153,7 @@ class UserViewModel: ObservableObject {
 
         isUploading = false
     }
-    
-    
+
     // Realm에 사용자 데이터 업데이트
     private func updateUserInRealm(email: String, imageUrl: String) {
         if let user = realm.objects(UserData.self).filter("userEmail == %@", email).first {
@@ -138,9 +162,10 @@ class UserViewModel: ObservableObject {
                     user.userImage = imageUrl
                 }
                 DispatchQueue.main.async {
+                    print("ℹ️ Realm 데이터 업데이트 시작")
                     self.userImage = imageUrl
+                    print("✅ Realm 사용자 데이터 업데이트 완료")
                 }
-                print("✅ Realm 사용자 데이터 업데이트 성공")
             } catch {
                 print("❌ Realm 사용자 데이터 업데이트 실패: \(error.localizedDescription)")
             }
