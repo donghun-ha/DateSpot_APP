@@ -255,4 +255,47 @@ extension RestaurantViewModel {
             .store(in: &cancellables)
     }
     
+    func checkBookmark(userEmail: String, restaurantName: String) {
+        // API URL
+        guard let url = URL(string: "\(baseURL)check_bookmark/") else { return }
+
+        // 요청 데이터
+        let requestBody: [String: Any] = [
+            "user_email": userEmail,
+            "restaurant_name": restaurantName
+        ]
+
+        // JSON 데이터 생성
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: requestBody) else { return }
+
+        // URLRequest 생성
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = jsonData
+
+        // API 호출
+        URLSession.shared.dataTaskPublisher(for: request)
+            .tryMap { output -> Data in
+                guard let response = output.response as? HTTPURLResponse,
+                      response.statusCode == 200 else {
+                    throw URLError(.badServerResponse)
+                }
+                return output.data
+            }
+            .decode(type: [String: Bool].self, decoder: JSONDecoder())
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { completion in
+                switch completion {
+                case .finished:
+                    print("Bookmark status checked successfully")
+                case .failure(let error):
+                    print("Failed to check bookmark: \(error.localizedDescription)")
+                }
+            }, receiveValue: { [weak self] response in
+                self?.isBookmarked = response["is_bookmarked"] ?? false
+            })
+            .store(in: &cancellables)
+    }
+    
 }

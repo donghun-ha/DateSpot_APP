@@ -186,3 +186,25 @@ async def add_bookmark(bookmark: RestaurantBookRequest):
         raise HTTPException(status_code=500, detail="Failed to add bookmark")
     finally:
         connection.close()
+
+
+@router.post("/check_bookmark/")
+async def check_bookmark(request: RestaurantBookRequest):
+    connection = hosts.connect()
+    try:
+        with connection.cursor() as cursor:
+            # 북마크 존재 여부 확인
+            sql = """
+                SELECT COUNT(*) AS count
+                FROM rrestaurant_bookmark
+                WHERE user_email = %s AND restaurant_name = %s
+            """
+            cursor.execute(sql, (request.user_email, request.restaurant_name))
+            result = cursor.fetchone()
+            is_bookmarked = result["count"] > 0
+        return {"is_bookmarked": is_bookmarked}
+    except Exception as e:
+        print(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to check bookmark")
+    finally:
+        connection.close()
