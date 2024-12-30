@@ -11,7 +11,7 @@ import MapKit
 struct DetailMap: View {
     @StateObject private var viewModel = DetailMapViewModel()
     @Binding var restaurants : Restaurant
-   
+//    @Binding var place : PlaceData
     
     var body: some View {
         NavigationView {
@@ -47,9 +47,9 @@ struct DetailMap: View {
                             
                             Spacer()
                             
-//                            Image("") //이미지
-//                                .resizable()
-
+                            //                            Image("") //이미지
+                            //                                .resizable()
+                            
                         }
                         
                         VStack(alignment: .leading, spacing: 8) {
@@ -84,6 +84,7 @@ struct DetailMap: View {
                 
             }
         }
+        .navigationTitle("지도")
     } // View
     
 } // End

@@ -3,7 +3,8 @@ import MapKit
 
 struct TabbarMapView: View {
     @StateObject var mapViewModel = TabMapViewModel()
-//    @Binding var restaurantData : [Restaurant]
+    @StateObject var restaurantVM = RestaurantViewModel()
+    @StateObject var placeVM = PlaceViewModel()
     
     // 테스트 데이터
     let testPlace: [PlaceData] = [
@@ -30,8 +31,7 @@ struct TabbarMapView: View {
             closing_time: "0"
         )
     ]
-    
-    let restaurantData: [Restaurant] = [
+    let testRestaurant: [Restaurant] = [
         Restaurant(
             name: "바빌리안테이블",
             address: "서울특별시 강남구 압구정로46길",
@@ -63,8 +63,8 @@ struct TabbarMapView: View {
                     UserAnnotation()
                     
                     // 명소 마커 (빨간색)
-                    ForEach(testPlace.indices, id:\.self) { index in
-                        let place = testPlace[index]
+                    ForEach($mapViewModel.nearPlace.indices, id:\.self) { index in
+                        let place = mapViewModel.nearPlace[index]
                         Marker(place.name, systemImage: "house.fill", coordinate:
                             CLLocationCoordinate2D(latitude:
                                 place.lat, longitude:
@@ -73,27 +73,31 @@ struct TabbarMapView: View {
                     }
                     
                     // 맛집 마커 (파란색)
-                    ForEach(restaurantData.indices, id:\.self) { index in
-                        let restaurant = restaurantData[index]
+                    ForEach($mapViewModel.nearRestaurant.indices, id:\.self) { index in
+                        let restaurant = mapViewModel.nearRestaurant[index]
                         Marker(restaurant.name, systemImage:"fork.knife.circle.fill", coordinate:
                             CLLocationCoordinate2D(latitude:
                                 restaurant.lat, longitude:
                                 restaurant.lng))
                             .tint(.blue)
                     }
-                }    
+                }
+                
             }
         }
+        .navigationTitle("지도")
         .onAppear {
             mapViewModel.tabMapLoc.delegate = mapViewModel
             mapViewModel.tabMapLoc.requestWhenInUseAuthorization()
-            
-            if let userLocation = mapViewModel.userLocation {
-                mapViewModel.filterNearALL(currentLocation:userLocation,
-                                           placeData:testPlace,
-                                           restaurantData:restaurantData)
-            }
+            Task{
+                await restaurantVM.fetchRestaurants()
+                await placeVM.fetchPlace()
+                mapViewModel.filterNearALL(currentLocation: mapViewModel.userLocation!, placeData: placeVM.places, restaurantData: restaurantVM.restaurants)
+                
+            }   
         }
     }
 }
+
+
 
