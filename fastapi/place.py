@@ -9,6 +9,7 @@ import pymysql
 
 router = APIRouter()
 
+
 @router.get("/select")
 async def select():
     conn = hosts.connect()
@@ -37,11 +38,6 @@ async def select():
         )
     return dict_list
 
-# def normalize_name(name: str) -> str:
-#     """
-#     입력된 이름을 Unicode 정규화하여 S3 검색에 적합한 형태로 변환
-#     """
-#     return unicodedata.normalize("NFC", name.strip())
 
 def remove_invisible_characters(input_str: str) -> str:
     """
@@ -53,74 +49,63 @@ import unicodedata
 from fastapi import FastAPI, HTTPException
 from urllib.parse import unquote
 
-import re
+
 
 def normalize_place_name(name: str) -> str:
+    # Unicode 정규화 (NFC 적용)
+    return unicodedata.normalize("NFC", name)
+
+
+
+def remove_invisible_characters(input_str: str) -> str:
+    # 모든 비표시 가능 문자를 제거 (공백, 제어 문자 포함)
+    return ''.join(ch for ch in input_str if ch.isprintable())
+
+import unicodedata
+
+def normalize_place_name_nfd(name: str) -> str:
     """
-    입력된 이름을 S3에서 사용한 규칙에 맞게 변환
+    입력된 이름을 Unicode NFD로 정규화
     """
-    # 정규표현식을 사용하여 파일명을 S3 키에 맞게 변환
-    match = re.match(r'^(.*?)(_.*)?$', name.strip(), re.IGNORECASE)
-    if match:
-        return match.group(1).strip()
-    return name.strip()
+    return unicodedata.normalize("NFD", name)
 
 @router.get("/images")
 async def get_images(name: str):
     """
-    특정 이름에 해당하는 이미지를 S3에서 가져와 리스트로 반환 (NFD 정규화 적용)
+    특정 이름에 해당하는 이미지를 S3에서 가져와 리스트로 반환
     """
     s3_client = hosts.create_s3_client()
     try:
-        # 입력값 디코딩
+        # 입력값 디코딩 및 NFD 정규화
         decoded_name = unquote(name).strip()
-        print(f"Decoded name: {decoded_name}")  # 디버깅: 디코딩된 이름 출력
+        normalized_name = normalize_place_name_nfd(decoded_name)  # 명소는 NFD로 정규화
+        prefix = f"명소/{normalized_name}_"
 
-        # NFD/NFC 정규화 비교
-        normalized_name_nfd = unicodedata.normalize("NFD", decoded_name)
-        normalized_name_nfc = unicodedata.normalize("NFC", decoded_name)
-        print(f"NFD Normalized: {normalized_name_nfd}")
-        print(f"NFC Normalized: {normalized_name_nfc}")
+        print(f"Looking for images with Prefix: {prefix}")
 
-        # Prefix 생성 (NFC 기준으로 생성)
-        prefix = f"명소/{normalized_name_nfc}_"
-        print(f"Prefix used for S3: {prefix}")
-
-        # S3에서 Prefix로 파일 검색
-        response = s3_client.list_objects_v2(Bucket=hosts.BUCKET_NAME, Prefix=prefix)
-        print(f"S3 Response: {response}")  # 디버깅: S3 응답 확인
-
-        # S3에 파일이 없는 경우
-        if 'Contents' not in response or not response['Contents']:
-            print(f"No files found for prefix: {prefix}")
+        # S3에서 파일 검색 (Prefix 적용)
+        response = s3_client.list_objects_v2(Bucket=hosts.BUCKET_NAME, Prefix=normalize_place_name_nfd(prefix))
+        
+        if "Contents" not in response or not response["Contents"]:
+            print(f"No images found for prefix: {prefix}")
             raise HTTPException(status_code=404, detail="No images found")
+        
+        # 필터링된 키 목록 가져오기
+        filtered_keys = [normalize_place_name_nfd(content["Key"]) for content in response["Contents"]]
+        print(f"Filtered keys: {filtered_keys}")
 
-        # 검색된 파일 키 리스트
-        image_keys = [content["Key"] for content in response["Contents"]]
-        print(f"Found image keys: {image_keys}")  # 디버깅: 발견된 이미지 키 출력
+        return {"images": filtered_keys}
 
-        return {"images": image_keys}
-
-    except ClientError as e:
-        # S3 클라이언트 에러 처리
-        print(f"ClientError while fetching images: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"ClientError fetching images: {str(e)}")
     except Exception as e:
-        # 기타 에러 처리
         print(f"Error while fetching images: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error fetching images: {str(e)}")
 
 @router.get("/image")
 async def stream_image(file_key: str):
-    """
-    S3에서 단일 이미지 파일 스트리밍 (NFD 정규화 적용)
-    """
     s3_client = hosts.create_s3_client()
     try:
-        # 파일 키 정리 및 NFD 정규화
-        decoded_key = unquote(file_key).strip()
-        normalized_key = unicodedata.normalize("NFD", decoded_key)
-        cleaned_key = remove_invisible_characters(normalized_key)
+        # 파일 키 정리 및 정규화
+        cleaned_key = remove_invisible_characters(file_key)
 
         # S3 객체 가져오기
         s3_object = s3_client.get_object(Bucket=hosts.BUCKET_NAME, Key=cleaned_key)
