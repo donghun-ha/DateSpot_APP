@@ -71,6 +71,7 @@ class PlaceViewModel: ObservableObject {
     // 이미지 로드
     func fetchImage(for placeName: String) async {
         guard images[placeName] == nil else { return } // 이미 로드된 경우
+        print(placeName)
         let imageUrl = "https://fastapi.fre.today/place/image?name=\(placeName)"
         guard let url = URL(string: imageUrl) else { return }
 
