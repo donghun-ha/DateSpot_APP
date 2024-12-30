@@ -8,7 +8,7 @@
 import SwiftUI
 import MapKit
 
-class DetailMapViewModel : NSObject, ObservableObject, CLLocationManagerDelegate {
+class DetailMapViewModel : NSObject, CLLocationManagerDelegate, ObservableObject {
     @Published var cameraPosition = MapCameraPosition.region(
         MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: 37.5665, longitude: 126.9780), // 기본 좌표 (서울)
@@ -89,6 +89,7 @@ class DetailMapViewModel : NSObject, ObservableObject, CLLocationManagerDelegate
     func filterNearbyParking(currentLocation: CLLocation) {
         self.nearParking = parkingData.filter { parking in
             let parkingLocation = CLLocation(latitude: parking.latitude, longitude: parking.longitude)
+            
             return currentLocation.distance(from: parkingLocation) <= 5000 // 5km 이내
         }
     }
