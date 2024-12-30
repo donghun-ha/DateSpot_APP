@@ -124,7 +124,7 @@ async def upload_profile_image(
             image.file, # 업로드할 파일 객체
             hosts.BUCKET_NAME, # S3 버킷 이름
             file_name, # S3에 저장될 파일 이름 및 경로
-            ExtraArgs={"ContentType" : image.content_type, "ACL" : "public_read"}
+            ExtraArgs={"ContentType" : image.content_type, "ACL" : "public-read"}
         )
 
         # S3 URL 생성
