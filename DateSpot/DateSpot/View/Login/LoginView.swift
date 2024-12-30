@@ -16,7 +16,7 @@ struct LoginView: View {
     let realm = try! Realm() // Realm 초기화
     @StateObject var viewModel = LoginViewModel()
     @EnvironmentObject var appState: AppState
-    
+
     // 이미지 배열
     let images = ["tripImage1", "tripImage2", "tripImage3", "tripImage4"]
     @State private var currentImageIndex = 0
@@ -34,7 +34,7 @@ struct LoginView: View {
                     .scaledToFill()
                     .ignoresSafeArea()
                     .animation(.easeInOut, value: currentImageIndex)
-                
+
                 VStack {
                     Text("""
                          오늘, 어디로 떠나볼까요?
@@ -61,17 +61,8 @@ struct LoginView: View {
             startImageRotation()
             loadUserDataIfAvailable() // Realm에서 데이터 로드
         }
-        .onChange(of: viewModel.isLoginSuccessful) { isSuccess in
-            if isSuccess {
-                appState.isLoggedIn = true
-                appState.userEmail = viewModel.loggedInUserEmail
-                appState.userName = viewModel.loggedInUserName
-                appState.userImage = viewModel.loggedInUserImage
-                Task {
-                    await saveUserData()
-                    navigateToTabBar = true
-                }
-            }
+        .onChange(of: viewModel.isLoginSuccessful) {
+            handleLoginSuccess()
         }
     }
 
@@ -81,6 +72,19 @@ struct LoginView: View {
             withAnimation {
                 currentImageIndex = (currentImageIndex + 1) % images.count
             }
+        }
+    }
+
+    // 로그인 성공 시 처리
+    private func handleLoginSuccess() {
+        guard viewModel.isLoginSuccessful else { return }
+        appState.isLoggedIn = true
+        appState.userEmail = viewModel.loggedInUserEmail
+        appState.userName = viewModel.loggedInUserName
+        appState.userImage = viewModel.loggedInUserImage
+        Task {
+            await saveUserData()
+            navigateToTabBar = true
         }
     }
 
@@ -112,9 +116,4 @@ struct LoginView: View {
             }
         }
     }
-}
-
-
-#Preview {
-    LoginView().environmentObject(AppState())
 }

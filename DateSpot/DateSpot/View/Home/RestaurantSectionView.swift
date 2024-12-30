@@ -24,7 +24,7 @@ struct RestaurantSectionView: View {
                         let image = loadedImages[restaurant.name] // 이미 로드된 이미지를 가져옴
                         CardView(
                             image: image,
-                            category: restaurant.parking ?? "N/A",
+                            category: restaurant.parking,
                             heading: restaurant.name,
                             author: restaurant.address
                         )

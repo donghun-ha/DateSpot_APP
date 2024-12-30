@@ -25,7 +25,7 @@ struct PlaceSectionView: View {
                             let image = loadedImages[place.name] // 이미 로드된 이미지를 가져옴
                             CardView(
                                 image: image, // UIImage 전달
-                                category: place.parking ?? "N/A",
+                                category: place.parking,
                                 heading: place.name,
                                 author: place.address
                             )
