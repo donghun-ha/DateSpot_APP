@@ -7,7 +7,8 @@ Apple 로그인 시 이메일 가리기 로직 처리.
 Usage: 로그인 시 캐싱을 통한 반환 및 MySQL Insert 처리
 """
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, File, Form, UploadFile
+import uuid
 import json, hosts
 
 
@@ -97,80 +98,58 @@ async def user_login(request: Request):
         cursor.close()
         mysql_conn.close()
 
-@router.post("/update_user")
-async def update_user(request: Request):
+@router.post("/upload-profile")
+async def upload_profile_image(
+    # Form은 클라이언트가 보내는 multipart/form-data 형식에서 user_id를 추출
+    # int 타입으로 정의 되어있으며, Form(...)과 File(...)은 필수값임을 의미!
+    # UploadFile은 클라이언트가 업로드한 파일을 처리하기 위한 FastAPI의 기본 데이터 유형
+    # Package FastAPI에 추가해줘야함!
+    user_id: int = Form(...), image: UploadFile = File(...)
+):
     """
-    사용자 데이터를 업데이트하고 Redis와 MySQL 동기화
+    프로필 이미지를 업로드하고 S3 URL을 MySQL에 저장
+    1. 멀티파트로 전송된 이미지를 S3에 업로드
+    2. S3 URL을 MySQL에 저장
     """
-    print(f"사용자 데이터 업데이트 요청: {request}")
-    
-    # 클라이언트에서 전송된 JSON 데이터
-    data = await request.json()
-    email = data.get("email")
-    name = data.get("name")
-    image = data.get("image")
-    
-    if not email:
-        raise HTTPException(status_code=400, detail="email이 누락되었습니다.")
-    
-    # Apple 이메일 가리기 처리 로직
-    user_identifier = email
-    if email.endswith("privaterelay.appleid.com"):
-        user_identifier = email.split('@')[0] + "@hidden.appleid.com"
-    
-    # Redis 키 설정
-    redis_key = f"user:{user_identifier}"
-
-    # Redis 연결
-    redis = await hosts.get_redis_connection()
-
-    # MySQL 연결
-    mysql_conn = hosts.connect()
-    cursor = mysql_conn.cursor()
-
     try:
-        # MySQL 사용자 데이터 업데이트
-        update_query = """
-        UPDATE user
-        SET name = %s, image = %s, user_identifier = %s
-        WHERE email = %s
+        # S3 클라이언트 생성
+        s3_client = hosts.create_s3_client()
+
+        # S3에 업로드할 파일 이름 생성
+        file_extension = image.filename.split(".")[-1] #파일 확장자 추출
+        file_name = f"profile_images/{uuid.uuid4()}.{file_extension}" # 고유 파일 이름 생성
+
+        # S3에 파일 업로드
+        s3_client.upload_fileobj(
+            image.file, # 업로드할 파일 객체
+            hosts.BUCKET_NAME, # S3 버킷 이름
+            file_name, # S3에 저장될 파일 이름 및 경로
+            ExtraArgs={"ContentType" : image.content_type, "ACL" : "public_read"}
+        )
+
+        # S3 URL 생성
+        image_url = f"https://{hosts.BUCKET_NAME}.s3.{hosts.REGION}.amazonaws.com/{file_name}"
+
+        # MySQL에 URL 저장
+        mysql_conn = hosts.connect()
+        cursor = mysql_conn.cursor()
+
+        query ="""
+        UPDATE user SET image = %s WHERE email = %s
         """
-        cursor.execute(update_query, (name, image, user_identifier, email))
+        cursor.execute(query, (image_url, user_id))
         mysql_conn.commit()
-
-        print(f"MySQL에서 사용자 데이터 업데이트: {email}")
-
-        # Redis에서 기존 사용자 데이터 삭제
-        await redis.delete(redis_key)
-        print(f"Redis에서 기존 사용자 데이터 삭제: {redis_key}")
-
-        # 최신 사용자 데이터를 MySQL에서 가져오기
-        select_query = """
-        SELECT email, name, image, user_identifier
-        FROM user
-        WHERE email = %s
-        """
-        cursor.execute(select_query, (email,))
-        user = cursor.fetchone()
-
-        if user:
-            user_data = {
-                "email": user[0],
-                "name": user[1],
-                "image": user[2],
-                "user_identifier": user[3],
-            }
-            # Redis에 최신 사용자 데이터 저장
-            await redis.set(redis_key, json.dumps(user_data))
-            print(f"Redis에 최신 사용자 데이터 저장: {redis_key}")
-            return {"status": "success", "source": "mysql", "user_data": user_data}
-        else:
-            raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
-    
-    except Exception as e:
-        print(f"사용자 업데이트 중 오류 발생: {e}")
-        raise HTTPException(status_code=500, detail="사용자 데이터를 업데이트하는 중 오류가 발생했습니다.")
-    
-    finally:
         cursor.close()
         mysql_conn.close()
+
+        return {
+            "status" : "success",
+            "message" : "Profile image uploaded successfully",
+            "image_url" : image_url
+        }
+    
+    except Exception as e:
+        print(f"Error uploading image: {e}")
+        raise HTTPException(
+            status_code=500, detail="Failed to upload profile image"
+        )
