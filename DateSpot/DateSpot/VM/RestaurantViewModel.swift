@@ -34,24 +34,6 @@ class RestaurantViewModel: ObservableObject {
     private let baseURL = "https://fastapi.fre.today/restaurant/" // 기본 API URL
 
     
-//    func fetchImageKeys(for name: String) async -> [String] {
-//        let encodedName = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? name
-//        guard let url = URL(string: "\(baseURL)images/?name=\(encodedName)") else {
-//            print("Invalid URL for fetchImageKeys")
-//            return []
-//        }
-//        
-//        do {
-//            let (data, _) = try await URLSession.shared.data(from: url)
-//            let returnresponse = try JSONDecoder().decode([String: [String]].self, from: data)
-//            let keys = returnresponse["images"] ?? []
-//            return keys
-//        } catch {
-//            print("Failed to fetch image keys: \(error)")
-//            return []
-//        }
-//    }
-    
     func fetchRestaurants() async {
         Task {
             do {

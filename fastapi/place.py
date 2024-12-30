@@ -78,18 +78,15 @@ async def get_images(name: str):
         normalized_name = normalize_place_name_nfd(decoded_name)  # 명소는 NFD로 정규화
         prefix = f"명소/{normalized_name}_"
 
-        print(f"Looking for images with Prefix: {prefix}")
 
         # S3에서 파일 검색 (Prefix 적용)
         response = s3_client.list_objects_v2(Bucket=hosts.BUCKET_NAME, Prefix=normalize_place_name_nfd(prefix))
         
         if "Contents" not in response or not response["Contents"]:
-            print(f"No images found for prefix: {prefix}")
             raise HTTPException(status_code=404, detail="No images found")
         
         # 필터링된 키 목록 가져오기
         filtered_keys = [normalize_place_name_nfd(content["Key"]) for content in response["Contents"]]
-        print(f"Filtered keys: {filtered_keys}")
 
         return {"images": filtered_keys}
 
