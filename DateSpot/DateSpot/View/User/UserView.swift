@@ -2,79 +2,86 @@
 //  UserView.swift
 //  DateSpot
 //
-//  Created by 하동훈 on 27/12/2024.
-//
-// 이 뷰는 사용자의 프로필 정보를 표시하며, 프로필 이미지를 눌러 사진 앨범에서 이미지를 선택할 수 있는 기능을 제공합니다.
-//
 
 import SwiftUI
 
 struct UserView: View {
     @EnvironmentObject var appState: AppState
-    @StateObject private var viewModel = UserViewModel()
+    @StateObject private var viewModel = UserViewModel() // UserViewModel 연결
     @State private var isImagePickerPresented = false
     @State private var selectedImage: UIImage?
 
     var body: some View {
         VStack(spacing: 16) {
-            // 사용자 정보 섹션
-            if let currentUser = appState.userEmail {
+            if let email = appState.userEmail, !email.isEmpty {
                 VStack(spacing: 16) {
                     Text("사용자 정보")
                         .font(.title)
                         .padding()
 
-                    HStack {
-                        if let selectedImage = selectedImage {
-                            Image(uiImage: selectedImage)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 100, height: 100)
-                                .clipShape(Circle())
-                                .overlay(Circle().stroke(Color.gray, lineWidth: 2))
-                        } else {
-                            Image(systemName: "person.circle.fill")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 100, height: 100)
-                                .foregroundColor(.gray)
+                    // AsyncImage를 사용하여 S3에서 불러온 프로필 이미지 표시
+                    if let imageURL = URL(string: appState.userImage), !appState.userImage.isEmpty {
+                        AsyncImage(url: imageURL) { phase in
+                            switch phase {
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 100, height: 100)
+                                    .clipShape(Circle())
+                                    .overlay(Circle().stroke(Color.gray, lineWidth: 2))
+                            case .failure:
+                                Image(systemName: "person.circle.fill")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 100, height: 100)
+                                    .foregroundColor(.gray)
+                            default:
+                                ProgressView()
+                            }
                         }
+                        .padding()
+                    } else {
+                        // 기본 이미지 표시
+                        Image(systemName: "person.circle.fill")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 100, height: 100)
+                            .foregroundColor(.gray)
+                            .padding()
+                    }
 
-                        Button(action: {
-                            isImagePickerPresented = true
-                        }) {
-                            Text("Change Image")
-                                .padding()
-                                .background(Color.blue)
-                                .foregroundColor(.white)
-                                .cornerRadius(8)
-                        }
+                    Button("Change Image") {
+                        isImagePickerPresented = true
                     }
                     .padding()
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(8)
 
-                    TextField("Email", text: .constant(currentUser))
+                    // 이메일 표시 (수정 불가)
+                    TextField("Email", text: .constant(email))
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .disabled(true)
                         .padding()
 
+                    // 이름 입력 필드
                     TextField("Name", text: $appState.userName)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .padding()
 
-                    Button(action: {
+                    Button("Save Changes", action: {
                         guard let selectedImage = selectedImage else { return }
                         viewModel.uploadProfileImage(
-                            email: currentUser,
-                            name: appState.userName,
+                            email: email,
                             image: selectedImage
                         )
-                    }) {
-                        Text("Save Changes")
-                            .padding()
-                            .background(Color.green)
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
-                    }
+                    })
+                    .padding()
+                    .background(viewModel.isUploading ? Color.gray : Color.green)
+                    .foregroundColor(.white)
+                    .cornerRadius(8)
+                    .disabled(viewModel.isUploading) // 업로드 중에는 버튼 비활성화
                 }
                 .padding()
             } else {
@@ -83,17 +90,11 @@ struct UserView: View {
             }
         }
         .onAppear {
-            // 초기 데이터 로드
-            appState.userName = appState.userName
-            appState.userImage = appState.userImage
+            // Realm에서 사용자 데이터 로드
+            viewModel.loadUserDataFromRealm(email: appState.userEmail ?? "")
         }
         .sheet(isPresented: $isImagePickerPresented) {
             ImagePicker(selectedImage: $selectedImage)
         }
     }
-}
-
-
-#Preview {
-    UserView().environmentObject(AppState())
 }
