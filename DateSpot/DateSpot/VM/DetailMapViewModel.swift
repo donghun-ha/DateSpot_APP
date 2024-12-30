@@ -27,6 +27,7 @@ class DetailMapViewModel : NSObject, CLLocationManagerDelegate, ObservableObject
         locationManager.requestWhenInUseAuthorization()
         locationManager.startUpdatingLocation()
     }
+   
 
     
     
@@ -34,23 +35,31 @@ class DetailMapViewModel : NSObject, CLLocationManagerDelegate, ObservableObject
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
         userLocation = location
-
-        DispatchQueue.main.async {
-            self.cameraPosition = .region(
-                MKCoordinateRegion(
-                    center: location.coordinate,
-                    span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-                )
-            )
-            // 현재 위치가 업데이트되면 근처 주차장 필터링
-            if let userLocation = self.userLocation {
-                self.filterNearbyParking(currentLocation: userLocation)
-            }
-        }
+        
+        // 현재 위치가 업데이트되면 근처 주차장 필터링
+                    if let userLocation = self.userLocation {
+                        self.filterNearbyParking(currentLocation: userLocation)
+                    }
     }
+    
+    
+    // 카메라 포지션 변경 함수
+    func updateCameraPosition(latitude: Double, longitude: Double) {
+           DispatchQueue.main.async {
+               self.cameraPosition = .region(
+                   MKCoordinateRegion(
+                       center: CLLocationCoordinate2D(
+                           latitude: latitude,
+                           longitude: longitude
+                       ),
+                       span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+                   )
+               )
+           }
+       }
 
     // 주차장 정보 불러오기
-    func fetchParkingInfo() {
+    func fetchParkingInfo(lat : Double, lng : Double)  {
         guard let url = URL(string: "http://fastapi.fre.today/parking/select_parkinginfo?") else {
             print("Invalid URL")
             return
@@ -72,14 +81,14 @@ class DetailMapViewModel : NSObject, CLLocationManagerDelegate, ObservableObject
                 let decodedResponse = try JSONDecoder().decode([String: [Parking]].self, from: data)
                 DispatchQueue.main.async {
                     self.parkingData = decodedResponse["result"] ?? []
-                    
+                    let  location = CLLocation(latitude: lat, longitude: lng)
                     // 주차장 필터링
-                    if let userLocation = self.userLocation {
-                        self.filterNearbyParking(currentLocation: userLocation)
+                    if self.userLocation != nil {
+                        self.filterNearbyParking(currentLocation: location)
                     }
                 }
             } catch {
-                print("Error decoding JSON:", error)
+                print("주차장정보 불러오기 Error :", error)
             }
         }.resume()
     }
@@ -90,7 +99,7 @@ class DetailMapViewModel : NSObject, CLLocationManagerDelegate, ObservableObject
         self.nearParking = parkingData.filter { parking in
             let parkingLocation = CLLocation(latitude: parking.latitude, longitude: parking.longitude)
             
-            return currentLocation.distance(from: parkingLocation) <= 5000 // 5km 이내
+            return currentLocation.distance(from: parkingLocation) <= 1000 // 5km 이내
         }
     }
 }

@@ -9,8 +9,11 @@ import Foundation
 import SwiftUI
 import MapKit
 import CoreLocation
-
 class TabMapViewModel: NSObject, CLLocationManagerDelegate, ObservableObject {
+
+    @StateObject var placeVM = PlaceViewModel()
+    @StateObject var restaurantVM = RestaurantViewModel()
+    
     
     @Published var cameraPosition = MapCameraPosition.region(
         MKCoordinateRegion(
@@ -18,16 +21,16 @@ class TabMapViewModel: NSObject, CLLocationManagerDelegate, ObservableObject {
             span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
         )
     )
-    
-
-    
     @Published var userLocation: CLLocation?  // 사용자 위치
-    let tabMapLoc = CLLocationManager()  // 지도관리
     @Published var region: MKCoordinateRegion = MKCoordinateRegion()  // 지도 영역
     
-    // 필터링된 명소와 레스토랑 배열
+    // 필터링된 명소와 레스토랑
     @Published var nearPlace: [PlaceData] = []
     @Published var nearRestaurant: [Restaurant] = []
+     
+    
+    // 지도
+    let tabMapLoc = CLLocationManager()  // 지도관리
     
     override init() {
         super.init()
@@ -38,19 +41,22 @@ class TabMapViewModel: NSObject, CLLocationManagerDelegate, ObservableObject {
     }
     
     // 마커 필터링  (View에서 placeData, restaurantData 입력)
-    func filterNearALL(currentLocation: CLLocation, placeData: [PlaceData], restaurantData: [Restaurant]) {
+    func filterNearALL(currentLocation: CLLocation, placeData : [PlaceData], restaurantData : [Restaurant]) {
         // 명소 필터링
         self.nearPlace = placeData.filter { place in
             let placeLocation = CLLocation(latitude: place.lat, longitude: place.lng)
-            return currentLocation.distance(from: placeLocation) <= 5000 // 5km 이내
+            return currentLocation.distance(from: placeLocation) <= 1000 // 5km 이내
         }
         
         // 식당 필터링
         self.nearRestaurant = restaurantData.filter { restaurant in
             let restaurantLocation = CLLocation(latitude: restaurant.lat, longitude: restaurant.lng)
-            return currentLocation.distance(from: restaurantLocation) <= 5000
+            return currentLocation.distance(from: restaurantLocation) <= 1000
         }
     }
+    
+    
+    
 
     // CLLocationManagerDelegate 함수 - 사용자 위치 업데이트 시 호출
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
@@ -63,7 +69,7 @@ class TabMapViewModel: NSObject, CLLocationManagerDelegate, ObservableObject {
             self.cameraPosition = .region(
                 MKCoordinateRegion(
                     center: newLocation.coordinate,
-                    span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+                    span: MKCoordinateSpan(latitudeDelta: 0.015, longitudeDelta: 0.015)
                 )
             )
             
