@@ -6,35 +6,37 @@ struct HomeContentView: View {
     @State private var isLoading = true
 
     var body: some View {
-        Group {
-            if isLoading {
-                ProgressView("Loading...")
-                    .font(.headline)
-            } else {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
-                        // 맛집 섹션
-                        RestaurantSectionView(
-                            restaurants: restaurantViewModel.restaurants,
-                            viewModel: restaurantViewModel
-                        )
+        NavigationView { // NavigationView로 감싸기
+            Group {
+                if isLoading {
+                    ProgressView("Loading...")
+                        .font(.headline)
+                } else {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 20) {
+                            // 맛집 섹션
+                            RestaurantSectionView(
+                                restaurants: restaurantViewModel.restaurants,
+                                viewModel: restaurantViewModel
+                            )
 
-                        // 명소 섹션
-                        PlaceSectionView(
-                            places: placeViewModel.places,
-                            viewModel: placeViewModel
-                        )
+                            // 명소 섹션
+                            PlaceSectionView(
+                                places: placeViewModel.places,
+                                viewModel: placeViewModel
+                            )
+                        }
+                        .padding(.vertical)
                     }
-                    .padding(.vertical)
                 }
             }
-        }
-        .onAppear {
-            Task {
-                isLoading = true
-                await restaurantViewModel.fetchRestaurants()
-                await placeViewModel.fetchPlace()
-                isLoading = false
+            .onAppear {
+                Task {
+                    isLoading = true
+                    await restaurantViewModel.fetchRestaurants()
+                    await placeViewModel.fetchPlace()
+                    isLoading = false
+                }
             }
         }
     }

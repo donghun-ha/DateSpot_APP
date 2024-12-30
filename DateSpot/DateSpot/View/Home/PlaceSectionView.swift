@@ -12,35 +12,37 @@ struct PlaceSectionView: View {
                 .padding(.horizontal)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 20) {
-                    // places 배열에서 최대 20개의 명소만 선택
+                LazyHStack(spacing: 20) {
                     ForEach(Array(places.prefix(20)), id: \.name) { place in
-                        ZStack {
-                            // 이미 로드된 첫 번째 이미지를 표시
-                            if let image = viewModel.images[place.name] {
-                                CardView(
-                                    image: image,
-                                    category: place.parking ?? "N/A",
-                                    heading: place.name,
-                                    author: place.address
-                                )
-                                .frame(width: 300)
-                            } else {
-                                // 기본 이미지를 표시하며 첫 번째 이미지를 비동기로 로드
-                                CardView(
-                                    image: UIImage(systemName: "photo"), // 기본 이미지
-                                    category: place.parking ?? "N/A",
-                                    heading: place.name,
-                                    author: place.address
-                                )
-                                .frame(width: 300)
-                                .onAppear {
-                                    Task {
-                                        await viewModel.fetchFirstImage(for: place.name) // 첫 번째 이미지 로드
+                        NavigationLink(
+                            destination: DetailView(restaurantName: place.name) // 클릭 시 DetailView로 이동
+                        ) {
+                            ZStack {
+                                if let image = viewModel.images[place.name] {
+                                    CardView(
+                                        image: image,
+                                        category: place.parking,
+                                        heading: place.name,
+                                        author: place.address
+                                    )
+                                    .frame(width: 300)
+                                } else {
+                                    CardView(
+                                        image: UIImage(systemName: "photo"),
+                                        category: place.parking,
+                                        heading: place.name,
+                                        author: place.address
+                                    )
+                                    .frame(width: 300)
+                                    .onAppear {
+                                        Task {
+                                            await viewModel.fetchFirstImage(for: place.name)
+                                        }
                                     }
                                 }
                             }
                         }
+                        .buttonStyle(PlainButtonStyle()) // 기본 스타일 제거
                     }
                 }
                 .padding(.horizontal)
