@@ -5,18 +5,34 @@ from urllib.parse import unquote
 
 router = APIRouter()
 
-
 @router.get('/restaurant_select_all')
 async def select():
-    redis = hosts.get_redis_connection()
     try:
         conn = hosts.connect()
         curs = conn.cursor()
         sql = "select * from restaurant"
         curs.execute(sql)
         data = curs.fetchall()
-        print(data)
-        return {"result" : data}
+        
+        # mysql에 데이터가 존재할 경우
+        if data :
+            result = []
+            for i in data : 
+                result.append(
+            {
+                'name' : i[0],
+                'address' : i[1],
+                'lat' : i[2],
+                'lng' : i[3],
+                'parking' : i[4],
+                'operatingHour' : i[5],
+                'closedDays' : i[6],
+                'contactInfo' : i[7],
+                'breakTime' : i[8],
+                'lastOrder' : i[9]
+            }
+                )
+            return {"results" : result}
     except Exception as e :
         print("restaurant.py select Error")
         return {"restaurant.py select Error" : e}
@@ -138,3 +154,5 @@ async def stream_image(file_key: str):
     except Exception as e:
         print(f"Error while streaming image: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
