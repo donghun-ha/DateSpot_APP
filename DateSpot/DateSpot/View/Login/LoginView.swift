@@ -8,75 +8,111 @@
 import SwiftUI
 import GoogleSignIn
 import AuthenticationServices
+import RealmSwift
 
 
 // Login 화면
 struct LoginView: View {
-    // VM (Google 로그인 로직)
-    // 새로운 상태 객체를 생성해야 할 때는 @StateObject, 이미 생성된 객체를 감시할 때는 @ObservedObject를 사용합니다.
+    let realm = try! Realm() // Realm 초기화
     @StateObject var viewModel = LoginViewModel()
     @EnvironmentObject var appState: AppState
     
     // 이미지 배열
     let images = ["tripImage1", "tripImage2", "tripImage3", "tripImage4"]
-    // 이미지 상태
     @State private var currentImageIndex = 0
+    @State private var navigateToTabBar = false // TabBarView로 이동 여부
 
-    // 본문
     var body: some View {
         ZStack {
-            // 배경 이미지
-            Image(images[currentImageIndex])
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
-                .animation(.easeInOut, value: currentImageIndex) // 애니메이션 효과 추가
-            
-               VStack() {
-                   // 문구
-                   Text("""
-                        오늘, 어디로 떠나볼까요?
-                        함께할 장소를 찾아보세요.
-                        """)
-                       .bold()
-                       .foregroundStyle(.white)
-                       .multilineTextAlignment(.center)
-                       .font(.title)
-                       .padding(.top, 120)
-                   Spacer()
-                   VStack(spacing: 15) {
-                       // Google Login Button
-                       GoogleLoginButtonView(viewModel: viewModel)
-                       // Apple Login Button
-                       AppleLoginButtonView(viewModel: viewModel)
-                   }
-                   .padding(.bottom, 50)
-                   .padding(.horizontal, 20) // 버튼 좌우 간격 조정
-               }
-           }
+            if navigateToTabBar {
+                // TabBarView로 이동
+                TabBarView()
+            } else {
+                // 로그인 화면
+                Image(images[currentImageIndex])
+                    .resizable()
+                    .scaledToFill()
+                    .ignoresSafeArea()
+                    .animation(.easeInOut, value: currentImageIndex)
+                
+                VStack {
+                    Text("""
+                         오늘, 어디로 떠나볼까요?
+                         함께할 장소를 찾아보세요.
+                         """)
+                        .bold()
+                        .foregroundStyle(.white)
+                        .multilineTextAlignment(.center)
+                        .font(.title)
+                        .padding(.top, 120)
+
+                    Spacer()
+
+                    VStack(spacing: 15) {
+                        GoogleLoginButtonView(viewModel: viewModel)
+                        AppleLoginButtonView(viewModel: viewModel)
+                    }
+                    .padding(.bottom, 50)
+                    .padding(.horizontal, 20)
+                }
+            }
+        }
         .onAppear {
             startImageRotation()
+            loadUserDataIfAvailable() // Realm에서 데이터 로드
         }
         .onChange(of: viewModel.isLoginSuccessful) { isSuccess in
             if isSuccess {
-                appState.isLoggedIn = true // 로그인 성공 시 상태 업데이트
-                appState.userEmail = viewModel.loggedInUserEmail // 로그인한 사용자 이메일
-                appState.userName = viewModel.loggedInUserName  // 로그인한 사용자 이름
-                appState.userImage = viewModel.loggedInUserImage // 로그인한 사용자 이미지
+                appState.isLoggedIn = true
+                appState.userEmail = viewModel.loggedInUserEmail
+                appState.userName = viewModel.loggedInUserName
+                appState.userImage = viewModel.loggedInUserImage
+                Task {
+                    await saveUserData()
+                    navigateToTabBar = true
+                }
             }
         }
-    } // body
-    
+    }
+
     // 이미지를 주기적으로 변경하는 함수
     private func startImageRotation() {
-        Timer.scheduledTimer(withTimeInterval: 2.5, repeats: true) {_ in
-            withAnimation{
+        Timer.scheduledTimer(withTimeInterval: 2.5, repeats: true) { _ in
+            withAnimation {
                 currentImageIndex = (currentImageIndex + 1) % images.count
             }
         }
-    } // startImageRotation
-    
-} // LoginContentView
+    }
+
+    // Realm에 저장된 데이터 확인 및 AppState 업데이트
+    private func loadUserDataIfAvailable() {
+        let users = realm.objects(UserData.self)
+        guard let user = users.first else { return } // 저장된 사용자 데이터가 없는 경우 종료
+
+        DispatchQueue.main.async {
+            appState.isLoggedIn = true
+            appState.userEmail = user.userEmail
+            appState.userName = user.userName
+            appState.userImage = user.userImage
+            navigateToTabBar = true // TabBarView로 이동
+        }
+    }
+
+    // Realm에 사용자 데이터 저장
+    func saveUserData() async {
+        let data = UserData(userEmail: viewModel.loggedInUserEmail, userName: viewModel.loggedInUserName, userImage: viewModel.loggedInUserImage)
+        DispatchQueue.main.async {
+            do {
+                try realm.write {
+                    realm.add(data, update: .modified) // 중복 데이터 업데이트
+                }
+                print("✅ UserData 저장 성공")
+            } catch {
+                print("❌ UserData 저장 실패: \(error.localizedDescription)")
+            }
+        }
+    }
+}
 
 
 #Preview {

@@ -6,10 +6,11 @@
 //
 
 import Foundation
-
+import RealmSwift
 
 // FastAPI 서버로 사용자 정보를 전송
 class LoginService {
+    let realm = try! Realm() // Realm 인스턴스 생성
     /*
      사용자 데이터 백엔드 전송
      - Parameters:
