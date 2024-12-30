@@ -59,7 +59,7 @@ class DetailMapViewModel : NSObject, CLLocationManagerDelegate, ObservableObject
        }
 
     // 주차장 정보 불러오기
-    func fetchParkingInfo(lat : Double, lng : Double) {
+    func fetchParkingInfo(lat : Double, lng : Double)  {
         guard let url = URL(string: "http://fastapi.fre.today/parking/select_parkinginfo?") else {
             print("Invalid URL")
             return
@@ -88,7 +88,7 @@ class DetailMapViewModel : NSObject, CLLocationManagerDelegate, ObservableObject
                     }
                 }
             } catch {
-                print("Error decoding JSON:", error)
+                print("주차장정보 불러오기 Error :", error)
             }
         }.resume()
     }

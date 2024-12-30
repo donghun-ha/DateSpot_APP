@@ -12,9 +12,14 @@ struct DetailMap: View {
     @StateObject private var viewModel = DetailMapViewModel()
     @Binding var restaurants : Restaurant
 //    @Binding var place : PlaceData
+    @State var loadingStatus = false
     
     var body: some View {
         NavigationView {
+            if loadingStatus == false{
+                ProgressView("Loading...")
+                    .font(.headline)
+            }
             ZStack {
                 Map(position:$viewModel.cameraPosition) {
                     UserAnnotation()
@@ -81,6 +86,7 @@ struct DetailMap: View {
             .onAppear {
                 viewModel.updateCameraPosition(latitude: restaurants.lat, longitude: restaurants.lng)
                 viewModel.fetchParkingInfo(lat: restaurants.lat, lng: restaurants.lng)
+                loadingStatus = true
                 
             }
         }

@@ -69,7 +69,7 @@ class TabMapViewModel: NSObject, CLLocationManagerDelegate, ObservableObject {
             self.cameraPosition = .region(
                 MKCoordinateRegion(
                     center: newLocation.coordinate,
-                    span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
+                    span: MKCoordinateSpan(latitudeDelta: 0.015, longitudeDelta: 0.015)
                 )
             )
             
