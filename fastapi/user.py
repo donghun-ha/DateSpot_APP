@@ -101,10 +101,10 @@ async def user_login(request: Request):
 @router.post("/upload-profile")
 async def upload_profile_image(
     # Form은 클라이언트가 보내는 multipart/form-data 형식에서 user_id를 추출
-    # int 타입으로 정의 되어있으며, Form(...)과 File(...)은 필수값임을 의미!
+    # str 타입으로 정의 되어있으며, Form(...)과 File(...)은 필수값임을 의미!
     # UploadFile은 클라이언트가 업로드한 파일을 처리하기 위한 FastAPI의 기본 데이터 유형
     # Package FastAPI에 추가해줘야함!
-    user_id: int = Form(...), image: UploadFile = File(...)
+    user_id: str = Form(...), image: UploadFile = File(...)
 ):
     """
     프로필 이미지를 업로드하고 S3 URL을 MySQL에 저장
