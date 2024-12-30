@@ -49,11 +49,6 @@ async def select():
         )
     return dict_list
 
-def normalize_name(name: str) -> str:
-    """
-    입력된 이름을 Unicode 정규화하여 S3 검색에 적합한 형태로 변환
-    """
-    return unicodedata.normalize("NFC", name.strip())
 
 def remove_invisible_characters(input_str: str) -> str:
     """
@@ -205,3 +200,37 @@ async def stream_image(file_key: str):
 def remove_invisible_characters(input_str: str) -> str:
     # 모든 비표시 가능 문자를 제거 (공백, 제어 문자 포함)
     return ''.join(ch for ch in input_str if ch.isprintable())
+
+@router.get("/images_lwy")
+async def get_images(name: str):
+    """
+    특정 이름에 해당하는 이미지를 S3에서 가져와 리스트로 반환
+    """
+    s3_client = hosts.create_s3_client()
+    try:
+        # 입력값 디코딩 및 정규화
+        decoded_name = unquote(name).strip()
+        normalized_name = normalize_place_name(decoded_name)
+        prefix = f"명소/{normalized_name}_"
+
+        # S3에서 파일 검색
+        response = s3_client.list_objects_v2(Bucket=hosts.BUCKET_NAME)
+        all_keys = [
+            content["Key"] for content in response.get("Contents", [])
+        ]
+
+        # S3 키 정규화 및 매칭
+        filtered_keys = [
+            key for key in all_keys
+            if normalize_place_name(key).startswith(prefix)
+        ]
+
+        # 결과 확인
+        if not filtered_keys:
+            print(f"No images found for: {normalized_name}")
+            raise HTTPException(status_code=404, detail="No images found")
+        return {"images": filtered_keys}
+
+    except Exception as e:
+        print(f"Error while fetching images: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching images: {str(e)}")
