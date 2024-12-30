@@ -4,6 +4,8 @@ import hosts, unicodedata, re
 from urllib.parse import unquote
 from pydantic import BaseModel
 from datetime import datetime
+from pymysql.cursors import DictCursor
+
 router = APIRouter()
 
 @router.get('/restaurant_select_all')
@@ -191,11 +193,12 @@ async def add_bookmark(bookmark: RestaurantBookRequest):
         connection.close()
 
 
+
 @router.post("/check_bookmark/")
 async def check_bookmark(request: checkRestaurantBook):
     connection = hosts.connect()
     try:
-        with connection.cursor() as cursor:
+        with connection.cursor(DictCursor) as cursor:  # DictCursor 사용
             # 북마크 존재 여부 확인
             sql = """
                 SELECT COUNT(*) AS count
@@ -204,7 +207,7 @@ async def check_bookmark(request: checkRestaurantBook):
             """
             cursor.execute(sql, (request.user_email, request.restaurant_name))
             result = cursor.fetchone()
-            is_bookmarked = result["count"] > 0
+            is_bookmarked = result["count"] > 0  # DictCursor로 딕셔너리로 처리 가능
         return {"is_bookmarked": is_bookmarked}
     except Exception as e:
         print(f"Error: {e}")
