@@ -71,11 +71,13 @@ struct UserView: View {
                         .padding()
 
                     Button("Save Changes", action: {
-                        guard let selectedImage = selectedImage else { return }
-                        viewModel.uploadProfileImage(
-                            email: email,
-                            image: selectedImage
-                        )
+                        Task {
+                            guard let selectedImage = selectedImage else { return }
+                            await viewModel.uploadProfileImage(
+                                email: email,
+                                image: selectedImage
+                            )
+                        }
                     })
                     .padding()
                     .background(viewModel.isUploading ? Color.gray : Color.green)
@@ -90,8 +92,10 @@ struct UserView: View {
             }
         }
         .onAppear {
-            // Realm에서 사용자 데이터 로드
-            viewModel.loadUserDataFromRealm(email: appState.userEmail ?? "")
+            Task {
+                // Realm에서 사용자 데이터 로드
+                await viewModel.loadUserDataFromBackend(email: appState.userEmail ?? "")
+            }
         }
         .sheet(isPresented: $isImagePickerPresented) {
             ImagePicker(selectedImage: $selectedImage)

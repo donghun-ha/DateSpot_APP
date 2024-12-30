@@ -106,6 +106,12 @@ async def upload_profile_image(
     # Package FastAPI에 추가해줘야함!
     user_id: str = Form(...), image: UploadFile = File(...)
 ):
+    
+    print(f"Received user_id: {user_id}")  # 디버깅 로그
+    print(f"Received file name: {image.filename}")  # 파일 정보 출력
+    print(f"Received file content type: {image.content_type}")
+
+    
     """
     프로필 이미지를 업로드하고 S3 URL을 MySQL에 저장
     1. 멀티파트로 전송된 이미지를 S3에 업로드
