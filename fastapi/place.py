@@ -3,12 +3,14 @@ from fastapi.responses import StreamingResponse
 from urllib.parse import unquote
 import hosts
 import unicodedata
+from pydantic import BaseModel
+from datetime import datetime
 
 router = APIRouter()
+
 def normalize_place_name(name: str) -> str:
     # Unicode 정규화 (NFC 적용)
     return unicodedata.normalize("NFC", name)
-
 
 
 def remove_invisible_characters(input_str: str) -> str:
@@ -133,3 +135,34 @@ async def stream_image(name: str):
     except Exception as e:
         print(f"Error while streaming image: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+
+
+# Pydantic 모델
+class RestaurantBookRequest(BaseModel):
+    user_email: str
+    restaurant_name: str
+    name: str
+
+@router.post("/add_bookmark/")
+async def add_bookmark(bookmark: RestaurantBookRequest):
+    connection =hosts.connect()
+    try:
+        with connection.cursor() as cursor:
+            # 북마크 추가
+            sql = """
+                INSERT INTO restaurant_book (user_email, restaurant_name, name, created_at)
+                VALUES (%s, %s, %s, %s)
+            """
+            cursor.execute(sql, (
+                bookmark.user_email,
+                bookmark.restaurant_name,
+                bookmark.name,
+                datetime.now()
+            ))
+            connection.commit()
+        return {"message": "Bookmark added successfully"}
+    except Exception as e:
+        print(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to add bookmark")
+    finally:
+        connection.close()

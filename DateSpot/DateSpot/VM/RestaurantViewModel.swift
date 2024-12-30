@@ -7,12 +7,15 @@
 
 import SwiftUI
 import Foundation
+import Combine
 
 protocol RestaurantViewModelProtocol: ObservableObject {
     var restaurants: [Restaurant] { get } // 전체 레스토랑 리스트
     var selectedRestaurant: Restaurant? { get } // 선택된 레스토랑 상세 정보
     var images: [UIImage] { get } // 로드된 이미지 리스트
 
+
+    
     func fetchImageKeys(for name: String) async -> [String]
     func fetchImage(fileKey: String) async -> UIImage?
     func loadImages(for name: String) async
@@ -25,7 +28,8 @@ class RestaurantViewModel: ObservableObject {
     @Published private(set) var restaurants: [Restaurant] = [] // 전체 레스토랑 리스트
     @Published private(set) var selectedRestaurant: Restaurant? // 선택된 레스토랑 상세 정보
     @Published private(set) var images: [UIImage] = [] // 로드된 이미지 리스트
-    
+    @Published var isBookmarked: Bool = false
+    private var cancellables = Set<AnyCancellable>()
     
     private let baseURL = "https://fastapi.fre.today/restaurant/" // 기본 API URL
 
@@ -204,4 +208,51 @@ extension RestaurantViewModel {
             throw error
         }
     }
+    
+    
+    
+    func addBookmark(userEmail: String, restaurantName: String, name: String) {
+        // API URL
+        guard let url = URL(string: "http://your-api-url/add_bookmark/") else { return }
+
+        // 요청 데이터
+        let requestBody: [String: Any] = [
+            "user_email": userEmail,
+            "restaurant_name": restaurantName,
+            "name": name
+        ]
+
+        // JSON 데이터 생성
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: requestBody) else { return }
+
+        // URLRequest 생성
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = jsonData
+
+        // API 호출
+        URLSession.shared.dataTaskPublisher(for: request)
+            .tryMap { output -> Data in
+                guard let response = output.response as? HTTPURLResponse,
+                      response.statusCode == 200 else {
+                    throw URLError(.badServerResponse)
+                }
+                return output.data
+            }
+            .decode(type: [String: String].self, decoder: JSONDecoder())
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { completion in
+                switch completion {
+                case .finished:
+                    print("Bookmark added successfully")
+                case .failure(let error):
+                    print("Failed to add bookmark: \(error.localizedDescription)")
+                }
+            }, receiveValue: { [weak self] _ in
+                self?.isBookmarked = true
+            })
+            .store(in: &cancellables)
+    }
+    
 }
