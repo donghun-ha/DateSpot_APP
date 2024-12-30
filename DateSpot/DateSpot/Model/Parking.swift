@@ -8,8 +8,8 @@
 import Foundation
 import CoreLocation
 
-struct Parking: Identifiable, Decodable {
-    var id = UUID() // 고유 식별자 
+struct Parking: Identifiable, Codable {
+    var id = UUID() // 고유 식별자
     var address : String
     var name: String
     let latitude: Double
@@ -19,6 +19,7 @@ struct Parking: Identifiable, Decodable {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
     
+    
     init(id: UUID = UUID(), address: String, name: String, latitude: Double, longitude: Double) {
         self.id = id
         self.address = address
@@ -26,7 +27,6 @@ struct Parking: Identifiable, Decodable {
         self.latitude = latitude
         self.longitude = longitude
     }
-    
     
     
     enum CodingKeys: CodingKey {

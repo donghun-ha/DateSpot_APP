@@ -26,6 +26,7 @@ class RestaurantViewModel: ObservableObject {
     @Published private(set) var selectedRestaurant: Restaurant? // 선택된 레스토랑 상세 정보
     @Published private(set) var images: [UIImage] = [] // 로드된 이미지 리스트
     
+    
     private let baseURL = "https://fastapi.fre.today/restaurant/" // 기본 API URL
 
     
@@ -134,7 +135,7 @@ extension RestaurantViewModel {
         }
 
         let decoder = JSONDecoder()
-        return try decoder.decode([Restaurant].self, from: data)
+        return try decoder.decode([String:[Restaurant]].self, from: data)["results"] ?? []
     }
 
     private func fetchRestaurantDetailFromAPI(name: String) async throws -> Restaurant {
