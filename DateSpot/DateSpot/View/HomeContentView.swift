@@ -33,9 +33,12 @@ struct HomeContentView: View {
             .onAppear {
                 Task {
                     isLoading = true
-                    await restaurantViewModel.fetchRestaurants()
-                    await placeViewModel.fetchPlace()
+                    async let restaurants = restaurantViewModel.fetchRestaurants()
+                    async let places = placeViewModel.fetchPlace()
                     isLoading = false
+                    
+                    // 병렬로 데이터 로드
+                    await (restaurants, places)
                 }
             }
         }
