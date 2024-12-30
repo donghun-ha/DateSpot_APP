@@ -13,6 +13,7 @@ protocol PlaceQueryModelProtocol {
     func itemDownloaded(items: [PlaceData])
 }
 
+@MainActor
 class PlaceViewModel: ObservableObject {
     var delegate: PlaceQueryModelProtocol?
     @Published var places: [PlaceData] = [] // 전체 장소 리스트
@@ -65,12 +66,15 @@ class PlaceViewModel: ObservableObject {
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             if let image = UIImage(data: data) {
-                images[placeName] = image // @MainActor 적용으로 안전하게 업데이트
+                DispatchQueue.main.async {
+                    self.images[placeName] = image // 메인 스레드에서 업데이트
+                }
             }
         } catch {
             print("❌ 이미지 다운로드 실패: \(error.localizedDescription)")
         }
     }
+
 
 
     // 거리 계산 함수

@@ -1,4 +1,5 @@
 import SwiftUI
+import RealmSwift
 
 struct DetailView: View {
     @StateObject private var restaurantViewModel = RestaurantViewModel()
@@ -54,6 +55,7 @@ struct DetailView: View {
             }
         }
         .onAppear {
+            debugPrint(Realm.Configuration.defaultConfiguration.fileURL ?? "")
             Task {
                 isLoading = true
                 // 레스토랑 세부 정보 및 이미지 가져오기
@@ -92,4 +94,8 @@ struct DetailView: View {
         let deltaLng = lng2 - lng1
         return sqrt(deltaLat * deltaLat + deltaLng * deltaLng) * 111 // 대략적인 거리(km)
     }
+}
+
+#Preview {
+    DetailView()
 }

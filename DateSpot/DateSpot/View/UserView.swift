@@ -20,30 +20,30 @@ struct UserView: View {
             VStack(alignment: .leading, spacing: 20) {
                 HStack(spacing: 20) {
                     // 프로필 이미지
-                    Button(action: {
-                        isPhotoPickerPresented = true // 사진 선택 화면 열기
-                    }) {
-                        if let profileImage = appState.userImage {
-                            // 사용자가 선택한 이미지 표시
-                            Image(uiImage: profileImage)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 100, height: 100)
-                                .clipShape(Circle())
-                        } else {
-                            // 기본 프로필 이미지
-                            Image(systemName: "person.crop.circle.fill")
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 100, height: 100)
-                                .foregroundColor(.gray)
-                                .clipShape(Circle())
-                        }
-                    }
-                    .buttonStyle(PlainButtonStyle()) // 버튼 스타일 기본값 제거
-                    .sheet(isPresented: $isPhotoPickerPresented) {
-                        PhotoPicker(selectedImage: $profileImage)
-                    }
+//                    Button(action: {
+//                        isPhotoPickerPresented = true // 사진 선택 화면 열기
+//                    }) {
+//                        if let profileImage = appState.userImage {
+//                            // 사용자가 선택한 이미지 표시
+//                            Image(uiImage: profileImage)
+//                                .resizable()
+//                                .scaledToFill()
+//                                .frame(width: 100, height: 100)
+//                                .clipShape(Circle())
+//                        } else {
+//                            // 기본 프로필 이미지
+//                            Image(systemName: "person.crop.circle.fill")
+//                                .resizable()
+//                                .scaledToFill()
+//                                .frame(width: 100, height: 100)
+//                                .foregroundColor(.gray)
+//                                .clipShape(Circle())
+//                        }
+//                    }
+//                    .buttonStyle(PlainButtonStyle()) // 버튼 스타일 기본값 제거
+//                    .sheet(isPresented: $isPhotoPickerPresented) {
+//                        PhotoPicker(selectedImage: $profileImage)
+//                    }
 
                     VStack(alignment: .leading, spacing: 5) {
                         // 이메일
