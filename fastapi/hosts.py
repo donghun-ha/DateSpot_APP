@@ -21,19 +21,16 @@ REDIS_PASSWORD = os.getenv("REDIS_PASSWORD")
 
 
 def create_s3_client():
-    aws_access_key = os.getenv("AWS_ACCESS_KEY_ID")
-    aws_secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
-    region = os.getenv("AWS_REGION", "ap-northeast-2")
 
-    if not aws_access_key or not aws_secret_key:
+    if not AWS_SECRET_KEY or not AWS_SECRET_KEY:
         raise HTTPException(status_code=400, detail="AWS credentials are not set in environment variables.")
 
     try:
         s3 = boto3.client(
             's3',
-            aws_access_key_id=aws_access_key,
-            aws_secret_access_key=aws_secret_key,
-            region_name=region
+            aws_access_key_id=AWS_ACCESS_KEY,
+            aws_secret_access_key=AWS_SECRET_KEY,
+            region_name=REGION
         )
         return s3
     except (NoCredentialsError, PartialCredentialsError) as e:
