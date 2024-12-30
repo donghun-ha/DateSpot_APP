@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Foundation
+import Combine
 
 protocol RestaurantViewModelProtocol: ObservableObject {
     var restaurants: [Restaurant] { get } // 전체 레스토랑 리스트

@@ -2,13 +2,28 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from urllib.parse import unquote
 import hosts
-from botocore.exceptions import ClientError
 import unicodedata
-import pymysql
-
+from pydantic import BaseModel
+from datetime import datetime
 
 router = APIRouter()
 
+def normalize_place_name(name: str) -> str:
+    # Unicode 정규화 (NFC 적용)
+    return unicodedata.normalize("NFC", name)
+
+
+def remove_invisible_characters(input_str: str) -> str:
+    # 모든 비표시 가능 문자를 제거 (공백, 제어 문자 포함)
+    return ''.join(ch for ch in input_str if ch.isprintable())
+
+import unicodedata
+
+def normalize_place_name_nfd(name: str) -> str:
+    """
+    입력된 이름을 Unicode NFD로 정규화
+    """
+    return unicodedata.normalize("NFD", name)
 
 @router.get("/select")
 async def select():
@@ -45,29 +60,11 @@ def remove_invisible_characters(input_str: str) -> str:
     """
     return ''.join(ch for ch in input_str if ch.isprintable())
 
-import unicodedata
-from fastapi import FastAPI, HTTPException
-from urllib.parse import unquote
 
 
 
-def normalize_place_name(name: str) -> str:
-    # Unicode 정규화 (NFC 적용)
-    return unicodedata.normalize("NFC", name)
 
 
-
-def remove_invisible_characters(input_str: str) -> str:
-    # 모든 비표시 가능 문자를 제거 (공백, 제어 문자 포함)
-    return ''.join(ch for ch in input_str if ch.isprintable())
-
-import unicodedata
-
-def normalize_place_name_nfd(name: str) -> str:
-    """
-    입력된 이름을 Unicode NFD로 정규화
-    """
-    return unicodedata.normalize("NFD", name)
 
 @router.get("/images")
 async def get_images(name: str):
@@ -100,26 +97,72 @@ async def get_images(name: str):
         print(f"Error while fetching images: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error fetching images: {str(e)}")
 
-@router.get("/image")
-async def stream_image(file_key: str):
-    s3_client = hosts.create_s3_client()
+@router.get("/image_thumb")
+async def stream_image(name: str):
+    """
+    단일 이미지를 S3에서 검색하고 스트리밍 반환
+    """
+    s3 = hosts.create_s3_client()
     try:
-        # 파일 키 정리 및 정규화
-        cleaned_key = remove_invisible_characters(file_key)
+        # 입력값 정리 및 디코딩
+        decoded_name = unquote(name).strip()
+        normalized_name = normalize_place_name_nfd(decoded_name)
+        prefix = f"명소/{normalized_name}_"
+        normalized_prefix = normalize_place_name_nfd(prefix)
+
+        # S3에서 파일 검색 (Prefix를 사용하여 제한)
+        response = s3.list_objects_v2(Bucket=hosts.BUCKET_NAME, Prefix=normalized_prefix)
+        if "Contents" not in response or not response["Contents"]:
+            print(f"No images found for prefix: {normalized_prefix}")
+            raise HTTPException(status_code=404, detail="Image not found")
+
+        # 첫 번째 파일 키 가져오기
+        file_key = response["Contents"][0]["Key"]
 
         # S3 객체 가져오기
-        s3_object = s3_client.get_object(Bucket=hosts.BUCKET_NAME, Key=cleaned_key)
+        cleaned_key = remove_invisible_characters(file_key)
+        s3_object = s3.get_object(Bucket=hosts.BUCKET_NAME, Key=cleaned_key)
 
-        # 디버깅: 가져온 객체 출력
-        print(f"Streaming file: {cleaned_key}")
-
+        # 이미지 스트리밍 반환
         return StreamingResponse(
             content=s3_object["Body"],
             media_type="image/jpeg"
         )
-    except s3_client.exceptions.NoSuchKey:
-        print(f"File not found in S3: {file_key}")
+
+    except s3.exceptions.NoSuchKey:
+        print(f"NoSuchKey error for key: {name}")
         raise HTTPException(status_code=404, detail="File not found in S3")
     except Exception as e:
         print(f"Error while streaming image: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+
+
+# Pydantic 모델
+class PlaceBookRequest(BaseModel):
+    user_email: str
+    place_name: str
+    name: str
+
+@router.post("/add_bookmark/")
+async def add_bookmark(bookmark: PlaceBookRequest):
+    connection =hosts.connect()
+    try:
+        with connection.cursor() as cursor:
+            # 북마크 추가
+            sql = """
+                INSERT INTO place_bookmark (user_email, restaurant_name, name, created_at)
+                VALUES (%s, %s, %s, %s)
+            """
+            cursor.execute(sql, (
+                bookmark.user_email,
+                bookmark.place_name,
+                bookmark.name,
+                datetime.now()
+            ))
+            connection.commit()
+        return {"message": "Bookmark added successfully"}
+    except Exception as e:
+        print(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to add bookmark")
+    finally:
+        connection.close()
