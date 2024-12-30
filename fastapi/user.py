@@ -104,7 +104,7 @@ async def upload_profile_image(
     # int 타입으로 정의 되어있으며, Form(...)과 File(...)은 필수값임을 의미!
     # UploadFile은 클라이언트가 업로드한 파일을 처리하기 위한 FastAPI의 기본 데이터 유형
     # Package FastAPI에 추가해줘야함!
-    user_id: int = Form(...), image: UploadFile = File(...)
+    user_id: str = Form(...), image: UploadFile = File(...)
 ):
     """
     프로필 이미지를 업로드하고 S3 URL을 MySQL에 저장
@@ -124,7 +124,7 @@ async def upload_profile_image(
             image.file, # 업로드할 파일 객체
             hosts.BUCKET_NAME, # S3 버킷 이름
             file_name, # S3에 저장될 파일 이름 및 경로
-            ExtraArgs={"ContentType" : image.content_type, "ACL" : "public_read"}
+            ExtraArgs={"ContentType" : image.content_type, "ACL" : "public-read"}
         )
 
         # S3 URL 생성
