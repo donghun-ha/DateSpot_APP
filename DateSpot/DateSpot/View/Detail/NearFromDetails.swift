@@ -73,7 +73,7 @@ struct NearFromDetails: View {
                                             .font(.caption)
                                             .onAppear {
                                                 Task {
-                                                    await placeViewModel.fetchImage(for: place.name)
+                                                    await placeViewModel.fetchDetailImage(for: place.name)
                                                 }
                                             }
                                     }
