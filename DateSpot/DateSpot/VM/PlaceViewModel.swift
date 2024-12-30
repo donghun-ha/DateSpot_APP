@@ -56,6 +56,17 @@ class PlaceViewModel: ObservableObject {
     }
 
     
+    // Fetch Places
+    func fetchPlace() async {
+        do {
+            let fetchedPlace = try await fetchPlacesFromAPI()
+            self.places = fetchedPlace
+            print("✅ 데이터 다운로드 성공: \(self.places)")
+        } catch {
+            print("❌ 데이터 다운로드 실패: \(error.localizedDescription)")
+        }
+    }
+    
     // 이미지 로드
     func fetchImage(for placeName: String) async {
         guard images[placeName] == nil else { return } // 이미 로드된 경우

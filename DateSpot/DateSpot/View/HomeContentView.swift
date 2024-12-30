@@ -27,9 +27,13 @@ import SwiftUI
                 Task {
                     isLoading = true
                     await restaurantViewModel.fetchRestaurants()
-                    await placeViewModel.fetchPlaces()
+                    await placeViewModel.fetchPlace()
                     isLoading = false
                 }
             }
         }
     }
+
+#Preview {
+    HomeContentView()
+}
