@@ -11,7 +11,8 @@ import MapKit
 struct DetailMap: View {
     @StateObject private var viewModel = DetailMapViewModel()
     @Binding var restaurants : Restaurant
-//    @Binding var place : PlaceData
+    @Binding var images : UIImage
+
     @State var loadingStatus = false
     
     var body: some View {
@@ -19,78 +20,82 @@ struct DetailMap: View {
             if loadingStatus == false{
                 ProgressView("Loading...")
                     .font(.headline)
-            }
-            ZStack {
-                Map(position:$viewModel.cameraPosition) {
-                    UserAnnotation()
-                    
-                    ForEach(viewModel.nearParking, id: \.id) { parking in
-                        Marker(parking.name, systemImage: "car.fill", coordinate: parking.coordinate)
-                            .tint(.blue)
+            }else{
+                ZStack {
+                    Map(position:$viewModel.cameraPosition) {
+                        UserAnnotation()
+                        
+                        ForEach(viewModel.nearParking, id: \.id) { parking in
+                            Marker(parking.name, systemImage: "car.fill", coordinate: parking.coordinate)
+                                .tint(.blue)
+                            
+                        }
+                        Marker(restaurants.name, systemImage: "star.fill", coordinate: CLLocationCoordinate2D(latitude: restaurants.lat, longitude: restaurants.lng))
+                            
                     }
-                    Marker(restaurants.name, systemImage: "star.fill", coordinate: CLLocationCoordinate2D(latitude: restaurants.lat, longitude: restaurants.lng))
-                }
-                .ignoresSafeArea()
-                
-                VStack {
-                    Spacer()
-                    // 하단 카드 뷰
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(restaurants.name)
-                                    .font(.title3)
-                                    .fontWeight(.semibold)
+                    .ignoresSafeArea()
+                    
+                    VStack {
+                        Spacer()
+                        // 하단 카드 뷰
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text(restaurants.name)
+                                        .font(.title3)
+                                        .fontWeight(.semibold)
+                                    
+                                    HStack {
+                                        Image(systemName: "star.fill")
+                                            .foregroundColor(.yellow)
+                                    }
+                                }
+                                
+                                Spacer()
+                                
+                                Image(uiImage: images)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 80, height: 80)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Image(systemName: "location.fill")
+                                    Text(restaurants.address)
+                                }
                                 
                                 HStack {
-                                    Image(systemName: "star.fill")
-                                        .foregroundColor(.yellow)
-                                    Text(restaurants.parking)
-                                        .foregroundColor(.gray)
+                                    Image(systemName: "clock.fill")
+                                    Text(restaurants.operatingHour)
                                 }
+                                
+                                
+                                HStack {
+                                    Image(systemName: "phone.fill")
+                                    Text(restaurants.contactInfo)
+                                }
+                                
                             }
-                            
-                            Spacer()
-                            
-                            //                            Image("") //이미지
-                            //                                .resizable()
-                            
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
                         }
-                        
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Image(systemName: "location.fill")
-                                Text(restaurants.address)
-                            }
-                            
-                            HStack {
-                                Image(systemName: "clock.fill")
-                                Text(restaurants.operatingHour)
-                            }
-                            
-                            HStack {
-                                Image(systemName: "phone.fill")
-                                Text(restaurants.contactInfo)
-                            }
-                        }
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
+                        .padding()
+                        .background(Color.white)
+                        .cornerRadius(16)
+                        .shadow(radius: 5)
+                        .padding()
                     }
-                    .padding()
-                    .background(Color.white)
-                    .cornerRadius(16)
-                    .shadow(radius: 5)
-                    .padding()
                 }
-            }
-            .onAppear {
-                viewModel.updateCameraPosition(latitude: restaurants.lat, longitude: restaurants.lng)
-                viewModel.fetchParkingInfo(lat: restaurants.lat, lng: restaurants.lng)
-                loadingStatus = true
-                
             }
         }
         .navigationTitle("지도")
+        .onAppear {
+                viewModel.updateCameraPosition(latitude: restaurants.lat, longitude: restaurants.lng)
+                viewModel.fetchParkingInfo(lat: restaurants.lat, lng: restaurants.lng)
+                loadingStatus = true
+            
+        }
     } // View
-    
 } // End

@@ -24,7 +24,8 @@ protocol RestaurantViewModelProtocol: ObservableObject {
 class RestaurantViewModel: ObservableObject {
     @Published private(set) var restaurants: [Restaurant] = [] // 전체 레스토랑 리스트
     @Published private(set) var selectedRestaurant: Restaurant? // 선택된 레스토랑 상세 정보
-    @Published private(set) var images: [UIImage] = [] // 로드된 이미지 리스트
+//    @Published private(set) var images : [UIImage] = [] // 로드된 이미지 리스트
+    @Published var images: [UIImage] = [] // 로드된 이미지 리스트
     
     
     private let baseURL = "https://fastapi.fre.today/restaurant/" // 기본 API URL

@@ -4,7 +4,6 @@ import RealmSwift
 struct DetailView: View {
     @StateObject private var restaurantViewModel = RestaurantViewModel()
     @StateObject private var placeViewModel = PlaceViewModel()
-    
     @State private var selection: Int = 0
     @State private var isLoading = true
     @State private var nearbyPlaces: [PlaceData] = []
@@ -35,7 +34,7 @@ struct DetailView: View {
                         }
                         
                         // 레스토랑 상세 정보
-                        RestaurantDetailInfoView(restaurant: restaurant)
+                        RestaurantDetailInfoView(images: $restaurantViewModel.images[0], restaurant: restaurant)
 
                         // 근처 명소
                         if !nearbyPlaces.isEmpty {
@@ -96,6 +95,9 @@ struct DetailView: View {
     }
 }
 
+
 #Preview {
     DetailView()
 }
+
+

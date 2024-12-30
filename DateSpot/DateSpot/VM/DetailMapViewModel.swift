@@ -99,7 +99,7 @@ class DetailMapViewModel : NSObject, CLLocationManagerDelegate, ObservableObject
         self.nearParking = parkingData.filter { parking in
             let parkingLocation = CLLocation(latitude: parking.latitude, longitude: parking.longitude)
             
-            return currentLocation.distance(from: parkingLocation) <= 1000 // 5km 이내
+            return currentLocation.distance(from: parkingLocation) <= 2000 // 5km 이내
         }
     }
 }
