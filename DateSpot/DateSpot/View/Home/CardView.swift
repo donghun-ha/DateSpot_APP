@@ -1,48 +1,49 @@
 import SwiftUI
 
 struct CardView: View {
-    var image: UIImage?
-    var category: String
-    var heading: String
-    var author: String
+    let image: UIImage?
+    let category: String
+    let heading: String
+    let author: String
 
     var body: some View {
         VStack(alignment: .leading) {
-            // 이미지 로드
             if let image = image {
                 Image(uiImage: image)
                     .resizable()
-                    .scaledToFill()
-                    .frame(height: 150)
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 300, height: 200)
                     .clipped()
             } else {
                 Rectangle()
                     .fill(Color.gray.opacity(0.3))
-                    .frame(height: 150)
+                    .frame(width: 300, height: 200)
                     .overlay(
-                        Text("No Image Available")
+                        Image(systemName: "photo")
+                            .font(.largeTitle)
                             .foregroundColor(.white)
-                            .font(.caption)
                     )
             }
 
-            VStack(alignment: .leading) {
-                Text(category)
-                    .font(.caption)
-                    .fontWeight(.bold)
-                    .foregroundColor(.secondary)
-                Text(heading)
-                    .font(.title3)
-                    .fontWeight(.bold)
-                    .foregroundColor(.primary)
-                Text(author)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            .padding([.horizontal, .bottom])
+            Text(heading)
+                .font(.headline)
+                .fontWeight(.bold)
+                .padding([.top, .horizontal])
+
+            Text(category)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .padding(.horizontal)
+
+            Text(author)
+                .font(.footnote)
+                .foregroundColor(.secondary)
+                .padding(.horizontal)
+                .padding(.bottom)
         }
-        .background(Color(.systemBackground))
+        .background(Color.white)
         .cornerRadius(10)
-        .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
+        .shadow(radius: 5)
     }
 }
+
