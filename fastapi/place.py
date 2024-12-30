@@ -68,14 +68,14 @@ def normalize_place_name(name: str) -> str:
 @router.get("/images")
 async def get_images(name: str):
     """
-    특정 이름에 해당하는 이미지를 S3에서 가져와 리스트로 반환
+    특정 이름에 해당하는 이미지를 S3에서 가져와 리스트로 반환 (NFD 정규화 적용)
     """
-    s3_client = hosts.create_s3_client()  # S3 클라이언트 생성
+    s3_client = hosts.create_s3_client()
     try:
-        # 입력값 디코딩 및 정규화
+        # 입력값 디코딩 및 NFD 정규화
         decoded_name = unquote(name).strip()
-        normalized_name = normalize_place_name(decoded_name)  # 정규화 함수 사용
-        prefix = f"명소/{normalized_name}_"  # Prefix 생성
+        normalized_name = normalize_place_name(decoded_name)  # NFD 정규화
+        prefix = f"명소/{normalized_name}_"
 
         # 디버깅: 정규화 결과와 Prefix 출력
         print(f"Decoded name: {decoded_name}")
@@ -85,9 +85,16 @@ async def get_images(name: str):
         # S3에서 Prefix로 파일 검색
         response = s3_client.list_objects_v2(Bucket=hosts.BUCKET_NAME, Prefix=prefix)
 
-        # S3에 파일이 없는 경우 예외 처리
-        if 'Contents' not in response or not response['Contents']:
-            print(f"No files found for prefix: {prefix}")  # 디버깅용 로그
+        # 필터링된 키
+        filtered_keys = [
+            key for key in all_keys
+            if normalize_place_name(key).startswith(prefix)  # NFD 정규화
+        ]
+
+        # 디버깅: 필터링된 키 확인
+        print(f"Filtered keys: {filtered_keys}")
+
+        if not filtered_keys:
             raise HTTPException(status_code=404, detail="No images found")
 
         # 검색된 파일 키 리스트
@@ -107,10 +114,15 @@ async def get_images(name: str):
 
 @router.get("/image")
 async def stream_image(file_key: str):
+    """
+    S3에서 단일 이미지 파일 스트리밍 (NFD 정규화 적용)
+    """
     s3_client = hosts.create_s3_client()
     try:
-        # 파일 키 정리 및 정규화
-        cleaned_key = remove_invisible_characters(file_key)
+        # 파일 키 정리 및 NFD 정규화
+        decoded_key = unquote(file_key).strip()
+        normalized_key = unicodedata.normalize("NFD", decoded_key)
+        cleaned_key = remove_invisible_characters(normalized_key)
 
         # S3 객체 가져오기
         s3_object = s3_client.get_object(Bucket=hosts.BUCKET_NAME, Key=cleaned_key)
