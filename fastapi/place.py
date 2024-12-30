@@ -35,7 +35,6 @@ async def select():
     curs.execute(sql)
     rows = curs.fetchall()
     conn.close()
-    print(rows)
     dict_list = []
     for row in rows:
         dict_list.append(

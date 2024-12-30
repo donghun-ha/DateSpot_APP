@@ -162,6 +162,9 @@ class RestaurantBookRequest(BaseModel):
     user_email: str
     restaurant_name: str
     name: str
+class checkRestaurantBook(BaseModel):
+    user_email: str
+    restaurant_name: str
 
 @router.post("/add_bookmark/")
 async def add_bookmark(bookmark: RestaurantBookRequest):
@@ -189,7 +192,7 @@ async def add_bookmark(bookmark: RestaurantBookRequest):
 
 
 @router.post("/check_bookmark/")
-async def check_bookmark(request: RestaurantBookRequest):
+async def check_bookmark(request: checkRestaurantBook):
     connection = hosts.connect()
     try:
         with connection.cursor() as cursor:

@@ -255,6 +255,7 @@ extension RestaurantViewModel {
     
     func checkBookmark(userEmail: String, restaurantName: String) {
         // API URL
+        print("북마크 확인")
         guard let url = URL(string: "\(baseURL)check_bookmark/") else { return }
 
         // 요청 데이터
