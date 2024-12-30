@@ -72,34 +72,32 @@ async def get_images(name: str):
     """
     s3_client = hosts.create_s3_client()
     try:
-        # 입력값 디코딩 및 NFD 정규화
+        # 입력값 디코딩
         decoded_name = unquote(name).strip()
-        normalized_name = normalize_place_name(decoded_name)  # NFD 정규화
-        prefix = f"명소/{normalized_name}_"
+        print(f"Decoded name: {decoded_name}")  # 디버깅: 디코딩된 이름 출력
 
-        # 디버깅: 정규화 결과와 Prefix 출력
-        print(f"Decoded name: {decoded_name}")
-        print(f"Normalized name: {normalized_name}")
-        print(f"Prefix: {prefix}")
+        # NFD/NFC 정규화 비교
+        normalized_name_nfd = unicodedata.normalize("NFD", decoded_name)
+        normalized_name_nfc = unicodedata.normalize("NFC", decoded_name)
+        print(f"NFD Normalized: {normalized_name_nfd}")
+        print(f"NFC Normalized: {normalized_name_nfc}")
+
+        # Prefix 생성 (NFC 기준으로 생성)
+        prefix = f"명소/{normalized_name_nfc}_"
+        print(f"Prefix used for S3: {prefix}")
 
         # S3에서 Prefix로 파일 검색
         response = s3_client.list_objects_v2(Bucket=hosts.BUCKET_NAME, Prefix=prefix)
+        print(f"S3 Response: {response}")  # 디버깅: S3 응답 확인
 
-        # 필터링된 키
-        filtered_keys = [
-            key for key in all_keys
-            if normalize_place_name(key).startswith(prefix)  # NFD 정규화
-        ]
-
-        # 디버깅: 필터링된 키 확인
-        print(f"Filtered keys: {filtered_keys}")
-
-        if not filtered_keys:
+        # S3에 파일이 없는 경우
+        if 'Contents' not in response or not response['Contents']:
+            print(f"No files found for prefix: {prefix}")
             raise HTTPException(status_code=404, detail="No images found")
 
         # 검색된 파일 키 리스트
         image_keys = [content["Key"] for content in response["Contents"]]
-        print(f"Found keys: {image_keys}")  # 디버깅용 로그
+        print(f"Found image keys: {image_keys}")  # 디버깅: 발견된 이미지 키 출력
 
         return {"images": image_keys}
 
