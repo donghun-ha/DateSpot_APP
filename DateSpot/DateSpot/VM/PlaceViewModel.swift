@@ -110,6 +110,24 @@ class PlaceViewModel: ObservableObject {
             }
         }
 
+    func fetchDetailImage(for placeName: String) async {
+        guard images[placeName] == nil else { return } // 이미 로드된 경우
+        print(placeName)
+        let imageUrl = "https://fastapi.fre.today/place/image_thumb?name=\(placeName)"
+        guard let url = URL(string: imageUrl) else { return }
+
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            if let image = UIImage(data: data) {
+                DispatchQueue.main.async {
+                    self.images[placeName] = image // 메인 스레드에서 업데이트
+                }
+            }
+        } catch {
+            print("❌ 이미지 다운로드 실패: \(error.localizedDescription)")
+        }
+    }
+
 
     // 거리 계산 함수
     func calculateDistance(lat: Double, lng: Double, currentLat: Double, currentLng: Double) -> Double {

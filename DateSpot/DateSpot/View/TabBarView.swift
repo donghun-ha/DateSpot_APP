@@ -12,7 +12,7 @@ struct TabBarView: View {
     
     var body: some View {
         TabView {
-            HomeContentView()
+            DetailView()
                 .tabItem {
                     Label("홈", systemImage: "house.fill")
                 }

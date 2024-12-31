@@ -2,6 +2,9 @@ from fastapi import HTTPException, APIRouter
 from fastapi.responses import StreamingResponse
 import hosts, unicodedata, re
 from urllib.parse import unquote
+from pydantic import BaseModel
+from datetime import datetime
+from pymysql.cursors import DictCursor
 
 router = APIRouter()
 
@@ -156,3 +159,58 @@ async def stream_image(file_key: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# Pydantic 모델
+class RestaurantBookRequest(BaseModel):
+    user_email: str
+    restaurant_name: str
+    name: str
+class checkRestaurantBook(BaseModel):
+    user_email: str
+    restaurant_name: str
+
+@router.post("/add_bookmark/")
+async def add_bookmark(bookmark: RestaurantBookRequest):
+    connection =hosts.connect()
+    try:
+        with connection.cursor() as cursor:
+            # 북마크 추가
+            sql = """
+                INSERT INTO restaurant_bookmark (user_email, restaurant_name, name, created_at)
+                VALUES (%s, %s, %s, %s)
+            """
+            cursor.execute(sql, (
+                bookmark.user_email,
+                bookmark.restaurant_name,
+                bookmark.name,
+                datetime.now()
+            ))
+            connection.commit()
+        return {"message": "Bookmark added successfully"}
+    except Exception as e:
+        print(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to add bookmark")
+    finally:
+        connection.close()
+
+
+
+@router.post("/check_bookmark/")
+async def check_bookmark(request: checkRestaurantBook):
+    connection = hosts.connect()
+    try:
+        with connection.cursor(DictCursor) as cursor:  # DictCursor 사용
+            # 북마크 존재 여부 확인
+            sql = """
+                SELECT COUNT(*) AS count
+                FROM restaurant_bookmark
+                WHERE user_email = %s AND restaurant_name = %s
+            """
+            cursor.execute(sql, (request.user_email, request.restaurant_name))
+            result = cursor.fetchone()
+            is_bookmarked = result["count"] > 0  # DictCursor로 딕셔너리로 처리 가능
+        return {"is_bookmarked": is_bookmarked}
+    except Exception as e:
+        print(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to check bookmark")
+    finally:
+        connection.close()

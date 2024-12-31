@@ -101,11 +101,17 @@ async def user_login(request: Request):
 @router.post("/upload-profile")
 async def upload_profile_image(
     # Form은 클라이언트가 보내는 multipart/form-data 형식에서 user_id를 추출
-    # int 타입으로 정의 되어있으며, Form(...)과 File(...)은 필수값임을 의미!
+    # str 타입으로 정의 되어있으며, Form(...)과 File(...)은 필수값임을 의미!
     # UploadFile은 클라이언트가 업로드한 파일을 처리하기 위한 FastAPI의 기본 데이터 유형
     # Package FastAPI에 추가해줘야함!
-    user_id: int = Form(...), image: UploadFile = File(...)
+    user_id: str = Form(...), image: UploadFile = File(...)
 ):
+    
+    print(f"Received user_id: {user_id}")  # 디버깅 로그
+    print(f"Received file name: {image.filename}")  # 파일 정보 출력
+    print(f"Received file content type: {image.content_type}")
+
+
     """
     프로필 이미지를 업로드하고 S3 URL을 MySQL에 저장
     1. 멀티파트로 전송된 이미지를 S3에 업로드
@@ -124,11 +130,13 @@ async def upload_profile_image(
             image.file, # 업로드할 파일 객체
             hosts.BUCKET_NAME, # S3 버킷 이름
             file_name, # S3에 저장될 파일 이름 및 경로
-            ExtraArgs={"ContentType" : image.content_type, "ACL" : "public_read"}
+            ExtraArgs={"ContentType" : image.content_type, "ACL" : "public-read"}
         )
 
         # S3 URL 생성
-        image_url = f"https://{hosts.BUCKET_NAME}.s3.{hosts.REGION}.amazonaws.com/{file_name}"
+        image_url = f"https://{hosts.BUCKET_NAME}.s3.ap-northeast-2.amazonaws.com/{file_name}"
+        print(image_url)
+
 
         # MySQL에 URL 저장
         mysql_conn = hosts.connect()
@@ -153,3 +161,23 @@ async def upload_profile_image(
         raise HTTPException(
             status_code=500, detail="Failed to upload profile image"
         )
+    
+@router.post("/get-profile-image")
+async def get_profile_image(user_id: str = Form(...)):
+    try:
+        # MySQL에서 사용자 이미지 URL 가져오기
+        mysql_conn = hosts.connect()
+        cursor = mysql_conn.cursor()
+        query = "SELECT image FROM user WHERE email = %s"
+        cursor.execute(query, (user_id,))
+        result = cursor.fetchone()
+        cursor.close()
+        mysql_conn.close()
+
+        if result:
+            return {"status": "success", "image_url": result[0]}
+        else:
+            raise HTTPException(status_code=404, detail="User not found")
+    except Exception as e:
+        print(f"Error fetching user image: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch user image")

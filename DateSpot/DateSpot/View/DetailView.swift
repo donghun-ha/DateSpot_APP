@@ -20,6 +20,7 @@ struct DetailView: View {
                         // 이미지 슬라이더
                         if !restaurantViewModel.images.isEmpty {
                             ImageSliderView(
+                                currentRestaurant: restaurantName,
                                 images: restaurantViewModel.images,
                                 selection: $selection
                             )
