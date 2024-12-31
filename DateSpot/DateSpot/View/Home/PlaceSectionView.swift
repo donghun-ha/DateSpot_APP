@@ -1,76 +1,53 @@
-//    //
-//    //  PlaceSectionView.swift
-//    //  DateSpot
-//    //
-//    //  Created by 이종남 on 12/29/24.
-//    //
 import SwiftUI
 
 struct PlaceSectionView: View {
     let places: [PlaceData]
-    @State private var loadedImages: [String: UIImage] = [:] // 명소 이름별로 이미지를 저장
-    private let imageBaseUrl = "https://fastapi.fre.today/place/image?name=" // 이미지 URL 기본 경로
+    @ObservedObject var viewModel: PlaceViewModel
 
     var body: some View {
-        // places 배열을 20개로 제한
-        let limitedPlaces = Array(places.prefix(30))
+        VStack(alignment: .leading, spacing: 10) {
+            Text("명소")
+                .font(.title)
+                .fontWeight(.bold)
+                .padding(.horizontal)
 
-        if !limitedPlaces.isEmpty {
-            VStack(alignment: .leading, spacing: 10) {
-                Text("명소")
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .padding(.horizontal)
-
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 20) {
-                        ForEach(limitedPlaces, id: \.name) { place in
-                            let image = loadedImages[place.name] // 이미 로드된 이미지를 가져옴
-                            CardView(
-                                image: image, // UIImage 전달
-                                category: place.parking ?? "N/A",
-                                heading: place.name,
-                                author: place.address
-                            )
-                            .frame(width: 300)
-                            .onAppear {
-                                loadImage(for: place.name) // 이미지를 로드
+            ScrollView(.horizontal, showsIndicators: false) {
+                LazyHStack(spacing: 20) {
+                    ForEach(Array(places.prefix(20)), id: \.name) { place in
+                        NavigationLink(
+                            destination: DetailView(restaurantName: place.name) // 클릭 시 DetailView로 이동
+                        ) {
+                            ZStack {
+                                if let image = viewModel.images[place.name] {
+                                    CardView(
+                                        image: image,
+                                        category: place.parking,
+                                        heading: place.name,
+                                        author: place.address
+                                    )
+                                    .frame(width: 300)
+                                } else {
+                                    CardView(
+                                        image: UIImage(systemName: "photo"),
+                                        category: place.parking,
+                                        heading: place.name,
+                                        author: place.address
+                                    )
+                                    .frame(width: 300)
+                                    .onAppear {
+                                        Task {
+                                            await viewModel.fetchFirstImage(for: place.name)
+                                        }
+                                    }
+                                }
                             }
                         }
+                        .buttonStyle(PlainButtonStyle()) // 기본 스타일 제거
                     }
-                    .padding(.horizontal)
                 }
-            }
-        } else {
-            Text("명소 데이터를 불러올 수 없습니다.")
-                .font(.subheadline)
-                .foregroundColor(.gray)
                 .padding(.horizontal)
-        }
-    }
-
-    private func loadImage(for placeName: String) {
-        guard loadedImages[placeName] == nil else { return } // 이미 로드된 경우 스킵
-
-        let encodedName = placeName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? placeName
-        guard let url = URL(string: "\(imageBaseUrl)\(encodedName)") else {
-            print("Invalid URL for \(placeName)")
-            return
-        }
-
-        Task {
-            do {
-                let (data, _) = try await URLSession.shared.data(from: url)
-                if let image = UIImage(data: data) {
-                    DispatchQueue.main.async {
-                        loadedImages[placeName] = image // 이미지 저장
-                    }
-                } else {
-                    print("Failed to decode image for \(placeName)")
-                }
-            } catch {
-                print("Error loading image for \(placeName): \(error.localizedDescription)")
             }
         }
     }
 }
+

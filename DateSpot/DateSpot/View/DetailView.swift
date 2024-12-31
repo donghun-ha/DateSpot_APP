@@ -34,7 +34,7 @@ struct DetailView: View {
                         }
                         
                         // 레스토랑 상세 정보
-                        RestaurantDetailInfoView(images: $restaurantViewModel.images[0], restaurant: restaurant)
+                        RestaurantDetailInfoView(restaurant: restaurant, images: $restaurantViewModel.images[0])
 
                         // 근처 명소
                         if !nearbyPlaces.isEmpty {

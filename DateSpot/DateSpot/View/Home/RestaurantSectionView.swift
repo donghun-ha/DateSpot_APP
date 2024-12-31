@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct RestaurantSectionView: View {
-    let restaurants: [Restaurant]                      // 상위에서 주입받은 레스토랑 리스트
-    @ObservedObject var viewModel: RestaurantViewModel // ViewModel을 받아옴
+    let restaurants: [Restaurant]
+    @ObservedObject var viewModel: RestaurantViewModel
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -12,33 +12,39 @@ struct RestaurantSectionView: View {
                 .padding(.horizontal)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 20) {
-                    ForEach(restaurants, id: \.name) { restaurant in
-                        ZStack {
-                            if let image = viewModel.images.first { // 이미지가 있는 경우
-                                CardView(
-                                    image: image,
-                                    category: restaurant.parking ?? "N/A",
-                                    heading: restaurant.name,
-                                    author: restaurant.address
-                                )
-                                .frame(width: 300)
-                            } else {
-                                // 로드 중인 경우 기본 이미지 표시
-                                CardView(
-                                    image: UIImage(systemName: "photo"), // 기본 이미지
-                                    category: restaurant.parking ?? "N/A",
-                                    heading: restaurant.name,
-                                    author: restaurant.address
-                                )
-                                .frame(width: 300)
-                                .onAppear {
-                                    Task {
-                                        await viewModel.loadImages(for: restaurant.name)
+                LazyHStack(spacing: 20) {
+                    ForEach(restaurants.prefix(20), id: \.name) { restaurant in
+                        NavigationLink(
+                            destination: DetailView(restaurantName: restaurant.name) // 클릭 시 DetailView로 이동
+                        ) {
+                            ZStack {
+                                if let image = viewModel.homeimage[restaurant.name] {
+                                    // 이미 로드된 첫 번째 이미지를 표시
+                                    CardView(
+                                        image: image,
+                                        category: restaurant.parking,
+                                        heading: restaurant.name,
+                                        author: restaurant.address
+                                    )
+                                    .frame(width: 300)
+                                } else {
+                                    // 기본 이미지를 표시하며 첫 번째 이미지를 비동기로 로드
+                                    CardView(
+                                        image: UIImage(systemName: "photo"), // 기본 이미지
+                                        category: restaurant.parking,
+                                        heading: restaurant.name,
+                                        author: restaurant.address
+                                    )
+                                    .frame(width: 300)
+                                    .onAppear {
+                                        Task {
+                                            await viewModel.fetchFirstImage(for: restaurant.name)
+                                        }
                                     }
                                 }
                             }
                         }
+                        .buttonStyle(PlainButtonStyle()) // 기본 스타일 제거
                     }
                 }
                 .padding(.horizontal)

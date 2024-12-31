@@ -1,11 +1,12 @@
 import SwiftUI
 
-    struct HomeContentView: View {
-        @StateObject private var restaurantViewModel = RestaurantViewModel()
-        @StateObject private var placeViewModel = PlaceViewModel()
-        @State private var isLoading = true
+struct HomeContentView: View {
+    @StateObject private var restaurantViewModel = RestaurantViewModel()
+    @StateObject private var placeViewModel = PlaceViewModel()
+    @State private var isLoading = true
 
-        var body: some View {
+    var body: some View {
+        NavigationView { // NavigationView로 감싸기
             Group {
                 if isLoading {
                     ProgressView("Loading...")
@@ -15,12 +16,15 @@ import SwiftUI
                         VStack(alignment: .leading, spacing: 20) {
                             // 맛집 섹션
                             RestaurantSectionView(
-                                restaurants: restaurantViewModel.restaurants, // 레스토랑 데이터 전달
-                                viewModel: restaurantViewModel // ViewModel 전달
+                                restaurants: restaurantViewModel.restaurants,
+                                viewModel: restaurantViewModel
                             )
 
                             // 명소 섹션
-                            PlaceSectionView(places: placeViewModel.places)
+                            PlaceSectionView(
+                                places: placeViewModel.places,
+                                viewModel: placeViewModel
+                            )
                         }
                         .padding(.vertical)
                     }
@@ -29,14 +33,15 @@ import SwiftUI
             .onAppear {
                 Task {
                     isLoading = true
-                    await restaurantViewModel.fetchRestaurants()
-                    await placeViewModel.fetchPlace()
+                    async let restaurants = restaurantViewModel.fetchRestaurants()
+                    async let places = placeViewModel.fetchPlace()
                     isLoading = false
+                    
+                    // 병렬로 데이터 로드
+                    await (restaurants, places)
                 }
             }
         }
     }
-
-#Preview {
-    HomeContentView()
 }
+
