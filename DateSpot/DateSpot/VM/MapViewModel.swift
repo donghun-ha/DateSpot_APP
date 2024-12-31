@@ -93,40 +93,9 @@ class TabMapViewModel: NSObject, CLLocationManagerDelegate, ObservableObject {
         print("Failed to find user's location:", error.localizedDescription)
     }
     
-    // 검색기능
-    //    func searchLocations() {
-    //           let request = MKLocalSearch.Request()
-    //           request.naturalLanguageQuery = searchText
-    //           request.region = region
-    //
-    //           let search = MKLocalSearch(request: request)
-    //           search.start { [weak self] response, error in
-    //               guard let self = self else { return }
-    //
-    //               if let error = error {
-    //                   print("Search error: \(error)")
-    //                   return
-    //               }
-    //
-    //               if let response = response {
-    //                   DispatchQueue.main.async {
-    //                       self.searchResults = response.mapItems
-    //
-    //                       // 검색 결과가 있으면 카메라 이동
-    //                       if let firstResult = response.mapItems.first?.placemark.coordinate {
-    //                           self.cameraPosition = .region(
-    //                               MKCoordinateRegion(
-    //                                   center: firstResult,
-    //                                   span: MKCoordinateSpan(latitudeDelta: 0.015, longitudeDelta: 0.015)
-    //                               )
-    //                           )
-    //                       }
-    //                   }
-    //               }
-    //           }
-    //       }
+    
+    // 보유 마커에서 검색
     func searchLocations() {
-        // 먼저 로컬 마커들에서 검색
         let localResults = searchLocalMarkers(searchText)
         if !localResults.isEmpty {
             self.searchResults = localResults
