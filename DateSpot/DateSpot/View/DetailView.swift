@@ -46,7 +46,6 @@ struct DetailView: View {
                         }
                     }
                 }
-                .navigationBarTitle("Date Spots", displayMode: .inline)
             } else {
                 Text("Restaurant not found.")
                     .font(.headline)
