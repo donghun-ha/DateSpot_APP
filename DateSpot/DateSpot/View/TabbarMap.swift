@@ -8,6 +8,7 @@ struct TabbarMapView: View {
     @State var loadingStatus = false // 데이터 로드 관리
     @State private var selectedResult: MKMapItem? // 검색 관리
     @State private var showSearchSheet = false // 검색 sheet 관리
+    @State var currentMarker : MKMapItem? // 마커 선택
     
     var body: some View {
             NavigationView {
@@ -15,7 +16,7 @@ struct TabbarMapView: View {
                     ProgressView("Loading...")
                         .font(.headline)
                 } else {
-                    Map(position: $mapViewModel.cameraPosition) {
+                    Map(position: $mapViewModel.cameraPosition, selection: $currentMarker) {
                         
                         // 현재 위치 표시
                         UserAnnotation()
@@ -24,17 +25,21 @@ struct TabbarMapView: View {
                         // 명소 마커(파란색)
                         ForEach($mapViewModel.nearPlace.indices, id: \.self) { index in
                             let place = mapViewModel.nearPlace[index]
+                            let mapItem = MKMapItem(placemark: MKPlacemark(coordinate: CLLocationCoordinate2D(latitude: place.lat, longitude: place.lng)))
                             Marker(place.name, systemImage: "house.fill", coordinate:
                                     CLLocationCoordinate2D(latitude: place.lat, longitude: place.lng))
                             .tint(.red)
+                            .tag(mapItem)
                         }
                         
                         // 맛집 마커(빨간색)
                         ForEach($mapViewModel.nearRestaurant.indices, id: \.self) { index in
                             let restaurant = mapViewModel.nearRestaurant[index]
+                            let mapItem = MKMapItem(placemark: MKPlacemark(coordinate: CLLocationCoordinate2D(latitude: restaurant.lat, longitude: restaurant.lng)))
                             Marker(restaurant.name, systemImage: "fork.knife.circle.fill", coordinate:
                                     CLLocationCoordinate2D(latitude: restaurant.lat, longitude: restaurant.lng))
                             .tint(.blue)
+                            .tag(mapItem)
                         }
                     }
                     // 검색결과 시트 표시
@@ -119,4 +124,32 @@ struct SearchResultsView: View {
             }
         }
     }
-}
+} // End
+
+
+// marker 선택 시트
+//struct MarkerDetailView: View {
+//    let mapItem: MKMapItem
+//    
+//    var body: some View {
+//        VStack(alignment: .leading, spacing: 10) {
+//            Text(mapItem.name ?? "Unknown")
+//                .font(.title)
+//            
+//            if let coordinate = mapItem.placemark.location?.coordinate {
+//                Text("Latitude: \(coordinate.latitude)")
+//                Text("Longitude: \(coordinate.longitude)")
+//            }
+//            
+//            if let address = mapItem.placemark.thoroughfare {
+//                Text("Address: \(address)")
+//            }
+//            
+//            // 추가 입력사항
+//        }
+//        .padding()
+//    }
+//}
+
+
+

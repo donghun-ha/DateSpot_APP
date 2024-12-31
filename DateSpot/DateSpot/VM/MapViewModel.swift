@@ -38,6 +38,19 @@ class TabMapViewModel: NSObject, CLLocationManagerDelegate, ObservableObject {
     // 지도
     let tabMapLoc = CLLocationManager()  // 지도관리
     
+    @Published var selectHname: String = ""
+    @Published var apivalue: Bool = false
+    @Published var capacity: Int = 0
+    @Published var totalAvailableParking: Int = 0
+    @Published var maxTemp: Double = 0
+    @Published var parkingCapacity: [Double] = []
+    @Published var parkingInfo: [ParkingInfo] = []
+    @Published var predvalue: Bool = false
+    @Published var timeList: [String] = ["1시간","2시간","3시간"] // ㅅ
+    @Published var selectedTime: Int = 0 // 시간 입력
+    @Published var predictedParking: Int?
+    @Published var predictedCongestion: [String: String] = [:]
+    
     override init() {
         super.init()
         tabMapLoc.delegate = self
@@ -143,46 +156,81 @@ class TabMapViewModel: NSObject, CLLocationManagerDelegate, ObservableObject {
         }
         
         
-        func searchLocalMarkers(_ query: String) -> [MKMapItem] {
-            let lowercaseQuery = query.lowercased()
-            var results: [MKMapItem] = []
-            
-            // 레스토랑 검색
-            for restaurant in nearRestaurant {
-                if restaurant.name.lowercased().contains(lowercaseQuery) {
-                    let placemark = MKPlacemark(
-                        coordinate: CLLocationCoordinate2D(
-                            latitude: restaurant.lat,
-                            longitude: restaurant.lng
-                        )
-                    )
-                    let mapItem = MKMapItem(placemark: placemark)
-                    mapItem.name = restaurant.name
-                    results.append(mapItem)
-                }
-            }
-            
-            // 명소 검색
-            for place in nearPlace {
-                if place.name.lowercased().contains(lowercaseQuery) {
-                    let placemark = MKPlacemark(
-                        coordinate: CLLocationCoordinate2D(
-                            latitude: place.lat,
-                            longitude: place.lng
-                        )
-                    )
-                    let mapItem = MKMapItem(placemark: placemark)
-                    mapItem.name = place.name
-                    results.append(mapItem)
-                }
-            }
-            
-            return results
-        }
+        
         
     } // VM
+//    func searchLocalMarkers(_ query: String) -> [MKMapItem] {
+//        let lowercaseQuery = query.lowercased()
+//        var results: [MKMapItem] = []
+//        
+//        // 레스토랑 검색
+//        for restaurant in nearRestaurant {
+//            if restaurant.name.lowercased().contains(lowercaseQuery) {
+//                let placemark = MKPlacemark(
+//                    coordinate: CLLocationCoordinate2D(
+//                        latitude: restaurant.lat,
+//                        longitude: restaurant.lng
+//                    )
+//                )
+//                let mapItem = MKMapItem(placemark: placemark)
+//                mapItem.name = restaurant.name
+//                results.append(mapItem)
+//            }
+//        }
+//        
+//        // 명소 검색
+//        for place in nearPlace {
+//            if place.name.lowercased().contains(lowercaseQuery) {
+//                let placemark = MKPlacemark(
+//                    coordinate: CLLocationCoordinate2D(
+//                        latitude: place.lat,
+//                        longitude: place.lng
+//                    )
+//                )
+//                let mapItem = MKMapItem(placemark: placemark)
+//                mapItem.name = place.name
+//                results.append(mapItem)
+//            }
+//        }
+//        
+//        return results
+//    }
     
-    
-    
+    func searchLocalMarkers(_ query: String) -> [MKMapItem] {
+        let lowercaseQuery = query.lowercased()
+        var results: [MKMapItem] = []
+        
+        // 레스토랑 검색
+        for restaurant in nearRestaurant {
+            if restaurant.name.lowercased().contains(lowercaseQuery) {
+                let placemark = MKPlacemark(
+                    coordinate: CLLocationCoordinate2D(
+                        latitude: restaurant.lat,
+                        longitude: restaurant.lng
+                    )
+                )
+                let mapItem = MKMapItem(placemark: placemark)
+                mapItem.name = restaurant.name
+                results.append(mapItem)
+            }
+        }
+        
+        // 명소 검색
+        for place in nearPlace {
+            if place.name.lowercased().contains(lowercaseQuery) {
+                let placemark = MKPlacemark(
+                    coordinate: CLLocationCoordinate2D(
+                        latitude: place.lat,
+                        longitude: place.lng
+                    )
+                )
+                let mapItem = MKMapItem(placemark: placemark)
+                mapItem.name = place.name
+                results.append(mapItem)
+            }
+        }
+        
+        return results
+    }
     
 }
