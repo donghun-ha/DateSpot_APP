@@ -17,7 +17,6 @@ def remove_invisible_characters(input_str: str) -> str:
     # 모든 비표시 가능 문자를 제거 (공백, 제어 문자 포함)
     return ''.join(ch for ch in input_str if ch.isprintable())
 
-import unicodedata
 
 def normalize_place_name_nfd(name: str) -> str:
     """
@@ -61,10 +60,6 @@ def remove_invisible_characters(input_str: str) -> str:
 
 
 
-
-
-
-
 @router.get("/images")
 async def get_images(name: str):
     """
@@ -78,7 +73,6 @@ async def get_images(name: str):
         prefix = f"명소/{normalized_name}_"
 
 
-        # S3에서 파일 검색 (Prefix 적용)
         response = s3_client.list_objects_v2(Bucket=hosts.BUCKET_NAME, Prefix=normalize_place_name_nfd(prefix))
         
         if "Contents" not in response or not response["Contents"]:

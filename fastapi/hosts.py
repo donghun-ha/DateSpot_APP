@@ -1,6 +1,6 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import HTTPException
 import os
-import pymysql , json
+import pymysql 
 from redis.asyncio import Redis
 import boto3
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
