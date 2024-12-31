@@ -8,9 +8,10 @@
 import SwiftUI
 
 struct BookMarkView: View {
+    @EnvironmentObject var appState: AppState
     @EnvironmentObject var restaurantViewModel: RestaurantViewModel // 뷰모델 참조
-    @State private var isLoading = true // 로딩 상태 표시
-    @State private var selectedRestaurant: Restaurant? = nil // 선택된 레스토랑 정보
+    @State private var isLoading = true
+    @State private var selectedRestaurant: BookmarkedRestaurant? = nil // BookmarkedRestaurant로 변경
 
     var body: some View {
         NavigationView {
@@ -26,19 +27,21 @@ struct BookMarkView: View {
                         .padding()
                 } else {
                     List(restaurantViewModel.bookmarkedRestaurants) { restaurant in
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(restaurant.name)
-                                    .font(.headline)
-                                    .foregroundColor(.primary)
-                                Text(restaurant.address ?? "주소 정보 없음")
-                                    .font(.subheadline)
-                                    .foregroundColor(.gray)
-                            }
-                            Spacer()
-                            Button(action: {
-                                selectedRestaurant = restaurant // 선택된 레스토랑 설정
-                            }) {
+                        NavigationLink(
+                            destination: DetailView(
+                                restaurantName: restaurant.name
+                            )
+                        ) {
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text(restaurant.name)
+                                        .font(.headline)
+                                        .foregroundColor(.primary)
+                                    Text(restaurant.address ?? "주소 정보 없음")
+                                        .font(.subheadline)
+                                        .foregroundColor(.gray)
+                                }
+                                Spacer()
                                 Text("보기")
                                     .font(.footnote)
                                     .padding(8)
@@ -54,30 +57,18 @@ struct BookMarkView: View {
             .onAppear {
                 loadBookmarks()
             }
-            .background(
-                NavigationLink(
-                    destination: DetailView(restaurants: selectedRestaurant!),
-                    isActive: Binding(
-                        get: { selectedRestaurant != nil },
-                        set: { if !$0 { selectedRestaurant = nil } }
-                    )
-                ) {
-                    EmptyView()
-                }
-            )
         }
     }
 
     private func loadBookmarks() {
-        guard let userEmail = UserDefaults.standard.string(forKey: "user_email") else {
+        guard let userEmail = appState.userEmail else {
             print("유저 이메일이 설정되지 않았습니다.")
             isLoading = false
             return
         }
-
         isLoading = true
         restaurantViewModel.fetchBookmarkedRestaurants(userEmail: userEmail)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { // 간단한 로딩 시뮬레이션
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             isLoading = false
         }
     }
