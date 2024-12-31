@@ -29,8 +29,9 @@ class RestaurantViewModel: ObservableObject {
     @Published private(set) var images1: [String: UIImage] = [:] // 맛집 이름별 첫 번째 이미지를 저장
     @Published var homeimage: [String: UIImage] = [:] // 레스토랑 이름별 이미지 저장
     @Published var isBookmarked: Bool = false
-    private var cancellables = Set<AnyCancellable>()
+    @Published var bookmarkedRestaurants: [Restaurant] = [] // 북마크된 레스토랑 리스트
     
+    private var cancellables = Set<AnyCancellable>()
     private let baseURL = "https://fastapi.fre.today/restaurant/" // 기본 API URL
 
     
@@ -297,4 +298,43 @@ extension RestaurantViewModel {
             .store(in: &cancellables)
     }
     
-}
+    
+    func fetchBookmarkedRestaurants(userEmail: String) {
+        guard let url = URL(string: "\(baseURL)get_user_bookmarks/") else {
+            print("Invalid URL for fetching user bookmarks")
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let requestBody: [String: String] = ["user_email": userEmail]
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
+        } catch {
+            print("Failed to create JSON body: \(error)")
+            return
+        }
+
+        URLSession.shared.dataTaskPublisher(for: request)
+            .tryMap { output in
+                guard let response = output.response as? HTTPURLResponse,
+                      response.statusCode == 200 else {
+                    throw URLError(.badServerResponse)
+                }
+                return output.data
+            }
+            .decode(type: [String: [Restaurant]].self, decoder: JSONDecoder())
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { completion in
+                if case .failure(let error) = completion {
+                    print("Failed to fetch bookmarked restaurants: \(error)")
+                }
+            }, receiveValue: { [weak self] response in
+                self?.bookmarkedRestaurants = response["results"] ?? []
+            })
+            .store(in: &cancellables)
+    }
+    }
+

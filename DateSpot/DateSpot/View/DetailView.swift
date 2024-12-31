@@ -8,6 +8,7 @@ struct DetailView: View {
     @State private var isLoading = true
     @State private var nearbyPlaces: [PlaceData] = []
     var restaurantName: String = "[백년가게]만석장"
+    var restaurants: Restaurant // Restaurant 매개변수
 
     var body: some View {
         NavigationView {
@@ -95,9 +96,5 @@ struct DetailView: View {
     }
 }
 
-
-#Preview {
-    DetailView()
-}
 
 
