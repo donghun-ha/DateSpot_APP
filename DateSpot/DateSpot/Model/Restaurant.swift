@@ -7,7 +7,8 @@
 
 import Foundation
 
-struct Restaurant: Codable, Hashable {
+struct Restaurant: Codable, Hashable, Identifiable {
+    var id: String { name } // 고유 식별자
     var name: String
     var address: String
     var lat: Double

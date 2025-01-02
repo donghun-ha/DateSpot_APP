@@ -214,3 +214,27 @@ async def check_bookmark(request: checkRestaurantBook):
         raise HTTPException(status_code=500, detail="Failed to check bookmark")
     finally:
         connection.close()
+
+
+@router.post("/get_user_bookmarks/")
+async def get_user_bookmarks(user_email: str):
+    """
+    주어진 이메일에 해당하는 모든 북마크 레스토랑 이름을 반환
+    """
+    connection = hosts.connect()
+    try:
+        with connection.cursor(DictCursor) as cursor:
+            sql = """
+                SELECT r.name, r.address
+                FROM restaurant_bookmark rb
+                JOIN restaurant r ON rb.restaurant_name = r.name
+                WHERE rb.user_email = %s
+            """
+            cursor.execute(sql, (user_email,))
+            bookmarks = cursor.fetchall()
+        return {"results": bookmarks}
+    except Exception as e:
+        print(f"Error fetching bookmarks: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch user bookmarks")
+    finally:
+        connection.close()

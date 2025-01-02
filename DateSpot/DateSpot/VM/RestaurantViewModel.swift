@@ -23,14 +23,16 @@ protocol RestaurantViewModelProtocol: ObservableObject {
 
 @MainActor
 class RestaurantViewModel: ObservableObject {
+    @Published var bookmarkedRestaurants: [BookmarkedRestaurant] = [] // 북마크 데이터
     @Published private(set) var restaurants: [Restaurant] = [] // 전체 레스토랑 리스트
     @Published private(set) var selectedRestaurant: Restaurant? // 선택된 레스토랑 상세 정보
     @Published var images: [UIImage] = [] // 로드된 이미지 리스트
     @Published private(set) var images1: [String: UIImage] = [:] // 맛집 이름별 첫 번째 이미지를 저장
     @Published var homeimage: [String: UIImage] = [:] // 레스토랑 이름별 이미지 저장
     @Published var isBookmarked: Bool = false
-    private var cancellables = Set<AnyCancellable>()
+//    @Published var bookmarkedRestaurants: [Restaurant] = [] // 북마크된 레스토랑 리스트
     
+    private var cancellables = Set<AnyCancellable>()
     private let baseURL = "https://fastapi.fre.today/restaurant/" // 기본 API URL
 
     
@@ -297,4 +299,56 @@ extension RestaurantViewModel {
             .store(in: &cancellables)
     }
     
+    
+    func fetchBookmarkedRestaurants(userEmail: String) {
+        // URL 구성 및 쿼리 파라미터 추가
+        guard var urlComponents = URLComponents(string: "https://fastapi.fre.today/restaurant/get_user_bookmarks/") else {
+            print("Invalid URL for fetching user bookmarks")
+            return
+        }
+
+        urlComponents.queryItems = [URLQueryItem(name: "user_email", value: userEmail)]
+
+        guard let url = urlComponents.url else {
+            print("Failed to construct URL with query parameters")
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        // 빈 바디 추가 (FastAPI POST 요청에서 바디가 비어있을 때 오류 발생 가능)
+        request.httpBody = Data()
+
+        URLSession.shared.dataTaskPublisher(for: request)
+            .tryMap { output in
+                // HTTP 응답 처리
+                guard let response = output.response as? HTTPURLResponse else {
+                    throw URLError(.badServerResponse)
+                }
+                print("HTTP Status Code: \(response.statusCode)") // 상태 코드 출력
+                guard response.statusCode == 200 else {
+                    throw URLError(.badServerResponse)
+                }
+                return output.data
+            }
+            .decode(type: [String: [BookmarkedRestaurant]].self, decoder: JSONDecoder()) // JSON 디코딩
+            .receive(on: DispatchQueue.main) // UI 업데이트는 메인 스레드에서 수행
+            .sink(receiveCompletion: { completion in
+                if case .failure(let error) = completion {
+                    print("Error occurred: \(error.localizedDescription)")
+                }
+            }, receiveValue: { [weak self] response in
+                if let results = response["results"] {
+                    print("Fetched bookmarked restaurants: \(results)")
+                    self?.bookmarkedRestaurants = results
+                } else {
+                    print("No results found in response")
+                    self?.bookmarkedRestaurants = []
+                }
+            })
+            .store(in: &cancellables)
+    }
 }
+
