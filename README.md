@@ -12,7 +12,8 @@
 
 
 ## 시스템 구조
-<img width="1461" alt="스크린샷 2024-12-23 오후 1 35 04" src="https://github.com/user-attachments/assets/d29ed677-add5-4ef5-a831-e8de0b1e3e70" />
+<img width="823" alt="시스템구조" src="https://github.com/user-attachments/assets/e89ea45b-7381-4eac-9730-6920001df7c0" />
+
 
 
 ## ERD
