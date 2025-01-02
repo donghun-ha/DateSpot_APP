@@ -84,10 +84,10 @@ async def user_login(request: Request):
             print("MySQL 사용자 데이터 없음")
             # MySQL에 새 사용자 추가
             insert_query = """
-            INSERT INTO user (email, name, image, user_identifier)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO user (email, name, image, user_identifier, is_logged_in)
+            VALUES (%s, %s, %s, %s, %s)
             """ 
-            cursor.execute(insert_query, (email, name, None, user_identifier))
+            cursor.execute(insert_query, (email, name, None, user_identifier, 1))
             mysql_conn.commit()
 
             user_data = {"email": email, "name": name}

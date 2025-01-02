@@ -9,17 +9,16 @@ import SwiftUI
 
 struct UserSettings: View {
     // Properties
-    @Environment(\.colorScheme) var colorScheme // 현재 앱의 Dark/Light Model 확인
-    @EnvironmentObject var appState: AppState
+    @EnvironmentObject var appState: AppState // 앱 상태 관리
     @State private var isLogoutAlertPresented: Bool = false
     @State private var isDeleteAccountAlertPresented: Bool = false
     @State private var viewModel = UserViewModel()
-    @AppStorage("isDarkMode") private var isDarkMode: Bool = false // Dark Mode 상태 저장
     
     var body: some View {
         NavigationView(content: {
             VStack(content: {
                 List(content: {
+                    // 계졍 관리 섹션
                     Section(header: Text("계정 관리"), content: {
                         Button("로그아웃") {
                             isLogoutAlertPresented = true
@@ -31,6 +30,7 @@ struct UserSettings: View {
                                 Task {
                                     // 비동기 호출로 로그아웃 로직 실행
                                     await viewModel.logoutUser(email: appState.userEmail ?? "")
+                                    appState.isLoggedIn = false // 로그인 상태를 false로 설정
                                     print("Logged out")
                                 }
                             }
@@ -46,12 +46,17 @@ struct UserSettings: View {
                                 // 계정 삭제 로직 추가
                                 Task{
                                     await viewModel.deleteUser(email: appState.userEmail ?? "")
+                                    appState.isLoggedIn = false // 로그인 상태를 false로 설정
                                     print("Account deleted")
                                 }
                             }
                         } message: {
                             Text("계정을 삭제하면 복구할 수 없습니다. 계속하시겠습니까?")
                         }
+                    })
+                    // Theme 설정 섹션
+                    Section(header: Text("테마 설정"), content: {
+                        Toggle("다크 모드 활성화", isOn: $appState.isDarkMode)
                     })
                 })
                 .listStyle(InsetGroupedListStyle()) // 깔끔한 iOS 스타일의 리스트 적용
