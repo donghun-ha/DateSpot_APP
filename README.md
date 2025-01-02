@@ -7,8 +7,8 @@
 |  :-----: | :----------------------: | 
 |    팀장   | <center> 이종남 </center> |
 |    팀원   | <center> 신정섭  </center> | 
-|    팀원   | <center> 하동훈  </center> | 
-|    팀원   | <center> **이원영**  </center> | 
+|    팀원   | <center> **하동훈**  </center> | 
+|    팀원   | <center> 이원영  </center> | 
 
 
 ## 시스템 구조
@@ -16,19 +16,25 @@
 
 
 ## ERD
+<img width="596" alt="DateSpot_ERD" src="https://github.com/user-attachments/assets/2debb075-64c7-44a3-8ca1-fc498dbc1f45" />
 
 
 
 ## 디자인 패턴(MVVM)
+<img width="859" alt="스크린샷 2025-01-02 오전 10 40 23" src="https://github.com/user-attachments/assets/e4dde2f9-7e2e-4b2e-b0f4-c45a10558b04" />
+
 
 
 
 
 ## API
+<img width="1171" alt="API_DateSpot1" src="https://github.com/user-attachments/assets/befd3285-3fc2-4d22-a54d-7472c285784b" />
+<img width="1167" alt="API_DateSpot2" src="https://github.com/user-attachments/assets/0f8f40a6-dedf-4493-b556-578d3e7235b8" />
 
 
 ### Packages / 사용한 패키지
-<img width="1184" alt="스크린샷 2024-10-17 오후 7 01 35" src="https://github.com/user-attachments/assets/311d9f8e-af36-4183-a6a1-f4f2635d0909">
+<img width="391" alt="Swift Package" src="https://github.com/user-attachments/assets/f62d577c-c852-44a3-bf08-6f1ec05453a2" />
+<img width="392" alt="PythonPackage" src="https://github.com/user-attachments/assets/d1d4f376-248e-4c8d-be5b-ec54c396cefc" />
 
 ```
 
@@ -72,24 +78,24 @@ alt="IMAGE ALT TEXT HERE" width="720" height="480" border="10" /></a>
   -  이원영 : 라우터 설계, 
   -  신정섭 : //
   -  이종남 : //
-  -  하동훈 : //
+  -  하동훈 : Redis, S3 설계 및 구축
     
   Python
   -  이원영 : 라우터 설계, 
   -  신정섭 : //
   -  이종남 : //
-  -  하동훈 : //
+  -  하동훈 : User, Login, bookmark FastAPI 엔드포인트 설계 
   
   View
   -  이원영 : 라우터 설계, 
   -  신정섭 : //
   -  이종남 : //
-  -  하동훈 : //
+  -  하동훈 : Login, Bookmark, User UI/UX 설계
 
   View Model
   -  이원영 : 라우터 설계, 
   -  신정섭 : //
   -  이종남 : //
-  -  하동훈 : //
+  -  하동훈 : User, Login, Bookmark FastAPI 연동
  
     
