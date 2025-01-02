@@ -20,6 +20,7 @@ struct DetailMap: View {
     @State var selectedParkingId : String?
     @State var loadingStatus = false
     
+    
     var body: some View {
         NavigationView {
             if loadingStatus == false{
@@ -42,24 +43,24 @@ struct DetailMap: View {
                         
                     }
                     .ignoresSafeArea()
-                    .onChange(of: selectedMarker) { newValue in
-                        selectValue = newValue != nil
-                                        }
-                    if selectedMarker == "여의도공원앞(구)" {
-                        if selectValue, let selectedName = selectedMarker {
-                            VStack {
-                                Text("혼잡")
-                                    .font(.headline)
-                                    .padding()
-                                    .background(Color.white)
-                                    .cornerRadius(10)
-                                    .shadow(radius: 5)
-                                    .transition(.move(edge: .top).combined(with: .opacity))
-                                Spacer()
-                            }
-                            .padding(.top, 50)
-                        }
-                    }
+//                    .onChange(of: selectedMarker) { newValue in
+//                        selectValue = newValue != nil
+//                                        }
+//                    if selectedMarker == "여의도공원앞(구)" {
+//                        if selectValue, let selectedName = selectedMarker {
+//                            VStack {
+//                                Text("혼잡")
+//                                    .font(.headline)
+//                                    .padding()
+//                                    .background(Color.white)
+//                                    .cornerRadius(10)
+//                                    .shadow(radius: 5)
+//                                    .transition(.move(edge: .top).combined(with: .opacity))
+//                                Spacer()
+//                            }
+//                            .padding(.top, 50)
+//                        }
+//                    }
                     VStack {
                         Spacer()
     

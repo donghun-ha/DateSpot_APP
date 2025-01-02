@@ -41,6 +41,7 @@ class RestaurantViewModel: ObservableObject {
             do {
                 let fetchedRestaurants = try await fetchRestaurantsFromAPI()
                 self.restaurants = Array(fetchedRestaurants.prefix(30)) // 최대 30개로 제한
+//                self.restaurants = fetchedRestaurants // 최대 
             } catch {
                 print("Failed to fetch restaurants: \(error.localizedDescription)")
             }
