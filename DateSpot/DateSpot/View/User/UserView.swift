@@ -7,12 +7,20 @@
 
 import SwiftUI
 
+struct ParentView: View {
+    var body: some View {
+        NavigationStack {
+            UserView()
+        }
+    }
+}
+
 struct UserView: View {
     @EnvironmentObject var appState: AppState
     @StateObject private var viewModel = UserViewModel()
     @State private var showImagePicker = false
     @State private var selectedImage: UIImage?
-
+    
     var body: some View {
         VStack {
             HStack {
@@ -50,7 +58,7 @@ struct UserView: View {
                             showImagePicker = true
                         }
                 }
-
+                
                 VStack(alignment: .leading) {
                     // 유저 이름과 이메일
                     Text(appState.userName)
@@ -60,21 +68,19 @@ struct UserView: View {
                         .foregroundColor(.gray)
                 }
                 .padding(.leading, 8)
-
+                
                 Spacer()
-
+                
                 // 설정 아이콘
-                Button(action: {
-                    // 설정 동작
-                }) {
+                NavigationLink(destination: UserSettings(), label: {
                     Image(systemName: "gearshape")
                         .font(.title2)
-                }
+                })
             }
             .padding()
-
+            
             Divider()
-
+            
             VStack(spacing: 16) {
                 // 데이터 로그 / 큐레이션 탭
                 HStack {
@@ -87,15 +93,15 @@ struct UserView: View {
                     Spacer()
                 }
                 .padding(.vertical)
-
+                
                 Divider()
-
+                
                 Spacer()
-
+                
                 Text("내가 방문한 공간을 기록해보세요")
                     .foregroundColor(.gray)
                     .padding()
-
+                
                 // 버튼
                 Button(action: {
                     // 첫 데이로그 남기기 동작
@@ -108,28 +114,32 @@ struct UserView: View {
                         .cornerRadius(8)
                 }
                 .padding(.horizontal)
+                .padding(.top)
+                
+                Spacer()
+                
+                // 탭 바 공간 확보
+                Spacer(minLength: 50)
             }
-            .padding(.top)
-
-            Spacer()
-
-            // 탭 바 공간 확보
-            Spacer(minLength: 50)
-        }
-        .onAppear {
-            Task {
-                await viewModel.fetchUserImage(email: appState.userEmail!)
+            .onAppear {
+                Task {
+                    await viewModel.fetchUserImage(email: appState.userEmail!)
+                }
             }
-        }
-        .sheet(isPresented: $showImagePicker) {
-            ImagePicker(selectedImage: $selectedImage)
-                .onDisappear {
-                    if let selectedImage = selectedImage {
-                        Task {
-                            await viewModel.uploadImage(email: appState.userEmail!, image: selectedImage)
+            .sheet(isPresented: $showImagePicker) {
+                ImagePicker(selectedImage: $selectedImage)
+                    .onDisappear {
+                        if let selectedImage = selectedImage {
+                            Task {
+                                await viewModel.uploadImage(email: appState.userEmail!, image: selectedImage)
+                            }
                         }
                     }
-                }
+            }
         }
     }
 }
+
+//#Preview {
+//    UserView()
+//}
