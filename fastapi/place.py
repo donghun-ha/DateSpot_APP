@@ -204,6 +204,8 @@ async def get_user_bookmarks(user_email: str):
     except Exception as e:
         print(f"Error fetching bookmarks: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch user bookmarks")
+    finally:
+        connection.close()
 class UserLocation(BaseModel):
     lat: float
     lng: float
