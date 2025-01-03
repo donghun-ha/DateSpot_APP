@@ -42,7 +42,7 @@ struct DetailMap: View {
                         
                     }
                     .ignoresSafeArea()
-                    .onChange(of: selectedMarker) { newValue in
+                    .onChange(of: selectedMarker) { _, newValue in
                         selectValue = newValue != nil
                                         }
                     if selectedMarker == "여의도공원앞(구)" {
