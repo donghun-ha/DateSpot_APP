@@ -23,6 +23,7 @@ struct UserView: View {
     
     var body: some View {
         VStack {
+            // 상단 프로필 섹션
             HStack {
                 // 프로필 이미지
                 if let imageURL = URL(string: viewModel.userImage), !viewModel.userImage.isEmpty {
@@ -59,8 +60,8 @@ struct UserView: View {
                         }
                 }
                 
+                // 유저 정보
                 VStack(alignment: .leading) {
-                    // 유저 이름과 이메일
                     Text(appState.userName)
                         .font(.headline)
                     Text(appState.userEmail ?? "")
@@ -78,68 +79,55 @@ struct UserView: View {
                 })
             }
             .padding()
+    
             
             Divider()
+
+
+            // 공지사항 섹션
+            VStack(alignment: .leading, spacing: 10) { // 왼쪽 정렬로 변경
+                Text("공지사항")
+                    .font(.headline)
+                    .padding(.leading)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Image(systemName: "bell")
+                            .foregroundColor(.blue)
+                        Text("새로운 업데이트를 확인하세요!")
+                            .font(.subheadline)
+                    }
+
+                    HStack {
+                        Image(systemName: "info.circle")
+                            .foregroundColor(.green)
+                        Text("앱 사용 팁: 프로필 이미지를 눌러 변경해보세요.")
+                            .font(.subheadline)
+                    }
+                }
+                .padding(.leading)
+            }
             
-            VStack(spacing: 16) {
-                // 데이터 로그 / 큐레이션 탭
-                HStack {
-                    Spacer()
-                    Text("데이로그")
-                        .font(.headline)
-                    Spacer()
-                    Text("큐레이션")
-                        .font(.headline)
-                    Spacer()
-                }
-                .padding(.vertical)
-                
-                Divider()
-                
-                Spacer()
-                
-                Text("내가 방문한 공간을 기록해보세요")
-                    .foregroundColor(.gray)
-                    .padding()
-                
-                // 버튼
-                Button(action: {
-                    // 첫 데이로그 남기기 동작
-                }) {
-                    Text("첫 데이로그 남기기")
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.black)
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
-                }
-                .padding(.horizontal)
-                .padding(.top)
-                
-                Spacer()
-                
-                // 탭 바 공간 확보
-                Spacer(minLength: 50)
+            Spacer()
+        }
+        .onAppear {
+            Task {
+                await viewModel.fetchUserImage(email: appState.userEmail!)
             }
-            .onAppear {
-                Task {
-                    await viewModel.fetchUserImage(email: appState.userEmail!)
-                }
-            }
-            .sheet(isPresented: $showImagePicker) {
-                ImagePicker(selectedImage: $selectedImage)
-                    .onDisappear {
-                        if let selectedImage = selectedImage {
-                            Task {
-                                await viewModel.uploadImage(email: appState.userEmail!, image: selectedImage)
-                            }
+        }
+        .sheet(isPresented: $showImagePicker) {
+            ImagePicker(selectedImage: $selectedImage)
+                .onDisappear {
+                    if let selectedImage = selectedImage {
+                        Task {
+                            await viewModel.uploadImage(email: appState.userEmail!, image: selectedImage)
                         }
                     }
-            }
+                }
         }
     }
 }
 
-//#Preview {
-//    UserView()
-//}
+#Preview {
+    UserView()
+}

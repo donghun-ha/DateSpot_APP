@@ -30,28 +30,13 @@ struct UserSettings: View {
                                 Task {
                                     // 비동기 호출로 로그아웃 로직 실행
                                     await viewModel.logoutUser(email: appState.userEmail ?? "")
+                                    LoginViewModel().deleteUser()
                                     appState.isLoggedIn = false // 로그인 상태를 false로 설정
                                     print("Logged out")
                                 }
                             }
                         } message: {
                             Text("로그아웃 하시겠습니까?")
-                        }
-                        Button("계정 삭제") {
-                            isDeleteAccountAlertPresented = true
-                        }
-                        .alert("계정삭제", isPresented: $isDeleteAccountAlertPresented) {
-                            Button("취소", role: .cancel) {}
-                            Button("확인", role: .destructive) {
-                                // 계정 삭제 로직 추가
-                                Task{
-                                    await viewModel.deleteUser(email: appState.userEmail ?? "")
-                                    appState.isLoggedIn = false // 로그인 상태를 false로 설정
-                                    print("Account deleted")
-                                }
-                            }
-                        } message: {
-                            Text("계정을 삭제하면 복구할 수 없습니다. 계속하시겠습니까?")
                         }
                     })
                     // Theme 설정 섹션

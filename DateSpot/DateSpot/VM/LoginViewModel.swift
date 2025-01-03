@@ -102,7 +102,7 @@ class LoginViewModel: NSObject, ObservableObject {
           guard let user = result?.user,
                 let email = user.profile?.email,
                 let name = user.profile?.name,
-                let imageURL = user.profile?.imageURL(withDimension: 100)
+                let imageURL = user.profile?.imageURL(withDimension: 100)?.absoluteString
             else {
                 self.showError("Google 사용자 정보 누락")
                 return
@@ -111,6 +111,7 @@ class LoginViewModel: NSObject, ObservableObject {
             // 사용자 정보 저장
             self.loggedInUserEmail = email
             self.loggedInUserName = name
+            self.loggedInUserImage = imageURL
             
             // 서버로 전송
             Task {

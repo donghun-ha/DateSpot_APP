@@ -54,8 +54,7 @@ struct LoginView: View {
                     .padding(.bottom, 50)
                     .padding(.horizontal, 20)
                 }
-                .onChange(of: viewModel.isLoginSuccessful) { isSuccess in
-                    print("isLoginSuccess: \(isSuccess)")
+                .onChange(of: viewModel.isLoginSuccessful) { _,isSuccess in
                     if isSuccess {
                         appState.isLoggedIn = true
                         appState.userEmail = viewModel.loggedInUserEmail
