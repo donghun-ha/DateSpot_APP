@@ -37,9 +37,7 @@ struct RestaurantSectionView: View {
                                     .onAppear {
                                         Task {
                                             if viewModel.homeimage[restaurant.name] == nil {
-                                                print("\(restaurant.name)의 이미지 로드")
                                                 var images = await viewModel.fetchImageKeys(for: restaurant.name)
-                                                print("다시 로드 : \(images)")
                                                 await viewModel.fetchFirstImage(for: restaurant.name)
                                             }
                                         }

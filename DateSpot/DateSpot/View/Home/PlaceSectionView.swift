@@ -3,14 +3,14 @@ import SwiftUI
 struct PlaceSectionView: View {
     @StateObject var viewModel = PlaceViewModel() // ViewModel 초기화
     @State private var userLocation: (lat: Double, lng: Double) = (37.5665, 126.9780) // 기본 위치 (서울)
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("명소")
                 .font(.title)
                 .fontWeight(.bold)
                 .padding(.horizontal)
-
+            
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: 20) {
                     ForEach(viewModel.nearbyPlaces.prefix(5), id: \.name) { place in
@@ -41,7 +41,6 @@ struct PlaceSectionView: View {
                                                 lng: userLocation.lng,
                                                 radius: 1000
                                             )
-                                            print("\(place.name)의 이미지 가져오기")
                                             await viewModel.fetchFirstImage(for: place.name)
                                         }
                                     }

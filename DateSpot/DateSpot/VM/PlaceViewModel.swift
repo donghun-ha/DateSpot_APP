@@ -20,7 +20,7 @@ class PlaceViewModel: ObservableObject {
     @Published var nearbyPlaces: [PlaceData] = [] // 가까운 장소 리스트
     @Published var images: [String: UIImage] = [:] // 장소 이름을 키로 하는 이미지 딕셔너리
     let urlPath = "https://fastapi.fre.today/place"
-
+    
     func downloadItems() async {
         let url = URL(string: "\(urlPath)/select")!
         
@@ -43,7 +43,7 @@ class PlaceViewModel: ObservableObject {
             let fetchedPlaces = try await fetchPlacesFromAPI()
             let sortedPlaces = fetchedPlaces.sorted {
                 calculateDistance(lat: $0.lat, lng: $0.lng, currentLat: currentLat, currentLng: currentLng) <
-                calculateDistance(lat: $1.lat, lng: $1.lng, currentLat: currentLat, currentLng: currentLng)
+                    calculateDistance(lat: $1.lat, lng: $1.lng, currentLat: currentLat, currentLng: currentLng)
             }
             
             // 메인 스레드에서 UI 상태 업데이트
@@ -55,7 +55,7 @@ class PlaceViewModel: ObservableObject {
             print("❌ 데이터 다운로드 실패: \(error.localizedDescription)")
         }
     }
-
+    
     
     // Fetch Places
     func fetchPlace() async {
@@ -73,7 +73,7 @@ class PlaceViewModel: ObservableObject {
         guard images[placeName] == nil else { return } // 이미 로드된 경우
         let imageUrl = "https://fastapi.fre.today/place/image?\(placeName)"
         guard let url = URL(string: imageUrl) else { return }
-
+        
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             if let image = UIImage(data: data) {
@@ -87,36 +87,33 @@ class PlaceViewModel: ObservableObject {
     }
     
     // Fetch first image for a given place name
-        func fetchFirstImage(for name: String) async {
-            print(name)
-            guard images[name] == nil else { return } // 이미 로드된 경우 스킵
-            print("들어가는 이미지 : \(name)")
-            let encodedName = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? name
-            guard let url = URL(string: "\(urlPath)/image_thumb?name=\(encodedName)") else {
-                print("Invalid URL for \(name)")
-                return
-            }
-
-            do {
-                let (data, _) = try await URLSession.shared.data(from: url)
-                if let image = UIImage(data: data) {
-                    await MainActor.run {
-                        self.images[name] = image // 명소 이름별로 이미지 저장
-                    }
-                } else {
-                    print("Failed to decode image for \(name)")
-                }
-            } catch {
-                print("Error fetching image for \(name): \(error)")
-            }
+    func fetchFirstImage(for name: String) async {
+        guard images[name] == nil else { return } // 이미 로드된 경우 스킵
+        let encodedName = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? name
+        guard let url = URL(string: "\(urlPath)/image_thumb?name=\(encodedName)") else {
+            print("Invalid URL for \(name)")
+            return
         }
-
+        
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            if let image = UIImage(data: data) {
+                await MainActor.run {
+                    self.images[name] = image // 명소 이름별로 이미지 저장
+                }
+            } else {
+                print("Failed to decode image for \(name)")
+            }
+        } catch {
+            print("Error fetching image for \(name): \(error)")
+        }
+    }
+    
     func fetchDetailImage(for placeName: String) async {
         guard images[placeName] == nil else { return } // 이미 로드된 경우
-        print(placeName)
         let imageUrl = "https://fastapi.fre.today/place/image_thumb?name=\(placeName)"
         guard let url = URL(string: imageUrl) else { return }
-
+        
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             if let image = UIImage(data: data) {
@@ -128,8 +125,8 @@ class PlaceViewModel: ObservableObject {
             print("❌ 이미지 다운로드 실패: \(error.localizedDescription)")
         }
     }
-
-
+    
+    
     // 거리 계산 함수
     func calculateDistance(lat: Double, lng: Double, currentLat: Double, currentLng: Double) -> Double {
         let deltaLat = lat - currentLat
@@ -138,41 +135,38 @@ class PlaceViewModel: ObservableObject {
     }
     
     private func fetchPlacesFromAPI() async throws -> [PlaceData] {
-       guard let url = URL(string: "\(urlPath)/select") else {
-           throw URLError(.badURL)
-       }
-
-       let (data, response) = try await URLSession.shared.data(from: url)
-
-       guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-           throw URLError(.badServerResponse)
-       }
-
-       let decoder = JSONDecoder()
-       return try decoder.decode([PlaceData].self, from: data)
-   }
-
+        guard let url = URL(string: "\(urlPath)/select") else {
+            throw URLError(.badURL)
+        }
+        
+        let (data, response) = try await URLSession.shared.data(from: url)
+        
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            throw URLError(.badServerResponse)
+        }
+        
+        let decoder = JSONDecoder()
+        return try decoder.decode([PlaceData].self, from: data)
+    }
+    
     
     /// 현재 위치 기반으로 가까운 명소 데이터를 가져옴
     func fetchNearbyPlaces(lat: Double, lng: Double, radius: Double = 1000) async {
-        print("명소 정보 가져오기")
-//        guard let url = URL(string: "\(urlPath)/nearby_places/") else {
-        guard let url = URL(string: "\(urlPath)/place/nearby_places/") else {
+        guard let url = URL(string: "\(urlPath)/nearby_places/") else {
             print("Invalid URL")
             return
         }
-
+        
         let requestBody: [String: Any] = [
             "lat": lat,
             "lng": lng,
             "radius": radius
         ]
-        print(requestBody)
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try? JSONSerialization.data(withJSONObject: requestBody)
-
+        
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
             
@@ -182,8 +176,6 @@ class PlaceViewModel: ObservableObject {
             }
             
             let decodedResponse = try JSONDecoder().decode([String: [PlaceData]].self, from: data)
-            print("가까운 명소 데이터 가져오기")
-            print(decodedResponse)
             self.nearbyPlaces = decodedResponse["nearby_places"] ?? []
             print("Fetched nearby places: \(self.nearbyPlaces)")
         } catch {
