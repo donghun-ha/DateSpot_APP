@@ -7,14 +7,23 @@
 
 import SwiftUI
 
+struct ParentView: View {
+    var body: some View {
+        NavigationStack {
+            UserView()
+        }
+    }
+}
+
 struct UserView: View {
     @EnvironmentObject var appState: AppState
     @StateObject private var viewModel = UserViewModel()
     @State private var showImagePicker = false
     @State private var selectedImage: UIImage?
-
+    
     var body: some View {
         VStack {
+            // 상단 프로필 섹션
             HStack {
                 // 프로필 이미지
                 if let imageURL = URL(string: viewModel.userImage), !viewModel.userImage.isEmpty {
@@ -50,9 +59,9 @@ struct UserView: View {
                             showImagePicker = true
                         }
                 }
-
+                
+                // 유저 정보
                 VStack(alignment: .leading) {
-                    // 유저 이름과 이메일
                     Text(appState.userName)
                         .font(.headline)
                     Text(appState.userEmail ?? "")
@@ -60,61 +69,46 @@ struct UserView: View {
                         .foregroundColor(.gray)
                 }
                 .padding(.leading, 8)
-
+                
                 Spacer()
-
+                
                 // 설정 아이콘
-                Button(action: {
-                    // 설정 동작
-                }) {
+                NavigationLink(destination: UserSettings(), label: {
                     Image(systemName: "gearshape")
                         .font(.title2)
-                }
+                })
             }
             .padding()
-
+    
+            
             Divider()
 
-            VStack(spacing: 16) {
-                // 데이터 로그 / 큐레이션 탭
-                HStack {
-                    Spacer()
-                    Text("데이로그")
-                        .font(.headline)
-                    Spacer()
-                    Text("큐레이션")
-                        .font(.headline)
-                    Spacer()
+
+            // 공지사항 섹션
+            VStack(alignment: .leading, spacing: 10) { // 왼쪽 정렬로 변경
+                Text("공지사항")
+                    .font(.headline)
+                    .padding(.leading)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Image(systemName: "bell")
+                            .foregroundColor(.blue)
+                        Text("새로운 업데이트를 확인하세요!")
+                            .font(.subheadline)
+                    }
+
+                    HStack {
+                        Image(systemName: "info.circle")
+                            .foregroundColor(.green)
+                        Text("앱 사용 팁: 프로필 이미지를 눌러 변경해보세요.")
+                            .font(.subheadline)
+                    }
                 }
-                .padding(.vertical)
-
-                Divider()
-
-                Spacer()
-
-                Text("내가 방문한 공간을 기록해보세요")
-                    .foregroundColor(.gray)
-                    .padding()
-
-                // 버튼
-                Button(action: {
-                    // 첫 데이로그 남기기 동작
-                }) {
-                    Text("첫 데이로그 남기기")
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.black)
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
-                }
-                .padding(.horizontal)
+                .padding(.leading)
             }
-            .padding(.top)
-
+            
             Spacer()
-
-            // 탭 바 공간 확보
-            Spacer(minLength: 50)
         }
         .onAppear {
             Task {
@@ -132,4 +126,8 @@ struct UserView: View {
                 }
         }
     }
+}
+
+#Preview {
+    UserView()
 }

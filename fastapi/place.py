@@ -6,6 +6,7 @@ from geopy.distance import geodesic
 import unicodedata
 from pydantic import BaseModel
 from datetime import datetime
+from pymysql.cursors import DictCursor
 
 router = APIRouter()
 
@@ -133,6 +134,9 @@ class PlaceBookRequest(BaseModel):
     user_email: str
     place_name: str
     name: str
+class checkPlaceBook(BaseModel):
+    user_email: str
+    place_name: str
 
 @router.post("/add_bookmark/")
 async def add_bookmark(bookmark: PlaceBookRequest):
@@ -158,6 +162,48 @@ async def add_bookmark(bookmark: PlaceBookRequest):
     finally:
         connection.close()
 
+@router.post("/check_bookmark/")
+async def check_bookmark(request: checkPlaceBook):
+    connection = hosts.connect()
+    try:
+        with connection.cursor(DictCursor) as cursor:  # DictCursor 사용
+            # 북마크 존재 여부 확인
+            sql = """
+                SELECT COUNT(*) AS count
+                FROM place_bookmark
+                WHERE user_email = %s AND place_name = %s
+            """
+            cursor.execute(sql, (request.user_email, request.place_name))
+            result = cursor.fetchone()
+            is_bookmarked = result["count"] > 0  # DictCursor로 딕셔너리로 처리 가능
+        return {"is_bookmarked": is_bookmarked}
+    except Exception as e:
+        print(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to check bookmark")
+    finally:
+        connection.close()
+
+
+@router.post("/get_user_bookmarks/")
+async def get_user_bookmarks(user_email: str):
+    """
+    주어진 이메일에 해당하는 모든 북마크 명소 이름을 반환
+    """
+    connection = hosts.connect()
+    try:
+        with connection.cursor(DictCursor) as cursor:
+            sql = """
+                SELECT p.name, p.address
+                FROM place_bookmark pb
+                JOIN place r ON pb.place_name = p.name
+                WHERE pb.user_email = %s
+            """
+            cursor.execute(sql, (user_email,))
+            bookmarks = cursor.fetchall()
+        return {"results": bookmarks}
+    except Exception as e:
+        print(f"Error fetching bookmarks: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch user bookmarks")
 class UserLocation(BaseModel):
     lat: float
     lng: float
