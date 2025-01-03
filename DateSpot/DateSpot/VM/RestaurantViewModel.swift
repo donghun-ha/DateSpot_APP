@@ -23,6 +23,7 @@ protocol RestaurantViewModelProtocol: ObservableObject {
 
 @MainActor
 class RestaurantViewModel: ObservableObject {
+    @Published var nearbyRestaurants: [Restaurant] = [] // 근처 레스토랑 데이터
     @Published var bookmarkedRestaurants: [BookmarkedRestaurant] = [] // 북마크 데이터
     @Published private(set) var restaurants: [Restaurant] = [] // 전체 레스토랑 리스트
     @Published private(set) var selectedRestaurant: Restaurant? // 선택된 레스토랑 상세 정보
@@ -65,39 +66,58 @@ class RestaurantViewModel: ObservableObject {
             }
         }
 
-        /// 이미지 키 가져오기
-        func fetchImageKeys(for name: String) async -> [String] {
-            let encodedName = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? name
-            guard let url = URL(string: "\(baseURL)images?name=\(encodedName)") else {
-                print("Invalid URL for fetchImageKeys")
-                return []
-            }
-
-            do {
-                let (data, _) = try await URLSession.shared.data(from: url)
-                let response = try JSONDecoder().decode([String: [String]].self, from: data)
-                return response["images"] ?? []
-            } catch {
-                print("Failed to fetch image keys: \(error)")
-                return []
-            }
+    /// 이미지 키 가져오기
+    func fetchImageKeys(for name: String) async -> [String] {
+        let encodedName = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? name
+        print("eoncodedName : \(encodedName)")
+        guard let url = URL(string: "\(baseURL)images?name=\(encodedName)") else {
+            print("Invalid URL for fetchImageKeys")
+            return []
         }
 
-        /// 특정 이미지 키로 이미지 가져오기
-        func fetchImage(fileKey: String) async -> UIImage? {
-            guard let url = URL(string: "\(baseURL)image?file_key=\(fileKey.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? fileKey)") else {
-                print("Invalid URL for fetchImage")
-                return nil
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            print(data)
+            // 응답을 디코딩하기 전에 로깅
+            if let responseString = String(data: data, encoding: .utf8) {
+                print("Response: \(responseString)")
             }
 
-            do {
-                let (data, _) = try await URLSession.shared.data(from: url)
-                return UIImage(data: data)
-            } catch {
-                print("Failed to fetch image: \(error)")
-                return nil
+            // 올바른 응답 형식 처리
+            if let response = try? JSONDecoder().decode([String: [String]].self, from: data),
+               let images = response["images"] {
+                return images
             }
+
+            // 에러 메시지 처리
+            if let errorResponse = try? JSONDecoder().decode([String: String].self, from: data),
+               let errorDetail = errorResponse["detail"] {
+                print("Server Error: \(errorDetail)")
+            }
+
+            return []
+        } catch {
+            print("Failed to fetch image keys: \(error)")
+            return []
         }
+    }
+
+    /// 특정 이미지 키로 이미지 가져오기
+    func fetchImage(fileKey: String) async -> UIImage? {
+        guard let url = URL(string: "\(baseURL)image?file_key=\(fileKey.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? fileKey)") else {
+            print("Invalid URL for fetchImage")
+            return nil
+        }
+
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            return UIImage(data: data)
+        } catch {
+            print("Failed to fetch image: \(error)")
+            return nil
+        }
+    }
+    
     func loadImages(for name: String) async {
         let imageKeys = await fetchImageKeys(for: name)
 
@@ -134,6 +154,19 @@ class RestaurantViewModel: ObservableObject {
 //        }
 //    }
 
+    // FastAPI 응답 모델
+    struct NearbyRestaurantsResponse: Codable {
+        let nearby_restaurants: [NearbyRestaurant]
+    }
+
+    struct NearbyRestaurant: Codable {
+        let name: String
+        let address: String
+        let lat: Double
+        let lng: Double
+        let distance: Double
+    }
+    
     func fetchRestaurantDetail(name: String) async {
         Task {
             do {
@@ -144,6 +177,54 @@ class RestaurantViewModel: ObservableObject {
             }
         }
     }
+    /// FastAPI에서 근처 레스토랑 데이터를 가져오는 함수
+    func fetchNearbyRestaurants(lat: Double, lng: Double, radius: Double = 1000) async {
+        let endpoint = "\(baseURL)nearby_places/"
+        guard let url = URL(string: endpoint) else {
+            print("Invalid URL")
+            return
+        }
+
+        let parameters: [String: Any] = [
+            "lat": lat,
+            "lng": lng,
+            "radius": radius
+        ]
+
+        do {
+            // 요청 생성
+            let jsonData = try JSONSerialization.data(withJSONObject: parameters)
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = jsonData
+
+            // 데이터 가져오기
+            let (data, _) = try await URLSession.shared.data(for: request)
+
+            // JSON 디코딩
+            let decodedResponse = try JSONDecoder().decode(NearbyRestaurantsResponse.self, from: data)
+
+            // UI 업데이트
+            self.nearbyRestaurants = decodedResponse.nearby_restaurants.map { restaurant in
+                Restaurant(
+                    name: restaurant.name,
+                    address: restaurant.address,
+                    lat: restaurant.lat,
+                    lng: restaurant.lng,
+                    parking: "\(String(format: "%.0f", restaurant.distance)) m",
+                    operatingHour: "", // FastAPI 응답에서 없는 경우 빈 값으로 설정
+                    closedDays: "",
+                    contactInfo: "",
+                    breakTime: nil,
+                    lastOrder: nil
+                )
+            }
+        } catch {
+            print("Failed to fetch nearby restaurants: \(error)")
+        }
+    }
+
 }
 
 // MARK: - Private Methods

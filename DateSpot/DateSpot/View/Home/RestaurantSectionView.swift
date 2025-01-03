@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct RestaurantSectionView: View {
-    let restaurants: [Restaurant] // 전달받은 레스토랑 리스트
-    @ObservedObject var viewModel: RestaurantViewModel
+    @StateObject var viewModel = RestaurantViewModel() // ViewModel 초기화
+    @State private var userLocation: (lat: Double, lng: Double) = (37.5255100592, 127.0367640978) // 기본 위치 (서울)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -13,9 +13,9 @@ struct RestaurantSectionView: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: 20) {
-                    ForEach(restaurants.prefix(5), id: \.name) { restaurant in
+                    ForEach(viewModel.nearbyRestaurants.prefix(5)) { restaurant in
                         NavigationLink(
-                            destination: DetailView(restaurantName: restaurant.name) // 클릭 시 DetailView로 이동
+                            destination: DetailView(restaurantName: restaurant.name)
                         ) {
                             ZStack {
                                 if let image = viewModel.homeimage[restaurant.name] {
@@ -36,16 +36,41 @@ struct RestaurantSectionView: View {
                                     .frame(width: 300, height: 300)
                                     .onAppear {
                                         Task {
-                                            await viewModel.fetchFirstImage(for: restaurant.name)
+                                            if viewModel.homeimage[restaurant.name] == nil {
+                                                print("\(restaurant.name)의 이미지 로드")
+                                                var images = await viewModel.fetchImageKeys(for: restaurant.name)
+                                                print("다시 로드 : \(images)")
+                                                await viewModel.fetchFirstImage(for: restaurant.name)
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
-                        .buttonStyle(PlainButtonStyle()) // 기본 스타일 제거
+                        .buttonStyle(PlainButtonStyle())
+                        .onAppear {
+                            // 스크롤될 때마다 동적으로 데이터 로드
+                            Task {
+                                await viewModel.fetchNearbyRestaurants(
+                                    lat: userLocation.lat,
+                                    lng: userLocation.lng,
+                                    radius: 1000
+                                )
+                            }
+                        }
                     }
                 }
                 .padding(.horizontal)
+            }
+        }
+        .onAppear {
+            Task {
+                // FastAPI에서 근처 레스토랑 데이터를 가져오기
+                await viewModel.fetchNearbyRestaurants(
+                    lat: userLocation.lat,
+                    lng: userLocation.lng,
+                    radius: 1000
+                )
             }
         }
     }

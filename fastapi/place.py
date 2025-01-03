@@ -206,44 +206,43 @@ async def get_user_bookmarks(user_email: str):
         raise HTTPException(status_code=500, detail="Failed to fetch user bookmarks")
     finally:
         connection.close()
+
 class UserLocation(BaseModel):
     lat: float
     lng: float
 
 @router.post("/nearby_places/")
 async def get_nearby_places(location: UserLocation, radius: float = 1000):
-    """
-    사용자 위치(lat, lng)를 기반으로 반경(radius) 내의 맛집 및 명소를 반환
-    """
     connection = hosts.connect()
     try:
         with connection.cursor() as cursor:
-
-            # 명소 데이터 가져오기
-            place_query = "SELECT name, address, parking, lat, lng FROM place"
+            place_query = "SELECT name, address, parking, lat, lng, description, contact_info, operating_hour, closing_time FROM place"
             cursor.execute(place_query)
             places = cursor.fetchall()
 
-        # 사용자 위치
         user_coords = (location.lat, location.lng)
 
-        # 반경 내의 명소 필터링
-        nearby_places = [
+        # 유효한 장소 필터링
+        valid_places = [
             {
                 "name": p[0],
                 "address": p[1],
-                "lat": p[2],
-                "lng": p[3],
-                "distance": geodesic(user_coords, (p[2], p[3])).meters
+                "lat": p[3],
+                "lng": p[4],
+                "distance": geodesic(user_coords, (p[3], p[4])).meters,
+                "description": p[5] if p[5] else "No description available",
+                "contact_info": p[6] if p[6] else "No contact info",
+                "operating_hour": p[7] if p[7] else "Unknown",
+                "parking": p[2] if p[2] else "No parking info",
+                "closing_time": p[8] if p[8] else "Unknown"
             }
             for p in places
-            if geodesic(user_coords, (p[2], p[3])).meters <= radius
+            if p[3] is not None and p[4] is not None
         ]
 
-        # 결과 반환
-        return {
-            "nearby_places": nearby_places
-        }
+        nearby_places = [p for p in valid_places if p["distance"] <= radius]
+
+        return {"nearby_places": nearby_places}
     except Exception as e:
         print(f"Error fetching nearby places: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch nearby places")

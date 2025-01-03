@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct PlaceSectionView: View {
-    let places: [PlaceData]
-    @ObservedObject var viewModel: PlaceViewModel
+    @StateObject var viewModel = PlaceViewModel() // ViewModel 초기화
+    @State private var userLocation: (lat: Double, lng: Double) = (37.5665, 126.9780) // 기본 위치 (서울)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -13,9 +13,9 @@ struct PlaceSectionView: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: 20) {
-                    ForEach(Array(places.prefix(5)), id: \.name) { place in
+                    ForEach(viewModel.nearbyPlaces.prefix(5), id: \.name) { place in
                         NavigationLink(
-                            destination: DetailView(restaurantName: place.name) // 클릭 시 DetailView로 이동
+                            destination: DetailView(restaurantName: place.name)
                         ) {
                             ZStack {
                                 if let image = viewModel.images[place.name] {
@@ -36,18 +36,32 @@ struct PlaceSectionView: View {
                                     .frame(width: 300, height: 300)
                                     .onAppear {
                                         Task {
+                                            await viewModel.fetchNearbyPlaces(
+                                                lat: userLocation.lat,
+                                                lng: userLocation.lng,
+                                                radius: 1000
+                                            )
+                                            print("\(place.name)의 이미지 가져오기")
                                             await viewModel.fetchFirstImage(for: place.name)
                                         }
                                     }
                                 }
                             }
                         }
-                        .buttonStyle(PlainButtonStyle()) // 기본 스타일 제거
+                        .buttonStyle(PlainButtonStyle())
                     }
                 }
                 .padding(.horizontal)
             }
         }
+        .onAppear {
+            Task {
+                await viewModel.fetchNearbyPlaces(
+                    lat: userLocation.lat,
+                    lng: userLocation.lng,
+                    radius: 1000
+                )
+            }
+        }
     }
 }
-
