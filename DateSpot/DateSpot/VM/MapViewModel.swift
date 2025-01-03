@@ -27,8 +27,10 @@ class TabMapViewModel: NSObject, CLLocationManagerDelegate, ObservableObject {
     // 필터링된 명소와 레스토랑
     @Published var nearPlace: [PlaceData] = []
     @Published var nearRestaurant: [Restaurant] = []
+    @Published var filteredRestaurants: [Restaurant] = []  // 반경 2km 레스토랑
+    @Published var filteredPlaces: [PlaceData] = []        // 반경 2km 명소
     
-    
+
     // 검색 기능 변수
     @Published var searchText = ""
     @Published var searchResults: [MKMapItem] = []
@@ -45,6 +47,25 @@ class TabMapViewModel: NSObject, CLLocationManagerDelegate, ObservableObject {
         tabMapLoc.requestWhenInUseAuthorization()
         tabMapLoc.startUpdatingLocation()
     }
+    
+    func filterData(restaurants: [Restaurant], places: [PlaceData], radius: Double = 2000) {
+            guard let userLocation = userLocation else {
+                print("사용자 위치를 확인할 수 없습니다.")
+                return
+            }
+            
+            // 2km 반경 레스토랑 필터링
+            self.filteredRestaurants = restaurants.filter { restaurant in
+                let restaurantLocation = CLLocation(latitude: restaurant.lat, longitude: restaurant.lng)
+                return userLocation.distance(from: restaurantLocation) <= radius
+            }
+            
+            // 2km 반경 명소 필터링
+            self.filteredPlaces = places.filter { place in
+                let placeLocation = CLLocation(latitude: place.lat, longitude: place.lng)
+                return userLocation.distance(from: placeLocation) <= radius
+            }
+        }
     
     // 마커 필터링  (View에서 placeData, restaurantData 입력)
     func filterNearALL(currentLocation: CLLocation, placeData : [PlaceData], restaurantData : [Restaurant]) async {
@@ -93,9 +114,40 @@ class TabMapViewModel: NSObject, CLLocationManagerDelegate, ObservableObject {
         print("Failed to find user's location:", error.localizedDescription)
     }
     
-    
-    // 보유 마커에서 검색
+    // 검색기능
+    //    func searchLocations() {
+    //           let request = MKLocalSearch.Request()
+    //           request.naturalLanguageQuery = searchText
+    //           request.region = region
+    //
+    //           let search = MKLocalSearch(request: request)
+    //           search.start { [weak self] response, error in
+    //               guard let self = self else { return }
+    //
+    //               if let error = error {
+    //                   print("Search error: \(error)")
+    //                   return
+    //               }
+    //
+    //               if let response = response {
+    //                   DispatchQueue.main.async {
+    //                       self.searchResults = response.mapItems
+    //
+    //                       // 검색 결과가 있으면 카메라 이동
+    //                       if let firstResult = response.mapItems.first?.placemark.coordinate {
+    //                           self.cameraPosition = .region(
+    //                               MKCoordinateRegion(
+    //                                   center: firstResult,
+    //                                   span: MKCoordinateSpan(latitudeDelta: 0.015, longitudeDelta: 0.015)
+    //                               )
+    //                           )
+    //                       }
+    //                   }
+    //               }
+    //           }
+    //       }
     func searchLocations() {
+        // 먼저 로컬 마커들에서 검색
         let localResults = searchLocalMarkers(searchText)
         if !localResults.isEmpty {
             self.searchResults = localResults
@@ -150,8 +202,4 @@ class TabMapViewModel: NSObject, CLLocationManagerDelegate, ObservableObject {
         }
         
     } // VM
-    
-    
-    
-    
 }

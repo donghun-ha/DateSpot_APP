@@ -40,14 +40,15 @@ class RestaurantViewModel: ObservableObject {
         Task {
             do {
                 let fetchedRestaurants = try await fetchRestaurantsFromAPI()
-                self.restaurants = Array(fetchedRestaurants.prefix(30)) // 최대 30개로 제한
+                self.restaurants = Array(fetchedRestaurants) // 최대 30개로 제한
             } catch {
                 print("Failed to fetch restaurants: \(error.localizedDescription)")
             }
         }
     }
-
-    
+//    func fetchRestaurants() async {
+//        }
+                                                                                                                                
     func fetchFirstImage(for name: String) async {
         guard homeimage[name] == nil else { return } // 이미 로드된 경우 스킵
 

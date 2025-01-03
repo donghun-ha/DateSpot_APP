@@ -13,7 +13,7 @@ struct PlaceSectionView: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: 20) {
-                    ForEach(Array(places.prefix(20)), id: \.name) { place in
+                    ForEach(Array(places.prefix(5)), id: \.name) { place in
                         NavigationLink(
                             destination: DetailView(restaurantName: place.name) // 클릭 시 DetailView로 이동
                         ) {
@@ -25,7 +25,7 @@ struct PlaceSectionView: View {
                                         heading: place.name,
                                         author: place.address
                                     )
-                                    .frame(width: 300)
+                                    .frame(width: 300, height: 300)
                                 } else {
                                     CardView(
                                         image: UIImage(systemName: "photo"),
@@ -33,7 +33,7 @@ struct PlaceSectionView: View {
                                         heading: place.name,
                                         author: place.address
                                     )
-                                    .frame(width: 300)
+                                    .frame(width: 300, height: 300)
                                     .onAppear {
                                         Task {
                                             await viewModel.fetchFirstImage(for: place.name)

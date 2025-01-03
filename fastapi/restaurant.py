@@ -2,6 +2,7 @@ from fastapi import HTTPException, APIRouter
 from fastapi.responses import StreamingResponse
 import hosts, unicodedata, re
 from urllib.parse import unquote
+from geopy.distance import geodesic
 from pydantic import BaseModel
 from datetime import datetime
 from pymysql.cursors import DictCursor
@@ -236,5 +237,46 @@ async def get_user_bookmarks(user_email: str):
     except Exception as e:
         print(f"Error fetching bookmarks: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch user bookmarks")
+    finally:
+        connection.close()
+
+class UserLocation(BaseModel):
+    lat: float
+    lng: float
+
+@router.post("/nearby_places/")
+async def get_nearby_places(location: UserLocation, radius: float = 1000):
+    """
+    사용자 위치(lat, lng)를 기반으로 반경(radius) 내의 맛집 및 명소를 반환
+    """
+    connection = hosts.connect()
+    try:
+        with connection.cursor() as cursor:
+            # 맛집 데이터 가져오기
+            restaurant_query = "SELECT name, address, lat, lng FROM restaurant"
+            cursor.execute(restaurant_query)
+            restaurants = cursor.fetchall()
+
+        # 사용자 위치
+        user_coords = (location.lat, location.lng)
+        # 반경 내의 맛집 필터링
+        nearby_restaurants = [
+            {
+                "name": r[0],
+                "address": r[1],
+                "lat": r[2],
+                "lng": r[3],
+                "distance": geodesic(user_coords, (r[2], r[3])).meters
+            }
+            for r in restaurants
+            if geodesic(user_coords, (r[2], r[3])).meters <= radius
+        ]
+        # 결과 반환
+        return {
+            "nearby_restaurants": nearby_restaurants,
+        }
+    except Exception as e:
+        print(f"Error fetching nearby places: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch nearby places")
     finally:
         connection.close()

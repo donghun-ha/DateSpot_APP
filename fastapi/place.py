@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from urllib.parse import unquote
 import hosts
+from geopy.distance import geodesic
 import unicodedata
 from pydantic import BaseModel
 from datetime import datetime
@@ -154,5 +155,49 @@ async def add_bookmark(bookmark: PlaceBookRequest):
     except Exception as e:
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail="Failed to add bookmark")
+    finally:
+        connection.close()
+
+class UserLocation(BaseModel):
+    lat: float
+    lng: float
+
+@router.post("/nearby_places/")
+async def get_nearby_places(location: UserLocation, radius: float = 1000):
+    """
+    사용자 위치(lat, lng)를 기반으로 반경(radius) 내의 맛집 및 명소를 반환
+    """
+    connection = hosts.connect()
+    try:
+        with connection.cursor() as cursor:
+
+            # 명소 데이터 가져오기
+            place_query = "SELECT name, address, parking, lat, lng FROM place"
+            cursor.execute(place_query)
+            places = cursor.fetchall()
+
+        # 사용자 위치
+        user_coords = (location.lat, location.lng)
+
+        # 반경 내의 명소 필터링
+        nearby_places = [
+            {
+                "name": p[0],
+                "address": p[1],
+                "lat": p[2],
+                "lng": p[3],
+                "distance": geodesic(user_coords, (p[2], p[3])).meters
+            }
+            for p in places
+            if geodesic(user_coords, (p[2], p[3])).meters <= radius
+        ]
+
+        # 결과 반환
+        return {
+            "nearby_places": nearby_places
+        }
+    except Exception as e:
+        print(f"Error fetching nearby places: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch nearby places")
     finally:
         connection.close()

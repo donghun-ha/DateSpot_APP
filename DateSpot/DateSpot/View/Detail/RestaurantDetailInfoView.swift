@@ -19,8 +19,7 @@ struct RestaurantDetailInfoView: View {
                 Button(action: {
                    print(appState.userEmail ?? "")
                }) {
-                   NavigationLink(destination: DetailMap(restaurants: $restaurant, images: $images, rates : $rates), label: {
-
+                   NavigationLink(destination: DetailMap(restaurants: $restaurant, images: $images), label: {
                    HStack {
                        Image(systemName: "paperplane.fill")
                            .foregroundColor(.white)

@@ -1,11 +1,9 @@
-////
-////  DetailMap.swift
-////  DateSpot
-////
-////  Created by 신정섭 on 12/26/24.
-////
-
-
+//
+//  DetailMap.swift
+//  DateSpot
+//
+//  Created by 신정섭 on 12/26/24.
+//
 import SwiftUI
 import MapKit
 
@@ -14,10 +12,7 @@ struct DetailMap: View {
     @StateObject private var viewModel = DetailMapViewModel()
     @Binding var restaurants : Restaurant
     @Binding var images : UIImage
-    @Binding var rates : Int
-    @State var selectedMarker : String?
-    @State var selectValue = false
-    @State var selectedParkingId : String?
+
     @State var loadingStatus = false
     
     var body: some View {
@@ -27,44 +22,21 @@ struct DetailMap: View {
                     .font(.headline)
             }else{
                 ZStack {
-                    Map(position:$viewModel.cameraPosition, selection: $selectedMarker) {
+                    Map(position:$viewModel.cameraPosition) {
                         UserAnnotation()
                         
                         ForEach(viewModel.nearParking, id: \.id) { parking in
-                            let mapItem = MKMapItem(placemark: MKPlacemark(coordinate: CLLocationCoordinate2D(latitude: parking.latitude, longitude: parking.longitude)))
                             Marker(parking.name, systemImage: "car.fill", coordinate: parking.coordinate)
                                 .tint(.blue)
-                                .tag(parking.name)
-                                
                             
                         }
                         Marker(restaurants.name, systemImage: "star.fill", coordinate: CLLocationCoordinate2D(latitude: restaurants.lat, longitude: restaurants.lng))
-                        
+                            
                     }
                     .ignoresSafeArea()
-                    .onChange(of: selectedMarker) { newValue in
-                        selectValue = newValue != nil
-                                        }
-                    if selectedMarker == "여의도공원앞(구)" {
-                        if selectValue, let selectedName = selectedMarker {
-                            VStack {
-                                Text("혼잡")
-                                    .font(.headline)
-                                    .padding()
-                                    .background(Color.white)
-                                    .cornerRadius(10)
-                                    .shadow(radius: 5)
-                                    .transition(.move(edge: .top).combined(with: .opacity))
-                                Spacer()
-                            }
-                            .padding(.top, 50)
-                        }
-                    }
+                    
                     VStack {
                         Spacer()
-    
-    
-       
                         // 하단 카드 뷰
                         VStack(alignment: .leading, spacing: 12) {
                             HStack {
@@ -74,10 +46,8 @@ struct DetailMap: View {
                                         .fontWeight(.semibold)
                                     
                                     HStack {
-                                        
                                         Image(systemName: "star.fill")
                                             .foregroundColor(.yellow)
-                                        rates != 0 ? Text("\(String(rates)).0") : Text("별점을 입력하세요")
                                     }
                                 }
                                 
@@ -118,16 +88,14 @@ struct DetailMap: View {
                         .padding()
                     }
                 }
-                
-                }
             }
-                .onAppear {
-                    viewModel.updateCameraPosition(latitude: restaurants.lat, longitude: restaurants.lng)
-                    viewModel.fetchParkingInfo(lat: restaurants.lat, lng: restaurants.lng)
-                    loadingStatus = true
-                    
-                }
-
-        } // View
-    } // End
-
+        }
+        .navigationTitle("지도")
+        .onAppear {
+                viewModel.updateCameraPosition(latitude: restaurants.lat, longitude: restaurants.lng)
+                viewModel.fetchParkingInfo(lat: restaurants.lat, lng: restaurants.lng)
+                loadingStatus = true
+            
+        }
+    } // View
+} // End
