@@ -71,7 +71,7 @@ def connect():
     """
     try:
         conn = pymysql.connect(
-            host="127.0.0.1",
+            host="3.36.84.93",
             user=DB_USER,
             password=DB_PASSWORD,
             charset='utf8',
