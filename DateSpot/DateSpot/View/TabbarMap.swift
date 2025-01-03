@@ -8,7 +8,6 @@ struct TabbarMapView: View {
     @State var loadingStatus = false // 데이터 로드 관리
     @State private var selectedResult: MKMapItem? // 검색 관리
     @State private var showSearchSheet = false // 검색 sheet 관리
-    
     var body: some View {
             NavigationView {
                 if loadingStatus == false {
@@ -19,7 +18,6 @@ struct TabbarMapView: View {
                         
                         // 현재 위치 표시
                         UserAnnotation()
-                        
                         
                         // 명소 마커(파란색)
                         ForEach($mapViewModel.nearPlace.indices, id: \.self) { index in
@@ -36,6 +34,14 @@ struct TabbarMapView: View {
                                     CLLocationCoordinate2D(latitude: restaurant.lat, longitude: restaurant.lng))
                             .tint(.blue)
                         }
+                    }
+                    .onMapCameraChange {
+                        change in
+                        mapViewModel.region = change.region
+                        Task{
+                            await mapViewModel.filterNearALL(currentLocation: CLLocation(latitude : mapViewModel.region.center.latitude, longitude: mapViewModel.region.center.longitude), placeData: placeVM.places, restaurantData: restaurantVM.restaurants)
+                        }
+                        
                     }
                     // 검색결과 시트 표시
                     .sheet(isPresented: $showSearchSheet) {

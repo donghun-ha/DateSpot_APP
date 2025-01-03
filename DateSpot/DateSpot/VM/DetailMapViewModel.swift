@@ -8,6 +8,7 @@
 import SwiftUI
 import MapKit
 
+
 class DetailMapViewModel : NSObject, CLLocationManagerDelegate, ObservableObject {
     @Published var cameraPosition = MapCameraPosition.region(
         MKCoordinateRegion(
@@ -26,12 +27,13 @@ class DetailMapViewModel : NSObject, CLLocationManagerDelegate, ObservableObject
         locationManager.delegate = self
         locationManager.requestWhenInUseAuthorization()
         locationManager.startUpdatingLocation()
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
     }
    
 
     
     
-    // 지도 설정
+    // GPS 설정
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
         userLocation = location
