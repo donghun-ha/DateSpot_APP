@@ -84,10 +84,10 @@ async def user_login(request: Request):
             print("MySQL 사용자 데이터 없음")
             # MySQL에 새 사용자 추가
             insert_query = """
-            INSERT INTO user (email, name, image, user_identifier)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO user (email, name, image, user_identifier, is_logged_in)
+            VALUES (%s, %s, %s, %s, %s)
             """ 
-            cursor.execute(insert_query, (email, name, None, user_identifier))
+            cursor.execute(insert_query, (email, name, None, user_identifier, 1))
             mysql_conn.commit()
 
             user_data = {"email": email, "name": name}
@@ -164,6 +164,9 @@ async def upload_profile_image(
     
 @router.post("/get-profile-image")
 async def get_profile_image(user_id: str = Form(...)):
+    """
+    사용자 이미지를 받아오는 엔드포인트
+    """
     try:
         # MySQL에서 사용자 이미지 URL 가져오기
         mysql_conn = hosts.connect()
@@ -181,3 +184,72 @@ async def get_profile_image(user_id: str = Form(...)):
     except Exception as e:
         print(f"Error fetching user image: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch user image")
+    
+@router.post("/logout")
+async def logout(user_id: str = Form(...)):
+    """
+    - 사용자 로그아웃 처리 API
+    - Redis 세션 삭제
+    - MySQL 로그인 상태 업데이트
+    """
+    try:
+        # Redis 세션 삭제
+        redis = await hosts.get_redis_connection()
+        redis_key = f"user:{user_id}"
+        await redis.delete(redis_key)
+        print(f"Redis 세션 삭제 완료: {redis_key}")
+
+        # MySQL 로그인 상태 업데이트
+        mysql_conn = hosts.connect()
+        cursor = mysql_conn.cursor()
+        query = "UPDATE user SET is_logged_in = 0 WHERE email = %s"
+        cursor.execute(query, (user_id,))
+        mysql_conn.commit()
+
+        # MySQL에서 업데이트 된 행 확인
+        if cursor.rowcount > 0:
+            print(f"MySQL 로그인 상태 업데이트 완료:{user_id}")
+            return {"status": "success", "message": "User logged out successfully"}
+        else:
+            raise HTTPException(status_code=404, detail="User not found")
+    except Exception as e:
+        print(f"Error logging out: {e}")
+        raise HTTPException(status_code=500, detail="Failed to log out")
+    finally:
+        if cursor:
+            cursor.close()
+        if mysql_conn:
+            mysql_conn.close()
+
+@router.post("/account_delete")
+async def account_delete(user_id: str = Form(...)):
+    """
+    사용자 계정을 삭제하는 엔드포인트
+    """
+    try:
+        # MySQL에서 사용자 계정 탈퇴
+        mysql_conn = hosts.connect() # MySQL 연결
+        cursor = mysql_conn.cursor()
+        # MySQL문 사용자 데이터 삭제
+        query = """
+        DELETE FROM user WHERE email = %s
+        """
+        cursor.execute(query, (user_id,))
+        mysql_conn.commit()
+
+        # Redis 캐시에서도 사용자 데이터 삭제
+        redis = await hosts.get_redis_connection()
+        redis_key = f"user:{user_id}"
+        await redis.delete(redis_key)
+
+        # 삭제 결과 확인
+        if cursor.rowcount > 0:
+            return {"status" : "success", "message": "Account deleted successfully"}
+        else:
+            raise HTTPException(status_code=404, detail="User not found")
+    except Exception as e:
+        print(f"Error deleting account: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete account")
+    finally:
+        cursor.close()
+        mysql_conn.close()
