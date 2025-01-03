@@ -12,6 +12,10 @@ struct DetailMap: View {
     @StateObject private var viewModel = DetailMapViewModel()
     @Binding var restaurants : Restaurant
     @Binding var images : UIImage
+    @Binding var rates : Int
+    @State var selectedMarker : String?
+    @State var selectValue = false
+    @State var selectedParkingId : String?
 
     @State var loadingStatus = false
     
