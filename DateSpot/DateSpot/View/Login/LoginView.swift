@@ -69,6 +69,7 @@ struct LoginView: View {
         .onAppear {
             startImageRotation()
             viewModel.loadUserDataIfAvailable() // Realm에서 데이터 로드
+            print("Realm load 상태 : \(viewModel.loggedInUserEmail)")
         }
     }
 

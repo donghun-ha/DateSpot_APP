@@ -39,29 +39,36 @@ class LoginViewModel: NSObject, ObservableObject {
     
     // Realm에서 사용자 데이터 로드
     func loadUserDataIfAvailable() {
+        // ----------- Realm 데이터 로드 시 로그 추가 -----------
+        print("🔍 Realm 데이터 로드 시작")
         let users = realm.objects(UserData.self)
-        guard let user = users.first else { return } // 저장된 사용자 데이터가 없는 경우 종료
+        guard let user = users.first else {
+            print("❌ 저장된 사용자 데이터 없음") // 데이터 없음 로그
+            return
+        }
 
         DispatchQueue.main.async {
             self.loggedInUserEmail = user.userEmail
             self.loggedInUserName = user.userName
             self.loggedInUserImage = user.userImage
             self.isLoginSuccessful = true
+            print("✅ Realm 데이터 로드 성공: \(user)")
         }
     }
 
     // Realm에 사용자 데이터 저장
     func saveUserData(email: String, name: String, image: String) {
+        // ----------- saveUserData 호출 여부 로그 추가 -----------
+        print("🔍 saveUserData 호출됨: email=\(email), name=\(name), image=\(image)") // 호출 여부 확인
         let data = UserData(userEmail: email, userName: name, userImage: image)
-            do {
-                try realm.write {
-                    realm.add(data, update: .modified) // 중복 데이터 업데이트
-                }
-                print("✅ UserData 저장 성공")
-                
-            } catch {
-                print("❌ UserData 저장 실패: \(error.localizedDescription)")
+        do {
+            try realm.write {
+                realm.add(data, update: .modified) // 중복 데이터 업데이트
             }
+            print("✅ UserData 저장 성공: \(data)")
+        } catch {
+            print("❌ UserData 저장 실패: \(error.localizedDescription)")
+        }
     }
     
     // Realm에서 사용자 로그아웃 및 탈퇴 (데이터 삭제)
@@ -112,6 +119,10 @@ class LoginViewModel: NSObject, ObservableObject {
             self.loggedInUserEmail = email
             self.loggedInUserName = name
             self.loggedInUserImage = imageURL
+            
+            // ----------- saveUserData 호출 추가 및 로그 -----------
+            self.saveUserData(email: email, name: name, image: imageURL)
+            print("✅ Google 로그인 데이터 저장 완료: \(email), \(name), \(imageURL)")
             
             // 서버로 전송
             Task {
@@ -172,7 +183,11 @@ extension LoginViewModel: ASAuthorizationControllerDelegate {
             self.loggedInUserEmail = email
             self.loggedInUserName = fullName
             self.loggedInUserImage = "" // Apple 로그인에서는 이미지 제공하지 않음.
-
+            
+            // ----------- saveUserData 호출 추가 및 로그 -----------
+            self.saveUserData(email: email, name: fullName, image: "")
+            print("✅ Apple 로그인 데이터 저장 완료: \(email), \(fullName)")
+            
             // 디버깅 정보 출력
             print("User Identifier: \(userIdentifier)")
             print("Email received: \(email)")
