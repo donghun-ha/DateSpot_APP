@@ -1,5 +1,5 @@
 //
-//  DetailMap.swift
+//  RestaurantDetailMap.swift
 //  DateSpot
 //
 //  Created by 신정섭 on 12/26/24.
@@ -8,7 +8,7 @@ import SwiftUI
 import MapKit
 
 
-struct DetailMap: View {
+struct RestaurantDetailMap: View {
     @StateObject private var viewModel = DetailMapViewModel()
     @Binding var restaurants : Restaurant
     @Binding var images : UIImage

@@ -1,7 +1,7 @@
 import SwiftUI
 import RealmSwift
 
-struct DetailView: View {
+struct RestaurantDetailView: View {
     @StateObject private var restaurantViewModel = RestaurantViewModel()
     @StateObject private var placeViewModel = PlaceViewModel()
     @State private var selection: Int = 0
@@ -67,7 +67,7 @@ struct DetailView: View {
                 await restaurantViewModel.loadImages(for: restaurantName)
 
                 // 명소 데이터 가져오기
-                await placeViewModel.fetchPlaces(currentLat: restaurantViewModel.selectedRestaurant?.lat ?? 37.5665, currentLng: restaurantViewModel.selectedRestaurant?.lng ?? 126.9780)
+//                await placeViewModel.fetchPlaces(currentLat: restaurantViewModel.selectedRestaurant?.lat ?? 37.5665, currentLng: restaurantViewModel.selectedRestaurant?.lng ?? 126.9780)
                 if let restaurant = restaurantViewModel.selectedRestaurant {
                     // 가까운 5개의 명소 계산
                     nearbyPlaces = calculateNearbyPlaces(
