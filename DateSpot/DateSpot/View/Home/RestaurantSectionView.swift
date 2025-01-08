@@ -40,7 +40,7 @@ struct RestaurantSectionView: View {
     }
 
     private func restaurantCard(for restaurant: Restaurant) -> some View {
-        NavigationLink(destination: DetailView(name: restaurant.name)) {
+        NavigationLink(destination: RestaurantDetailView(name: restaurant.name)) {
             createCardView(for: restaurant)
         }
         .buttonStyle(PlainButtonStyle())

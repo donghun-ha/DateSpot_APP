@@ -9,17 +9,7 @@ import SwiftUI
 import Foundation
 import Combine
 
-protocol PlaceViewModelProtocol: ObservableObject {
-    var places: [PlaceData] { get } // 전체 명소 리스트
-    var selectedPlace: PlaceData? { get } // 선택된 명소 상세 정보
-    var images: [UIImage] { get } // 로드된 이미지 리스트
 
-    func fetchImageKeys(for name: String) async -> [String]
-    func fetchImage(fileKey: String) async -> UIImage?
-    func loadImages(for name: String) async
-    func fetchPlaces() async
-    func fetchPlaceDetail(name: String) async
-}
 
 @MainActor
 class PlaceViewModel: ObservableObject {
@@ -174,6 +164,13 @@ class PlaceViewModel: ObservableObject {
             print("Failed to fetch nearby places: \(error)")
         }
     }
+    
+    func calculateDistance(lat: Double, lng: Double, currentLat: Double, currentLng: Double) -> Double {
+        let deltaLat = lat - currentLat
+        let deltaLng = lng - currentLng
+        return sqrt(deltaLat * deltaLat + deltaLng * deltaLng) * 111 // 대략적인 거리(km)
+    }
+
 }
 
 // MARK: - Private Methods

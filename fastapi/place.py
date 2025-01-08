@@ -242,7 +242,7 @@ async def get_nearby_places(location: UserLocation, radius: float = 1000):
 
         nearby_places = [p for p in valid_places if p["distance"] <= radius]
 
-        return {"nearby_places": nearby_places}
+        return nearby_places
     except Exception as e:
         print(f"Error fetching nearby places: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch nearby places")
