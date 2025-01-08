@@ -66,7 +66,7 @@ struct RestaurantDetailView: View {
                 await restaurantViewModel.fetchRestaurantDetail(name: restaurantName)
                 await restaurantViewModel.loadImages(for: restaurantName)
 
-                // 명소 데이터 가져오기
+                // 명소 데이터 불러오기
 //                await placeViewModel.fetchPlaces(currentLat: restaurantViewModel.selectedRestaurant?.lat ?? 37.5665, currentLng: restaurantViewModel.selectedRestaurant?.lng ?? 126.9780)
                 if let restaurant = restaurantViewModel.selectedRestaurant {
                     // 가까운 5개의 명소 계산
