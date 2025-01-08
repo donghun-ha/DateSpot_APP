@@ -89,7 +89,7 @@ async def get_images(name: str):
         print(f"Error while fetching images: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error fetching images: {str(e)}")
 
-@router.get("/image_thumb")
+@router.get("/image")
 async def stream_image(name: str):
     """
     단일 이미지를 S3에서 검색하고 스트리밍 반환
@@ -248,3 +248,37 @@ async def get_nearby_places(location: UserLocation, radius: float = 1000):
         raise HTTPException(status_code=500, detail="Failed to fetch nearby places")
     finally:
         connection.close()
+
+# 디테일 페이지로 이동할때 클릭한 place 정보 쿼리
+@router.get('/go_detail')
+async def get_detail(name: str):
+    """
+    북마크한 매장 또는 명소의 정보 가져오기
+    """
+    conn = hosts.connect()
+    curs = conn.cursor()
+
+    sql = "SELECT * FROM place WHERE name = %s"
+    curs.execute(sql, (name,))
+    rows = curs.fetchall()
+    conn.close()
+
+    if not rows:
+        raise HTTPException(status_code=404, detail="Not Found")
+    
+    # 데이터를 매핑하여 반환 // SwiftUI에 맞는 형태
+    results = [
+        {
+            "name": row[0],
+            "address": row[1],
+            "lat": row[2],
+            "lng": row[3],
+            "description": row[4],
+            "contact_info": row[5],
+            "operating_hour": row[6],
+            "parking": row[7],
+            "closing_time": row[8]
+        }
+        for row in rows
+    ]
+    return {"results": results}

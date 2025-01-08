@@ -69,14 +69,17 @@ def connect():
     """
     MySQL 데이터베이스 연결 및 반환
     """
+    print(DB_USER)
+    print(DB_PORT)
     try:
         conn = pymysql.connect(
-            host="3.36.84.93",
+            host="3.39.227.143",
             user=DB_USER,
             password=DB_PASSWORD,
             charset='utf8',
             db=DB_TABLE,
-            port=int(DB_PORT)
+            port=3306
+            # int(DB_PORT)
         )
         print("MySQL 연결 성공")
         return conn
