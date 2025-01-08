@@ -7,8 +7,8 @@ struct DetailView: View {
     @State private var selection: Int = 0
     @State private var isLoading = true
     @State private var nearbyPlaces: [PlaceData] = []
-    var restaurantName: String = "[백년가게]만석장"
-//    var restaurants: Restaurant // Restaurant 매개변수
+    var name: String = "[백년가게]만석장"
+    var type: String = ""
 
     var body: some View {
         NavigationView {
@@ -21,7 +21,7 @@ struct DetailView: View {
                         // 이미지 슬라이더
                         if !restaurantViewModel.images.isEmpty {
                             ImageSliderView(
-                                currentRestaurant: restaurantName,
+                                currentRestaurant: name,
                                 images: restaurantViewModel.images,
                                 selection: $selection
                             )
@@ -55,16 +55,15 @@ struct DetailView: View {
             }
         }
         .onAppear {
-            print("Detail뷰 받은 레스토랑 이름: \(restaurantName)")
             Task {
-                await restaurantViewModel.fetchRestaurantDetail(name: restaurantName)
+                await restaurantViewModel.fetchRestaurantDetail(name: name)
             }
             debugPrint(Realm.Configuration.defaultConfiguration.fileURL ?? "")
             Task {
                 isLoading = true
                 // 레스토랑 세부 정보 및 이미지 가져오기
-                await restaurantViewModel.fetchRestaurantDetail(name: restaurantName)
-                await restaurantViewModel.loadImages(for: restaurantName)
+                await restaurantViewModel.fetchRestaurantDetail(name: name)
+                await restaurantViewModel.loadImages(for: name)
 
                 // 명소 데이터 가져오기
                 await placeViewModel.fetchPlaces(currentLat: restaurantViewModel.selectedRestaurant?.lat ?? 37.5665, currentLng: restaurantViewModel.selectedRestaurant?.lng ?? 126.9780)

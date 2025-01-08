@@ -27,7 +27,7 @@ class PlaceViewModel: ObservableObject {
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             if let decodedData = try? JSONDecoder().decode([PlaceData].self, from: data) {
-                print("✅ 데이터 다운로드 성공: \(decodedData)")
+                print("✅ 데이터 다운로드 성공")
                 delegate?.itemDownloaded(items: decodedData)
             } else {
                 print("❌ 데이터 파싱 실패")
@@ -177,7 +177,6 @@ class PlaceViewModel: ObservableObject {
             
             let decodedResponse = try JSONDecoder().decode([String: [PlaceData]].self, from: data)
             self.nearbyPlaces = decodedResponse["nearby_places"] ?? []
-            print("Fetched nearby places: \(self.nearbyPlaces)")
         } catch {
             print("Failed to fetch nearby places: \(error)")
         }

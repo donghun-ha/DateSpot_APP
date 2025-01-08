@@ -9,18 +9,6 @@ import SwiftUI
 import Foundation
 import Combine
 
-protocol RestaurantViewModelProtocol: ObservableObject {
-    var restaurants: [Restaurant] { get } // 전체 레스토랑 리스트
-    var selectedRestaurant: Restaurant? { get } // 선택된 레스토랑 상세 정보
-    var images: [UIImage] { get } // 로드된 이미지 리스트
-    
-    func fetchImageKeys(for name: String) async -> [String]
-    func fetchImage(fileKey: String) async -> UIImage?
-    func loadImages(for name: String) async
-    func fetchRestaurants() async
-    func fetchRestaurantDetail(name: String) async
-}
-
 @MainActor
 class RestaurantViewModel: ObservableObject {
     @Published var nearbyRestaurants: [Restaurant] = [] // 근처 레스토랑 데이터
@@ -31,7 +19,6 @@ class RestaurantViewModel: ObservableObject {
     @Published private(set) var images1: [String: UIImage] = [:] // 맛집 이름별 첫 번째 이미지를 저장
     @Published var homeimage: [String: UIImage] = [:] // 레스토랑 이름별 이미지 저장
     @Published var isBookmarked: Bool = false
-    //    @Published var bookmarkedRestaurants: [Restaurant] = [] // 북마크된 레스토랑 리스트
     
     private var cancellables = Set<AnyCancellable>()
     private let baseURL = "https://fastapi.fre.today/restaurant/" // 기본 API URL
@@ -244,11 +231,6 @@ extension RestaurantViewModel {
             throw URLError(.badServerResponse)
         }
         
-        // JSON 응답 디버깅용 출력
-        if let jsonString = String(data: data, encoding: .utf8) {
-            //                print("Response JSON: \(jsonString)")
-        }
-        
         let decoder = JSONDecoder()
         return try decoder.decode([String:[Restaurant]].self, from: data)["results"] ?? []
     }
@@ -283,10 +265,7 @@ extension RestaurantViewModel {
             }
             return restaurant
         } catch {
-            print("Decoding error: \(error)")
-            if let jsonString = String(data: data, encoding: .utf8) {
-                //                print("Response JSON: \(jsonString)")
-            }
+           
             throw error
         }
     }

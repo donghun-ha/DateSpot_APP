@@ -15,7 +15,7 @@ struct PlaceSectionView: View {
                 LazyHStack(spacing: 20) {
                     ForEach(viewModel.nearbyPlaces.prefix(5), id: \.name) { place in
                         NavigationLink(
-                            destination: DetailView(restaurantName: place.name)
+                            destination: DetailView(name: place.name, type: "place")
                         ) {
                             ZStack {
                                 if let image = viewModel.images[place.name] {

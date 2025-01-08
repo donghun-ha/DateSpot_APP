@@ -17,14 +17,15 @@ struct HomeContentView: View {
                         VStack(alignment: .leading, spacing: 20) {
                             // 2km 반경 레스토랑 섹션
                             RestaurantSectionView(
-                                viewModel: restaurantViewModel
+//                                viewModel: restaurantViewModel
                             )
                             
                             // 2km 반경 명소 섹션
                             PlaceSectionView(
-                                viewModel: placeViewModel
+//                                viewModel: placeViewModel
                             )
                         }
+                        .frame(height: 800)
                         .padding(.vertical)
                     }
                 }
