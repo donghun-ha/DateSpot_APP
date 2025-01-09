@@ -105,7 +105,7 @@ class PlaceViewModel: ObservableObject {
 
     /// 특정 이미지 키로 이미지 가져오기
     func fetchImage(fileKey: String) async -> UIImage? {
-        guard let url = URL(string: "\(baseURL)image?name=\(fileKey.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? fileKey)") else {
+        guard let url = URL(string: "\(baseURL)image?file_key=\(fileKey.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? fileKey)") else {
             print("Invalid URL for fetchImage")
             return nil
         }
