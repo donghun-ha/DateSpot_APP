@@ -42,10 +42,7 @@ struct NearFromDetails: View {
                         }
                     }
                 } else {
-                    Text("근처 명소가 없습니다.")
-                        .foregroundColor(.gray)
-                        .font(.subheadline)
-                        .padding()
+                    noPlacesView()
                 }
             }
             .padding(.top)
@@ -132,5 +129,70 @@ struct NearPlaceRow: View {
             currentLat: currentLat,
             currentLng: currentLng
         )
+    }
+}
+
+// 명소의 개별 행 뷰
+struct PlaceRowView: View {
+    let place: PlaceData
+    let image: UIImage?
+    let fetchImage: () async -> Void
+    let calculateDistance: () -> Double
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(place.name)
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                Spacer()
+                Button(action: {
+                    print("Bookmarked \(place.name)")
+                }) {
+                    Image(systemName: "bookmark")
+                        .foregroundColor(.blue)
+                }
+            }
+
+            HStack {
+                Text(place.address)
+                    .foregroundColor(.gray)
+                    .font(.subheadline)
+
+                Spacer()
+                Text("\(String(format: "%.2fkm", calculateDistance()))")
+                    .foregroundColor(.gray)
+                    .font(.subheadline)
+            }
+
+            // 이미지 표시
+            if let image = image {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(height: 180)
+                    .cornerRadius(12)
+            } else {
+                ZStack {
+                    Rectangle()
+                        .fill(Color(.systemGray5))
+                        .frame(height: 180)
+                        .cornerRadius(12)
+
+                    Text("이미지 로드 중...")
+                        .foregroundColor(.gray)
+                        .font(.caption)
+                        .onAppear {
+                            Task {
+                                await fetchImage()
+                            }
+                        }
+                }
+            }
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
     }
 }

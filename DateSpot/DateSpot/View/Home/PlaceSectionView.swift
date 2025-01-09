@@ -31,6 +31,35 @@ struct PlaceSectionView: View {
             }
         }
     }
+    
+    /// 명소 카드 뷰를 별도 함수로 분리
+    @ViewBuilder
+    private func placeCardView(for place: PlaceData) -> some View {
+        ZStack {
+            if let image = viewModel.images1[place.name] {
+                CardView(
+                    image: image,
+                    category: place.parking,
+                    heading: place.name,
+                    author: place.address
+                )
+                .frame(width: 300, height: 300)
+            } else {
+                CardView(
+                    image: UIImage(systemName: "photo") ?? UIImage(), // 옵셔널 해제
+                    category: place.parking,
+                    heading: place.name,
+                    author: place.address
+                )
+                .frame(width: 300, height: 300)
+                .onAppear {
+                    Task {
+                        await viewModel.fetchFirstImage(for: place.name)
+                    }
+                }
+            }
+        }
+    }
 }
 
 struct PlaceCardView: View {
