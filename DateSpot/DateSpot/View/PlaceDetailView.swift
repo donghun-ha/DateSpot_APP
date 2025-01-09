@@ -8,7 +8,7 @@
 import SwiftUI
 import RealmSwift
 
-struct PlceDetailView: View {
+struct PlaceDetailView: View {
 //    @StateObject private var restaurantViewModel = RestaurantViewModel()
     @StateObject private var placeViewModel = PlaceViewModel()
     @State private var selection: Int = 0

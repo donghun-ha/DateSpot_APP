@@ -33,17 +33,36 @@ class PlaceViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private let baseURL = "https://fastapi.fre.today/place/" // 기본 API URL
 
-    func fetchPlaces() async {
-        Task {
-            do {
-                let fetchedPlaces = try await fetchPlacesFromAPI()
-                self.places = Array(fetchedPlaces)
-            } catch {
-                print("Failed to fetch places: \(error.localizedDescription)")
+    // 전체 데이터를 다운로드하고 가까운 5개의 명소를 필터링
+    func fetchPlaces(currentLat: Double, currentLng: Double) async {
+        do {
+            let fetchedPlaces = try await fetchPlacesFromAPI()
+            let sortedPlaces = fetchedPlaces.sorted {
+                calculateDistance(lat: $0.lat, lng: $0.lng, currentLat: currentLat, currentLng: currentLng) <
+                    calculateDistance(lat: $1.lat, lng: $1.lng, currentLat: currentLat, currentLng: currentLng)
             }
+            
+            // 메인 스레드에서 UI 상태 업데이트
+            await MainActor.run {
+                self.places = fetchedPlaces
+                self.nearbyPlaces = Array(sortedPlaces.prefix(5))
+            }
+        } catch {
+            print("❌ 데이터 다운로드 실패: \(error.localizedDescription)")
         }
     }
-
+    
+    // Fetch Places
+    func fetchPlace() async {
+        do {
+            let fetchedPlace = try await fetchPlacesFromAPI()
+            self.places = fetchedPlace
+            print("✅ 데이터 다운로드 성공")
+        } catch {
+            print("❌ 데이터 다운로드 실패: \(error.localizedDescription)")
+        }
+    }
+    
     func fetchFirstImage(for name: String) async {
         guard homeimage[name] == nil else { return } // 이미 로드된 경우 스킵
 
@@ -173,6 +192,13 @@ class PlaceViewModel: ObservableObject {
         } catch {
             print("Failed to fetch nearby places: \(error)")
         }
+    }
+    
+    // 거리 계산 함수
+    func calculateDistance(lat: Double, lng: Double, currentLat: Double, currentLng: Double) -> Double {
+        let deltaLat = lat - currentLat
+        let deltaLng = lng - currentLng
+        return sqrt(deltaLat * deltaLat + deltaLng * deltaLng) * 111 // 대략적인 거리(km)
     }
 }
 

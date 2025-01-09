@@ -28,7 +28,7 @@ struct BookMarkView: View {
                 } else {
                     List(restaurantViewModel.bookmarkedRestaurants) { restaurant in
                         NavigationLink(
-                            destination: DetailView(
+                            destination: RestaurantDetailView(
                                 restaurantName: restaurant.name
                             )
                         ) {
