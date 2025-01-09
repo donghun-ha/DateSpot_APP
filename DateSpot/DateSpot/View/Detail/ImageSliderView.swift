@@ -33,7 +33,11 @@ struct ImageSliderView: View {
                 // 맛집 북마크
                 if currentType == "restaurant" {
                     if RestaurantviewModel.isBookmarked {
-                        // 이미 북마크된 상태일 때의 로직 추가 (예: 삭제)
+                        RestaurantviewModel.deleteBookmark(
+                            userEmail: appState.userEmail ?? "",
+                            restaurantName: currentItem,
+                            name: "My Favorite Spot"
+                        )
                     } else {
                         RestaurantviewModel.addBookmark(
                             userEmail: appState.userEmail ?? "",
@@ -45,7 +49,11 @@ struct ImageSliderView: View {
                 // 명소 북마크
                 else if currentType == "place" {
                     if PlaceviewModel.isBookmarked {
-                        // 이미 북마크된 상태일 때의 로직 추가 (예: 삭제)
+                        PlaceviewModel.deleteBookmark(
+                            userEmail: appState.userEmail ?? "",
+                            placeName: currentItem,
+                            name: "My Favorite Spot"
+                        )
                     } else {
                         PlaceviewModel.addBookmark(
                             userEmail: appState.userEmail ?? "",
