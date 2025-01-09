@@ -69,7 +69,7 @@ struct PlaceCardView: View {
     
     var body: some View {
         NavigationLink(
-            destination: RestaurantDetailView(name: place.name)
+            destination: PlaceDetailView(placeName: place.name)
         ) {
             ZStack {
                 if let image = viewModel.homeimage[place.name] {

@@ -65,12 +65,8 @@ struct PlaceDetailView: View {
             print("Detail뷰 받은 레스토랑 이름: \(placeName)")
             Task {
                 await placeViewModel.fetchPlaceDetail(name: placeName)
-            }
-            debugPrint(Realm.Configuration.defaultConfiguration.fileURL ?? "")
-            Task {
                 isLoading = true
                 // 명소 세부 정보 및 이미지 가져오기
-                await placeViewModel.fetchPlaceDetail(name: placeName)
                 await placeViewModel.loadImages(for: placeName)
 
                 // 명소 데이터 가져오기
@@ -82,8 +78,9 @@ struct PlaceDetailView: View {
                         restaurantLat: place.lat,
                         restaurantLng: place.lng
                     )
-                }
-                isLoading = false
+            }
+            debugPrint(Realm.Configuration.defaultConfiguration.fileURL ?? "")
+            isLoading = false
             }
         }
     }

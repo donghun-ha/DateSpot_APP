@@ -268,4 +268,4 @@ async def get_detail(name: str):
         }
         for row in rows
     ]
-    return {"results": results}
+    return results

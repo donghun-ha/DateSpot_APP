@@ -145,9 +145,12 @@ class PlaceViewModel: ObservableObject {
     }
 
     func fetchPlaceDetail(name: String) async {
+        print("명소 디테일 가져오기")
         Task {
             do {
                 let fetchedDetail = try await fetchPlaceDetailFromAPI(name: name)
+                print("Response :")
+                print(fetchedDetail)
                 self.selectedPlace = fetchedDetail
             } catch {
                 print("Failed to fetch place detail: \(error.localizedDescription)")
@@ -214,6 +217,7 @@ extension PlaceViewModel {
     }
 
     private func fetchPlaceDetailFromAPI(name: String) async throws -> PlaceData {
+        print("가져올 명소 : \(name)")
         guard var urlComponents = URLComponents(string: "\(baseURL)go_detail") else {
             throw URLError(.badURL)
         }
