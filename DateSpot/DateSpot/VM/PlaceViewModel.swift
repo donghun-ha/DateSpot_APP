@@ -148,15 +148,15 @@ class PlaceViewModel: ObservableObject {
         print("명소 디테일 가져오기")
         Task {
             do {
-                let fetchedDetail = try await fetchPlaceDetailFromAPI(name: name)
-                print("Response :")
-                print(fetchedDetail)
-                self.selectedPlace = fetchedDetail
+                let fetchedDetails = try await fetchPlaceDetailFromAPI(name: name)
+                print("Response : \(fetchedDetails)")
+                self.selectedPlace = fetchedDetails.first // 첫 번째 명소 선택
             } catch {
                 print("Failed to fetch place detail: \(error.localizedDescription)")
             }
         }
     }
+
 
     func fetchNearbyPlaces(lat: Double, lng: Double, radius: Double = 1000) async {
         let endpoint = "\(baseURL)nearby_places/"
@@ -242,8 +242,17 @@ extension PlaceViewModel {
             throw URLError(.badServerResponse)
         }
 
+        // JSON 데이터에서 "results" 키 추출 및 디코딩
+        let jsonObject = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
+        guard let resultsArray = jsonObject?["results"] as? [[String: Any]] else {
+            throw URLError(.cannotParseResponse)
+        }
+
+        // "results" 데이터를 JSON으로 다시 변환
+        let resultsData = try JSONSerialization.data(withJSONObject: resultsArray, options: [])
+        
         let decoder = JSONDecoder()
-        return try decoder.decode([PlaceData].self, from: data) // 배열 디코딩
+        return try decoder.decode([PlaceData].self, from: resultsData)
     }
 
 }
