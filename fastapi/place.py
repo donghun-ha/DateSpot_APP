@@ -269,3 +269,33 @@ async def get_detail(name: str):
         for row in rows
     ]
     return {"results": results}
+
+@router.post("/delete_bookmark/")
+async def delete_bookmark(bookmark: PlaceBookRequest):
+    """
+    북마크 삭제 API
+    """
+    connection = hosts.connect()
+    try:
+        with connection.cursor() as cursor:
+            # 북마크 삭제 쿼리
+            sql = """
+                DELETE FROM place_bookmark
+                WHERE user_email = %s AND place_name = %s
+            """
+            cursor.execute(sql, (bookmark.user_email, bookmark.place_name))
+            connection.commit()
+            
+            # 삭제된 행 확인
+            if cursor.rowcount == 0:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Bookmark not found"
+                )
+
+        return {"message": "Bookmark deleted successfully"}
+    except Exception as e:
+        print(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete bookmark")
+    finally:
+        connection.close()

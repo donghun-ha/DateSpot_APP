@@ -193,8 +193,6 @@ async def add_bookmark(bookmark: RestaurantBookRequest):
     finally:
         connection.close()
 
-
-
 @router.post("/check_bookmark/")
 async def check_bookmark(request: checkRestaurantBook):
     connection = hosts.connect()
@@ -278,5 +276,35 @@ async def get_nearby_places(location: UserLocation, radius: float = 1000):
     except Exception as e:
         print(f"Error fetching nearby places: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch nearby places")
+    finally:
+        connection.close()
+
+@router.post("/delete_bookmark/")
+async def delete_bookmark(bookmark: RestaurantBookRequest):
+    """
+    북마크 삭제 API
+    """
+    connection = hosts.connect()
+    try:
+        with connection.cursor() as cursor:
+            # 북마크 삭제 쿼리
+            sql = """
+                DELETE FROM restaurant_bookmark
+                WHERE user_email = %s AND restaurant_name = %s
+            """
+            cursor.execute(sql, (bookmark.user_email, bookmark.restaurant_name))
+            connection.commit()
+            
+            # 삭제된 행 확인
+            if cursor.rowcount == 0:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Bookmark not found"
+                )
+
+        return {"message": "Bookmark deleted successfully"}
+    except Exception as e:
+        print(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete bookmark")
     finally:
         connection.close()
