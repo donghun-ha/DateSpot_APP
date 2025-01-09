@@ -216,7 +216,7 @@ extension PlaceViewModel {
         return try decoder.decode([PlaceData].self, from: data)
     }
 
-    private func fetchPlaceDetailFromAPI(name: String) async throws -> PlaceData {
+    private func fetchPlaceDetailFromAPI(name: String) async throws -> [PlaceData] {
         print("가져올 명소 : \(name)")
         guard var urlComponents = URLComponents(string: "\(baseURL)go_detail") else {
             throw URLError(.badURL)
@@ -234,11 +234,16 @@ extension PlaceViewModel {
 
         let (data, response) = try await URLSession.shared.data(for: request)
 
+        if let jsonString = String(data: data, encoding: .utf8) {
+            print("서버 응답 데이터: \(jsonString)")
+        }
+
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
             throw URLError(.badServerResponse)
         }
 
         let decoder = JSONDecoder()
-        return try decoder.decode(PlaceData.self, from: data)
+        return try decoder.decode([PlaceData].self, from: data) // 배열 디코딩
     }
+
 }
