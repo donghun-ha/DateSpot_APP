@@ -182,7 +182,7 @@ async def get_user_bookmarks(user_email: str):
             sql = """
                 SELECT p.name, p.address
                 FROM place_bookmark pb
-                JOIN place r ON pb.place_name = p.name
+                JOIN place p ON pb.place_name = p.name
                 WHERE pb.user_email = %s
             """
             cursor.execute(sql, (user_email,))

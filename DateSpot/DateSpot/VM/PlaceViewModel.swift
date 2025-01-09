@@ -14,7 +14,7 @@ import Combine
 @MainActor
 class PlaceViewModel: ObservableObject {
     @Published var nearbyPlaces: [PlaceData] = [] // 근처 명소 데이터
-    @Published var bookmarkedPlace: [BookmarkedPlace] = [] // 북마크 데이터
+    @Published var bookmarkedPlaces: [BookmarkedPlace] = [] // 북마크 데이터
     @Published private(set) var places: [PlaceData] = [] // 전체 명소 리스트
     @Published private(set) var selectedPlace: PlaceData? // 선택된 명소 상세 정보
     @Published var images: [UIImage] = [] // 로드된 이미지 리스트
@@ -346,7 +346,7 @@ extension PlaceViewModel {
     }
     
     
-    func fetchBookmarkedPlace(userEmail: String) {
+    func fetchBookmarkedPlaces(userEmail: String) {
         // URL 구성 및 쿼리 파라미터 추가
         guard var urlComponents = URLComponents(string: "\(baseURL)get_user_bookmarks/") else {
             print("Invalid URL for fetching user bookmarks")
@@ -387,10 +387,10 @@ extension PlaceViewModel {
             }, receiveValue: { [weak self] response in
                 if let results = response["results"] {
                     print("Fetched bookmarked place: \(results)")
-                    self?.bookmarkedPlace = results
+                    self?.bookmarkedPlaces = results
                 } else {
                     print("No results found in response")
-                    self?.bookmarkedPlace = []
+                    self?.bookmarkedPlaces = []
                 }
             })
             .store(in: &cancellables)

@@ -15,6 +15,7 @@ struct PlaceDetailView: View {
     @State private var isLoading = true
     @State private var nearbyPlaces: [PlaceData] = []
     var placeName: String = "남산서울타워"
+    var type: String = ""
 
 
     var body: some View {

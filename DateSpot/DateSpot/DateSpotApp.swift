@@ -38,6 +38,7 @@ func application(_ app: UIApplication, open url: URL, options: [UIApplication.Op
 struct DateSpotApp: App {
     @StateObject private var appState = AppState() // AppSate 초기화
     @StateObject private var restaurantViewModel = RestaurantViewModel() // 뷰모델 초기화
+    @StateObject private var placeViewModel = PlaceViewModel()           // 뷰모델 초기화
     
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate // AppDelegate 연결
     
@@ -47,6 +48,7 @@ struct DateSpotApp: App {
                 TabBarView() // 로그인 후 홈 화면으로 이동
                     .environmentObject(appState) // 앱 상태를 전달
                     .environmentObject(restaurantViewModel) // environmentObject로 전달
+                    .environmentObject(placeViewModel)      // environmentObject로 전달
             } else {
                 LoginView() // 로그인 화면
                     .environmentObject(appState) // 앱 상태를 전달
