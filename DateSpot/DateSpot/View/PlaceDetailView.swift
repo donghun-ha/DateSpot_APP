@@ -28,7 +28,8 @@ struct PlaceDetailView: View {
                         // 이미지 슬라이더
                         if !placeViewModel.images.isEmpty {
                             ImageSliderView(
-                                currentRestaurant: placeName,
+                                currentItem: placeName,
+                                currentType: "place",
                                 images: placeViewModel.images,
                                 selection: $selection
                             )

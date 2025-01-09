@@ -1,10 +1,12 @@
 import SwiftUI
 
 struct ImageSliderView: View {
-    var currentRestaurant: String
+    var currentItem: String // 외부에서 값을 파라미터로 입력받아 처리하는 파라미터(명소 이름, 레스토랑 이름 받는 역할)
+    var currentType: String // 아이템 타입 ("restaurant" 또는 "place")
     var images: [UIImage]
     @Binding var selection: Int
-    @StateObject private var viewModel = RestaurantViewModel()
+    @StateObject private var RestaurantviewModel = RestaurantViewModel() // 맛집 뷰모델 참조
+    @StateObject private var PlaceviewModel = PlaceViewModel() // 명소 뷰모델 참조
     @EnvironmentObject var appState: AppState // 전역 상태 사용
 
     var body: some View {
@@ -28,19 +30,39 @@ struct ImageSliderView: View {
             .padding(EdgeInsets(top: 10, leading: 10, bottom: 0, trailing: 10))
 
             Button(action: {
-                if viewModel.isBookmarked {
-                    // 이미 북마크된 상태일 때의 로직 추가 (예: 삭제)
-                } else {
-                    viewModel.addBookmark(
-                        userEmail: appState.userEmail ?? "",
-                        restaurantName: currentRestaurant,
-                        name: "My Favorite Spot"
-                    )
+                // 맛집 북마크
+                if currentType == "restaurant" {
+                    if RestaurantviewModel.isBookmarked {
+                        // 이미 북마크된 상태일 때의 로직 추가 (예: 삭제)
+                    } else {
+                        RestaurantviewModel.addBookmark(
+                            userEmail: appState.userEmail ?? "",
+                            restaurantName: currentItem,
+                            name: "My Favorite Spot"
+                        )
+                    }
                 }
+                // 명소 북마크
+                else if currentType == "place" {
+                    if PlaceviewModel.isBookmarked {
+                        // 이미 북마크된 상태일 때의 로직 추가 (예: 삭제)
+                    } else {
+                        PlaceviewModel.addBookmark(
+                            userEmail: appState.userEmail ?? "",
+                            placeName: currentItem,
+                            name: "My Favorite Spot"
+                        )
+                    }
+                }
+                
             }) {
-                Image(systemName: viewModel.isBookmarked ? "bookmark.fill" : "bookmark")
-                    .foregroundColor(.white)
-                    .font(.system(size: 30))
+                // 현재 타입에 따라 북마크 상태 아이콘 표시
+                Image(systemName: (currentType == "restaurant" && RestaurantviewModel.isBookmarked) ||
+                                  (currentType == "place" && PlaceviewModel.isBookmarked)
+                      ? "bookmark.fill"
+                      : "bookmark")
+                .foregroundStyle(.white)
+                .font(.system(size: 30))
             }
             .padding([.trailing, .top], 16) // 아이콘 위치
             .shadow(color: .gray.opacity(0.5), radius: 5, x: 0, y: 2)
@@ -57,9 +79,13 @@ struct ImageSliderView: View {
         }
         .onAppear {
             // 북마크 상태 확인
-            viewModel.checkBookmark(
+            RestaurantviewModel.checkBookmark(
                 userEmail: appState.userEmail ?? "",
-                restaurantName: currentRestaurant
+                restaurantName: currentItem
+            )
+            PlaceviewModel.checkBookmark(
+                userEmail: appState.userEmail ?? "",
+                placeName: currentItem
             )
         }
     }

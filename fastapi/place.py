@@ -132,7 +132,7 @@ async def add_bookmark(bookmark: PlaceBookRequest):
         with connection.cursor() as cursor:
             # 북마크 추가
             sql = """
-                INSERT INTO place_bookmark (user_email, restaurant_name, name, created_at)
+                INSERT INTO place_bookmark (user_email, place_name, name, created_at)
                 VALUES (%s, %s, %s, %s)
             """
             cursor.execute(sql, (

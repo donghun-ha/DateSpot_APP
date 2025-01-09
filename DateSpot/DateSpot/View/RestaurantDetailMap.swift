@@ -69,6 +69,7 @@ struct RestaurantDetailMap: View {
                                     HStack {
                                         Image(systemName: "star.fill")
                                             .foregroundColor(.yellow)
+                                        rates != 0 ? Text("\(String(rates)).0") : Text("별점을 입력하세요")
                                     }
                                 }
                                 

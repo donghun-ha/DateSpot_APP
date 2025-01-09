@@ -9,9 +9,11 @@ import SwiftUI
 
 struct BookMarkView: View {
     @EnvironmentObject var appState: AppState
-    @EnvironmentObject var restaurantViewModel: RestaurantViewModel // 뷰모델 참조
+    @EnvironmentObject var restaurantViewModel: RestaurantViewModel // 맛집 뷰모델 참조
+    @EnvironmentObject var placeViewModel: PlaceViewModel // 명소 뷰모델 참조
     @State private var isLoading = true
-    @State private var selectedRestaurant: BookmarkedRestaurant? = nil // BookmarkedRestaurant로 변경
+    @State private var selectedRestaurant: BookmarkedRestaurant? = nil
+    @State private var selectedPlace: BookmarkedPlace? = nil
 
     var body: some View {
         NavigationView {
@@ -29,8 +31,6 @@ struct BookMarkView: View {
                     List(restaurantViewModel.bookmarkedRestaurants) { restaurant in
                         NavigationLink(
                             destination: RestaurantDetailView(
-                                
-//                                restaurantName: restaurant.name,
                                 type: "restaurant"
                             )
                         ) {
