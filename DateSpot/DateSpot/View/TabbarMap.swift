@@ -54,7 +54,7 @@ struct TabbarMapView: View {
             .onAppear {
                         Task{
                             await restaurantVM.fetchRestaurants()
-                            await placeVM.fetchPlaces()
+                            await placeVM.fetchPlaces(currentLat: 36, currentLng: 127)
                             await mapViewModel.filterNearALL(currentLocation: mapViewModel.userLocation!, placeData: placeVM.places, restaurantData: restaurantVM.restaurants)
                             loadingStatus = true
                         }

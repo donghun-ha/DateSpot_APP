@@ -90,43 +90,30 @@ async def get_images(name: str):
         raise HTTPException(status_code=500, detail=f"Error fetching images: {str(e)}")
 
 @router.get("/image")
-async def stream_image(name: str):
+async def stream_image(file_key: str):
     """
     단일 이미지를 S3에서 검색하고 스트리밍 반환
     """
-    s3 = hosts.create_s3_client()
+    s3_client = hosts.create_s3_client()
     try:
-        # 입력값 정리 및 디코딩
-        decoded_name = unquote(name).strip()
-        normalized_name = normalize_place_name_nfd(decoded_name)
-        prefix = f"명소/{normalized_name}_"
-        normalized_prefix = normalize_place_name_nfd(prefix)
-
-        # S3에서 파일 검색 (Prefix를 사용하여 제한)
-        response = s3.list_objects_v2(Bucket=hosts.BUCKET_NAME, Prefix=normalized_prefix)
-        if "Contents" not in response or not response["Contents"]:
-            print(f"No images found for prefix: {normalized_prefix}")
-            raise HTTPException(status_code=404, detail="Image not found")
-
-        # 첫 번째 파일 키 가져오기
-        file_key = response["Contents"][0]["Key"]
-
+        # 입력값 정리 및 유니코드 정규화 (NFD 적용)
+        decoded_key = unquote(file_key).strip()
+        normalized_key = unicodedata.normalize("NFD", decoded_key)
+        cleaned_key = remove_invisible_characters(normalized_key)
         # S3 객체 가져오기
-        cleaned_key = remove_invisible_characters(file_key)
-        s3_object = s3.get_object(Bucket=hosts.BUCKET_NAME, Key=cleaned_key)
-
+        s3_object = s3_client.get_object(Bucket=hosts.BUCKET_NAME, Key=cleaned_key)
         # 이미지 스트리밍 반환
         return StreamingResponse(
             content=s3_object["Body"],
             media_type="image/jpeg"
         )
 
-    except s3.exceptions.NoSuchKey:
-        print(f"NoSuchKey error for key: {name}")
+    except s3_client.exceptions.NoSuchKey:
+        print(f"NoSuchKey error for key: {file_key}")
         raise HTTPException(status_code=404, detail="File not found in S3")
     except Exception as e:
         print(f"Error while streaming image: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # Pydantic 모델

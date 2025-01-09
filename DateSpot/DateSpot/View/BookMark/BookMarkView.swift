@@ -29,7 +29,9 @@ struct BookMarkView: View {
                     List(restaurantViewModel.bookmarkedRestaurants) { restaurant in
                         NavigationLink(
                             destination: RestaurantDetailView(
-                                restaurantName: restaurant.name
+                                
+//                                restaurantName: restaurant.name,
+                                type: "restaurant"
                             )
                         ) {
                             HStack {

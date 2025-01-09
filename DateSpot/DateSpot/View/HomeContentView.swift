@@ -11,7 +11,7 @@ struct HomeContentView: View {
         NavigationView {
                 if isLoading {
                     ProgressView("Loading...")
-                        .font(.headline)
+                        .font(.headline) 
                 } else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 20) {

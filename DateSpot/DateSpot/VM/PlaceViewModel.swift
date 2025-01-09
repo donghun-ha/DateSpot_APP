@@ -54,8 +54,9 @@ class PlaceViewModel: ObservableObject {
     }
     
     func fetchFirstImage(for name: String) async {
-        guard homeimage[name] == nil else { return } // 이미 로드된 경우 스킵
-
+        print("찾아야 할 명소 :\(name)")
+        guard self.homeimage[name] == nil else { return } // 이미 로드된 경우 스킵
+        print("찾는 이미지 : \(homeimage[name])")
         let imageKeys = await fetchImageKeys(for: name)
         guard let firstKey = imageKeys.first else {
             print("No image keys found for place: \(name)")
@@ -72,7 +73,6 @@ class PlaceViewModel: ObservableObject {
     /// 이미지 키 가져오기
     func fetchImageKeys(for name: String) async -> [String] {
         let encodedName = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? name
-        print("Encoded name: \(encodedName)")
         guard let url = URL(string: "\(baseURL)images?name=\(encodedName)") else {
             print("Invalid URL for fetchImageKeys")
             return []
@@ -105,7 +105,7 @@ class PlaceViewModel: ObservableObject {
 
     /// 특정 이미지 키로 이미지 가져오기
     func fetchImage(fileKey: String) async -> UIImage? {
-        guard let url = URL(string: "\(baseURL)image?file_key=\(fileKey.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? fileKey)") else {
+        guard let url = URL(string: "\(baseURL)image?name=\(fileKey.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? fileKey)") else {
             print("Invalid URL for fetchImage")
             return nil
         }

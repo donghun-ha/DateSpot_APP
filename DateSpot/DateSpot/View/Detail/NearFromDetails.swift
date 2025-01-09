@@ -42,7 +42,7 @@ struct NearFromDetails: View {
                         }
                     }
                 } else {
-                    noPlacesView()
+//                    noPlacesView()
                 }
             }
             .padding(.top)

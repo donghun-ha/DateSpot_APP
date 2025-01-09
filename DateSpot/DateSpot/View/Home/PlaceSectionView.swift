@@ -36,7 +36,7 @@ struct PlaceSectionView: View {
     @ViewBuilder
     private func placeCardView(for place: PlaceData) -> some View {
         ZStack {
-            if let image = viewModel.images1[place.name] {
+            if let image = viewModel.homeimage[place.name] {
                 CardView(
                     image: image,
                     category: place.parking,
@@ -72,7 +72,7 @@ struct PlaceCardView: View {
             destination: RestaurantDetailView(name: place.name)
         ) {
             ZStack {
-                if let image = viewModel.images1[place.name] {
+                if let image = viewModel.homeimage[place.name] {
                     CardView(
                         image: image,
                         category: place.parking,
