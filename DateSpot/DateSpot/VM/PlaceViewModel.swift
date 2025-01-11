@@ -28,16 +28,20 @@ class PlaceViewModel: ObservableObject {
     // 전체 데이터를 다운로드하고 가까운 5개의 명소를 필터링
     func fetchPlaces(currentLat: Double, currentLng: Double) async {
         do {
-            let fetchedPlaces = try await fetchPlacesFromAPI()
-            let sortedPlaces = fetchedPlaces.sorted {
-                calculateDistance(lat: $0.lat, lng: $0.lng, currentLat: currentLat, currentLng: currentLng) <
-                    calculateDistance(lat: $1.lat, lng: $1.lng, currentLat: currentLat, currentLng: currentLng)
-            }
+            let fetchedPlaces = try await fetchPlacesFromAPI(currentLat: currentLat, currentLng: currentLng)
             
+            // 거리 기준으로 정렬하고 상위 5개만 가져오기
+            let sortedPlaces = fetchedPlaces
+                .sorted {
+                    calculateDistance(lat: $0.lat, lng: $0.lng, currentLat: currentLat, currentLng: currentLng) <
+                    calculateDistance(lat: $1.lat, lng: $1.lng, currentLat: currentLat, currentLng: currentLng)
+                }
+                .prefix(5) // 상위 5개만 선택
+
             // 메인 스레드에서 UI 상태 업데이트
             await MainActor.run {
                 self.places = fetchedPlaces
-                self.nearbyPlaces = Array(sortedPlaces.prefix(5))
+                self.nearbyPlaces = Array(sortedPlaces)
             }
         } catch {
             print("❌ 데이터 다운로드 실패: \(error.localizedDescription)")
@@ -45,15 +49,15 @@ class PlaceViewModel: ObservableObject {
     }
     
     // Fetch Places
-    func fetchPlace() async {
-        do {
-            let fetchedPlace = try await fetchPlacesFromAPI()
-            self.places = fetchedPlace
-            print("✅ 데이터 다운로드 성공")
-        } catch {
-            print("❌ 데이터 다운로드 실패: \(error.localizedDescription)")
-        }
-    }
+//    func fetchPlace() async {
+//        do {
+//            let fetchedPlace = try await fetchPlacesFromAPI(currentLat: currentLat, currentLng: currentLng)
+//            self.places = fetchedPlace
+//            print("✅ 데이터 다운로드 성공")
+//        } catch {
+//            print("❌ 데이터 다운로드 실패: \(error.localizedDescription)")
+//        }
+//    }
     
     func fetchFirstImage(for name: String) async {
         print("찾아야 할 명소 :\(name)")
@@ -71,6 +75,7 @@ class PlaceViewModel: ObservableObject {
             }
         }
     }
+    
 
     /// 이미지 키 가져오기
     func fetchImageKeys(for name: String) async -> [String] {
@@ -199,8 +204,18 @@ class PlaceViewModel: ObservableObject {
 
 // MARK: - Private Methods
 extension PlaceViewModel {
-    private func fetchPlacesFromAPI() async throws -> [PlaceData] {
-        guard let url = URL(string: "\(baseURL)select") else {
+    private func fetchPlacesFromAPI(currentLat: Double, currentLng: Double, limit: Int = 5) async throws -> [PlaceData] {
+        guard var urlComponents = URLComponents(string: "\(baseURL)select") else {
+            throw URLError(.badURL)
+        }
+
+        urlComponents.queryItems = [
+            URLQueryItem(name: "lat", value: "\(currentLat)"),
+            URLQueryItem(name: "lng", value: "\(currentLng)"),
+            URLQueryItem(name: "limit", value: "\(limit)")
+        ]
+
+        guard let url = urlComponents.url else {
             throw URLError(.badURL)
         }
 
@@ -217,6 +232,7 @@ extension PlaceViewModel {
         let decoder = JSONDecoder()
         return try decoder.decode([PlaceData].self, from: data)
     }
+
 
     private func fetchPlaceDetailFromAPI(name: String) async throws -> [PlaceData] {
         print("가져올 명소 : \(name)")

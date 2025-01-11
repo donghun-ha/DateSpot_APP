@@ -1,7 +1,5 @@
 import SwiftUI
 
-import SwiftUI
-
 struct NearFromDetails: View {
     @StateObject private var placeViewModel = PlaceViewModel()
     @State private var isLoading = true
@@ -108,7 +106,7 @@ struct NearPlaceRow: View {
                         .font(.caption)
                         .onAppear {
                             Task {
-                                await placeViewModel.loadImages(for: place.name)
+                                await placeViewModel.fetchFirstImage(for: place.name)
                             }
                         }
                 }

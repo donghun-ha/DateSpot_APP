@@ -360,6 +360,12 @@ extension RestaurantViewModel {
             .store(in: &cancellables)
     }
     
+    func calculateDistance(lat: Double, lng: Double, currentLat: Double, currentLng: Double) -> Double {
+        let deltaLat = lat - currentLat
+        let deltaLng = lng - currentLng
+        return sqrt(deltaLat * deltaLat + deltaLng * deltaLng) * 111 // 대략적인 거리(km)
+    }
+    
     
     func fetchBookmarkedRestaurants(userEmail: String) {
         // URL 구성 및 쿼리 파라미터 추가
