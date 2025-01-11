@@ -9,7 +9,7 @@ import SwiftUI
 import RealmSwift
 
 struct PlaceDetailView: View {
-//    @StateObject private var restaurantViewModel = RestaurantViewModel()
+    @StateObject private var restaurantViewModel = RestaurantViewModel()
     @StateObject private var placeViewModel = PlaceViewModel()
     @State private var selection: Int = 0
     @State private var isLoading = true
@@ -43,7 +43,7 @@ struct PlaceDetailView: View {
                         }
                         
                         // 명소 상세 정보
-                        PlaceDetailInfoView(place: place, images: $placeViewModel.images[0])
+                        RestaurantDetailInfoView(place: place, images: $placeViewModel.images[0])
 
                         // 근처 명소
                         if !nearbyPlaces.isEmpty {
@@ -70,7 +70,7 @@ struct PlaceDetailView: View {
                 await placeViewModel.loadImages(for: placeName)
 
                 // 명소 데이터 가져오기
-//                await placeViewModel.fetchPlaces(currentLat: placeViewModel.selectedPlace?.lat ?? 37.5665, currentLng: placeViewModel.selectedPlace?.lng ?? 126.9780)
+                await placeViewModel.fetchPlaces(currentLat: placeViewModel.selectedPlace?.lat ?? 37.5665, currentLng: placeViewModel.selectedPlace?.lng ?? 126.9780)
                 if let place = placeViewModel.selectedPlace {
                     // 가까운 5개의 명소 계산
                     nearbyPlaces = calculateNearbyPlaces(
