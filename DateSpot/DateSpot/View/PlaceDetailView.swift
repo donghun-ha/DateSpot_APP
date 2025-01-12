@@ -13,7 +13,7 @@ struct PlaceDetailView: View {
     @StateObject private var placeViewModel = PlaceViewModel()
     @State private var selection: Int = 0
     @State private var isLoading = true
-    @State private var nearbyPlaces: [PlaceData] = []
+    @State private var nearbyRestaurants: [Restaurant] = []
     var placeName: String = "남산서울타워"
 
 
@@ -43,11 +43,11 @@ struct PlaceDetailView: View {
                         }
                         
                         // 명소 상세 정보
-                        RestaurantDetailInfoView(place: place, images: $placeViewModel.images[0])
+                        PlaceDetailInfoView(place: place, images: $placeViewModel.images[0])
 
                         // 근처 명소
-                        if !nearbyPlaces.isEmpty {
-                            NearFromDetails()
+                        if !nearbyRestaurants.isEmpty {
+                            NearFromPlaceDetails()
                         } else {
                             Text("No nearby places found.")
                                 .foregroundColor(.gray)
@@ -71,31 +71,34 @@ struct PlaceDetailView: View {
 
                 // 명소 데이터 가져오기
                 await placeViewModel.fetchPlaces(currentLat: placeViewModel.selectedPlace?.lat ?? 37.5665, currentLng: placeViewModel.selectedPlace?.lng ?? 126.9780)
-                if let place = placeViewModel.selectedPlace {
-                    // 가까운 5개의 명소 계산
-                    nearbyPlaces = calculateNearbyPlaces(
-                        places: placeViewModel.places,
-                        restaurantLat: place.lat,
-                        restaurantLng: place.lng
-                    )
-            }
-            debugPrint(Realm.Configuration.defaultConfiguration.fileURL ?? "")
-            isLoading = false
-            }
-        }
-    }
+                // 명소를 기준으로 근처 레스토랑 데이터 가져오기
+                 if let place = placeViewModel.selectedPlace {
+                     await restaurantViewModel.fetchNearbyRestaurants(
+                         lat: place.lat,
+                         lng: place.lng
+                     )
+                     nearbyRestaurants = calculateNearbyRestaurant(
+                         restaurants: restaurantViewModel.nearbyRestaurants,
+                         placeLat: place.lat,
+                         placeLng: place.lng
+                     )
+                 }
 
-    // 근처 명소 계산 함수
-    private func calculateNearbyPlaces(places: [PlaceData], restaurantLat: Double, restaurantLng: Double) -> [PlaceData] {
-        return places
-            .map { place in
-                (place, calculateDistance(lat1: restaurantLat, lng1: restaurantLng, lat2: place.lat, lng2: place.lng))
-            }
-            .sorted(by: { $0.1 < $1.1 }) // 거리 기준 정렬
-            .prefix(5) // 가장 가까운 5개 선택
-            .map { $0.0 }
-    }
+                 isLoading = false
+             }
+         }
+     }
 
+     // 근처 레스토랑 계산 함수
+     private func calculateNearbyRestaurant(restaurants: [Restaurant], placeLat: Double, placeLng: Double) -> [Restaurant] {
+         return restaurants
+             .map { restaurant in
+                 (restaurant, calculateDistance(lat1: placeLat, lng1: placeLng, lat2: restaurant.lat, lng2: restaurant.lng))
+             }
+             .sorted(by: { $0.1 < $1.1 }) // 거리 기준 정렬
+             .prefix(5) // 가장 가까운 5개 선택
+             .map { $0.0 }
+     }
     // 거리 계산 함수
     private func calculateDistance(lat1: Double, lng1: Double, lat2: Double, lng2: Double) -> Double {
         let deltaLat = lat2 - lat1
