@@ -18,14 +18,14 @@ struct UserSettings: View {
         NavigationView(content: {
             VStack(content: {
                 List(content: {
-                    // 계졍 관리 섹션
+                    // 계정 관리 섹션
                     Section(header: Text("계정 관리"), content: {
                         Button("로그아웃") {
                             isLogoutAlertPresented = true
                         }
                         .alert("로그아웃", isPresented: $isLogoutAlertPresented) {
                             Button("취소", role: .cancel) {}
-                            Button("확인", role: .destructive){
+                            Button("확인", role: .destructive) {
                                 // Logout logic
                                 Task {
                                     // 비동기 호출로 로그아웃 로직 실행
@@ -38,7 +38,16 @@ struct UserSettings: View {
                         } message: {
                             Text("로그아웃 하시겠습니까?")
                         }
+                        
+                        // 개인정보처리방침 버튼 추가
+                        Button("개인정보처리방침") {
+                            if let url = URL(string: "https://alabaster-chocolate-fe8.notion.site/17ab5e9490658007806eff51192312f7?pvs=73") {
+                                UIApplication.shared.open(url)
+                            }
+                        }
+                        .foregroundColor(.blue) // 버튼 텍스트 색상
                     })
+                    
                     // Theme 설정 섹션
                     Section(header: Text("테마 설정"), content: {
                         Toggle("다크 모드 활성화", isOn: $appState.isDarkMode)

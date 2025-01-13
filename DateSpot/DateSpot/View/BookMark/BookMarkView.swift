@@ -87,8 +87,8 @@ struct BookMarkView: View {
         isLoading = true
         
         Task {
-            await restaurantViewModel.fetchBookmarkedRestaurants(userEmail: userEmail)
-            await placeViewModel.fetchBookmarkedPlaces(userEmail: userEmail)
+            restaurantViewModel.fetchBookmarkedRestaurants(userEmail: userEmail)
+            placeViewModel.fetchBookmarkedPlaces(userEmail: userEmail)
             
             print("Loaded Restaurants: \(restaurantViewModel.bookmarkedRestaurants.count)")
             print("Loaded Places: \(placeViewModel.bookmarkedPlaces.count)")

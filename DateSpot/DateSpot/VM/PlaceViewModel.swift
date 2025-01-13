@@ -62,7 +62,7 @@ class PlaceViewModel: ObservableObject {
     func fetchFirstImage(for name: String) async {
         print("찾아야 할 명소 :\(name)")
         guard self.homeimage[name] == nil else { return } // 이미 로드된 경우 스킵
-        print("찾는 이미지 : \(homeimage[name])")
+//        print("찾는 이미지 : \(homeimage[name])")
         let imageKeys = await fetchImageKeys(for: name)
         guard let firstKey = imageKeys.first else {
             print("No image keys found for place: \(name)")
