@@ -19,7 +19,7 @@ struct NearFromPlaceDetails: View {
             VStack(alignment: .leading, spacing: 16) {
                 // 헤더
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("근처의 레스토랑")
+                    Text("근처의 맛집")
                         .font(.title)
                         .fontWeight(.bold)
                         .padding(.horizontal)
