@@ -22,7 +22,7 @@
 
 
 ## 디자인 패턴(MVVM)
-<img width="859" alt="스크린샷 2025-01-02 오전 10 40 23" src="https://github.com/user-attachments/assets/e4dde2f9-7e2e-4b2e-b0f4-c45a10558b04" />
+<img width="859" alt="![DateSpot MVVM](https://github.com/user-attachments/assets/a0549741-f25b-4df2-a06c-7104ac8aaf39)" />
 
 
 
