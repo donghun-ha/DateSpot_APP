@@ -24,13 +24,9 @@
 <img width="859" alt="DateSpot MVVM" src="https://github.com/user-attachments/assets/a0549741-f25b-4df2-a06c-7104ac8aaf39" />
 
 
-
-
-
 ## API
-<img width="1171" alt="API_DateSpot1" src="https://github.com/user-attachments/assets/befd3285-3fc2-4d22-a54d-7472c285784b" />
-<img width="1167" alt="API_DateSpot2" src="https://github.com/user-attachments/assets/0f8f40a6-dedf-4493-b556-578d3e7235b8" />
-
+<img width="1167" alt="DateSpot API1" src="https://github.com/user-attachments/assets/773c2e1d-3bc5-4e5a-958d-0a1950e7cb51" />
+<img width="1190" alt="DateSpot API2" src="https://github.com/user-attachments/assets/414d2ea6-5bc3-4d86-8959-e23f2643f275" />
 
 ### Packages / 사용한 패키지
 <img width="391" alt="Swift Package" src="https://github.com/user-attachments/assets/f62d577c-c852-44a3-bf08-6f1ec05453a2" />
