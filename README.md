@@ -10,7 +10,6 @@
 |    팀원   | <center> **하동훈**  </center> | 
 |    팀원   | <center> 이원영  </center> | 
 
-
 ## 시스템 구조
 <img width="823" alt="시스템구조" src="https://github.com/user-attachments/assets/e89ea45b-7381-4eac-9730-6920001df7c0" />
 
@@ -22,7 +21,7 @@
 
 
 ## 디자인 패턴(MVVM)
-<img width="859" alt="![DateSpot MVVM](https://github.com/user-attachments/assets/a0549741-f25b-4df2-a06c-7104ac8aaf39)" />
+<img width="859" alt="DateSpot MVVM" src="https://github.com/user-attachments/assets/a0549741-f25b-4df2-a06c-7104ac8aaf39" />
 
 
 
