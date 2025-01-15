@@ -196,9 +196,6 @@ async def add_bookmark(bookmark: RestaurantBookRequest):
 @router.post("/check_bookmark/")
 async def check_bookmark(request: checkRestaurantBook):
     connection = hosts.connect()
-    # if request.user_email =="":
-    #     return False
-    print(request.user_email)
     try:
         with connection.cursor(DictCursor) as cursor:  # DictCursor 사용
             # 북마크 존재 여부 확인
@@ -209,7 +206,6 @@ async def check_bookmark(request: checkRestaurantBook):
             """
             cursor.execute(sql, (request.user_email, request.restaurant_name))
             result = cursor.fetchone()
-            print(result)
             is_bookmarked = result["count"] > 0  # DictCursor로 딕셔너리로 처리 가능
         return {"is_bookmarked": is_bookmarked}
     except Exception as e:

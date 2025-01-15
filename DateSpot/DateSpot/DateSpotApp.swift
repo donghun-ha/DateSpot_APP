@@ -44,19 +44,15 @@ struct DateSpotApp: App {
     
     var body: some Scene {
         WindowGroup {
-            TabBarView() // 로그인 후 홈 화면으로 이동
-                .environmentObject(appState) // 앱 상태를 전달
-                .environmentObject(restaurantViewModel) // environmentObject로 전달
-                .environmentObject(placeViewModel)      // environmentObject로 전달
-//            if appState.isLoggedIn {
-//                TabBarView() // 로그인 후 홈 화면으로 이동
-//                    .environmentObject(appState) // 앱 상태를 전달
-//                    .environmentObject(restaurantViewModel) // environmentObject로 전달
-//                    .environmentObject(placeViewModel)      // environmentObject로 전달
-//            } else {
-//                LoginView() // 로그인 화면
-//                    .environmentObject(appState) // 앱 상태를 전달
-//            }
+            if appState.isLoggedIn {
+                TabBarView() // 로그인 후 홈 화면으로 이동
+                    .environmentObject(appState) // 앱 상태를 전달
+                    .environmentObject(restaurantViewModel) // environmentObject로 전달
+                    .environmentObject(placeViewModel)      // environmentObject로 전달
+            } else {
+                LoginView() // 로그인 화면
+                    .environmentObject(appState) // 앱 상태를 전달
+            }
         }
     }
 }

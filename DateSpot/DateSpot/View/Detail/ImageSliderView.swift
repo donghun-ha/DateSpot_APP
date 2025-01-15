@@ -30,9 +30,6 @@ struct ImageSliderView: View {
             .padding(EdgeInsets(top: 10, leading: 10, bottom: 0, trailing: 10))
 
             Button(action: {
-                if appState.isLoggedIn == false {
-                    print("로그인 되어 있지 않습니다.")
-                }
                 // 맛집 북마크
                 if currentType == "restaurant" {
                     if RestaurantviewModel.isBookmarked {
@@ -45,8 +42,7 @@ struct ImageSliderView: View {
                         RestaurantviewModel.addBookmark(
                             userEmail: appState.userEmail ?? "",
                             restaurantName: currentItem,
-                            name: "My Favorite Spot",
-                            state : appState.isLoggedIn
+                            name: "My Favorite Spot"
                         )
                     }
                 }
@@ -62,8 +58,7 @@ struct ImageSliderView: View {
                         PlaceviewModel.addBookmark(
                             userEmail: appState.userEmail ?? "",
                             placeName: currentItem,
-                            name: "My Favorite Spot",
-                            state: appState.isLoggedIn
+                            name: "My Favorite Spot"
                         )
                     }
                 }
