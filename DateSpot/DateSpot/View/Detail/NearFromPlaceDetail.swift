@@ -10,7 +10,8 @@ import SwiftUI
 struct NearFromPlaceDetails: View {
     @StateObject private var restaurantViewModel = RestaurantViewModel()
     @State private var isLoading = true
-
+    
+    
     var currentLat: Double = 37.5665 // 현재 위도
     var currentLng: Double = 126.9780 // 현재 경도
 
@@ -71,6 +72,7 @@ struct NearFromPlaceDetails: View {
 struct NearRestaurantRow: View {
     let restaurant: Restaurant
     @ObservedObject var restaurantViewModel: RestaurantViewModel
+    @EnvironmentObject var appState: AppState
     let currentLat: Double
     let currentLng: Double
 
@@ -83,7 +85,7 @@ struct NearRestaurantRow: View {
                     .fontWeight(.semibold)
                 Spacer()
                 Button(action: {
-                    restaurantViewModel.addBookmark(userEmail: "user@example.com", restaurantName: restaurant.name, name: restaurant.name)
+                    restaurantViewModel.addBookmark(userEmail: "user@example.com", restaurantName: restaurant.name, name: restaurant.name, state: appState.isLoggedIn)
                 }) {
                     Image(systemName: restaurantViewModel.isBookmarked ? "bookmark.fill" : "bookmark")
                         .foregroundColor(.blue)

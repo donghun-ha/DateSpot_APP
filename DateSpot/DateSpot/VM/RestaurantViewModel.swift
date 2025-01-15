@@ -19,6 +19,7 @@ class RestaurantViewModel: ObservableObject {
     @Published private(set) var images1: [String: UIImage] = [:] // 맛집 이름별 첫 번째 이미지를 저장
     @Published var homeimage: [String: UIImage] = [:] // 레스토랑 이름별 이미지 저장
     @Published var isBookmarked: Bool = false
+    @EnvironmentObject var appState: AppState // 전역 상태 사용
     
     private var cancellables = Set<AnyCancellable>()
     private let baseURL = "https://fastapi.fre.today/restaurant/" // 기본 API URL
@@ -272,9 +273,14 @@ extension RestaurantViewModel {
     
     
     
-    func addBookmark(userEmail: String, restaurantName: String, name: String) {
+    func addBookmark(userEmail: String, restaurantName: String, name: String, state: Bool) {
         // API URL
         guard let url = URL(string: "\(baseURL)add_bookmark/") else { return }
+        if (!state){
+            print("not logined")
+            return
+        }
+        
         
         // 요청 데이터
         let requestBody: [String: Any] = [
@@ -416,6 +422,51 @@ extension RestaurantViewModel {
             })
             .store(in: &cancellables)
     }
+    
+    func checkBookmark(userEmail: String, placeName: String) {
+        // API URL
+        print("북마크 확인")
+        guard let url = URL(string: "\(baseURL)check_bookmark/") else { return }
+        
+        // 요청 데이터
+        let requestBody: [String: Any] = [
+            "user_email": userEmail,
+            "place_name": placeName
+        ]
+        
+        // JSON 데이터 생성
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: requestBody) else { return }
+        
+        // URLRequest 생성
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = jsonData
+        
+        // API 호출
+        URLSession.shared.dataTaskPublisher(for: request)
+            .tryMap { output -> Data in
+                guard let response = output.response as? HTTPURLResponse,
+                      response.statusCode == 200 else {
+                    throw URLError(.badServerResponse)
+                }
+                return output.data
+            }
+            .decode(type: [String: Bool].self, decoder: JSONDecoder())
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { completion in
+                switch completion {
+                case .finished:
+                    print("Bookmark status checked successfully")
+                case .failure(let error):
+                    print("Failed to check bookmark: \(error.localizedDescription)")
+                }
+            }, receiveValue: { [weak self] response in
+                self?.isBookmarked = response["is_bookmarked"] ?? false
+            })
+            .store(in: &cancellables)
+    }
+    
     
     func deleteBookmark(userEmail: String, restaurantName: String, name: String) {
         // API URL

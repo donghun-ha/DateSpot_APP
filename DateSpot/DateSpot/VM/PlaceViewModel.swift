@@ -273,10 +273,13 @@ extension PlaceViewModel {
         return try decoder.decode([PlaceData].self, from: resultsData)
     }
     
-    func addBookmark(userEmail: String, placeName: String, name: String) {
+    func addBookmark(userEmail: String, placeName: String, name: String, state: Bool) {
         // API URL
         guard let url = URL(string: "\(baseURL)add_bookmark/") else { return }
-        
+        if(!state){
+            print("not logined")
+            return
+        }
         // 요청 데이터
         let requestBody: [String: Any] = [
             "user_email": userEmail,
