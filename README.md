@@ -73,25 +73,25 @@ alt="IMAGE ALT TEXT HERE" width="720" height="480" border="10" /></a>
   서버
   -  이원영 : 라우터 설계, 
   -  신정섭 : //
-  -  이종남 : //
+  -  이종남 : Docker 설계 및 구축
   -  하동훈 : Redis, S3 설계 및 구축
     
   Python
   -  이원영 : 라우터 설계, 
   -  신정섭 : //
-  -  이종남 : //
+  -  이종남 : Home 설계
   -  하동훈 : User, Login, bookmark FastAPI 엔드포인트 설계 
   
   View
   -  이원영 : 라우터 설계, 
   -  신정섭 : //
-  -  이종남 : //
+  -  이종남 : Home 설계
   -  하동훈 : Login, Bookmark, User UI/UX 설계
 
   View Model
   -  이원영 : 라우터 설계, 
   -  신정섭 : //
-  -  이종남 : //
+  -  이종남 : Home 설계
   -  하동훈 : User, Login, Bookmark FastAPI 연동
  
     
