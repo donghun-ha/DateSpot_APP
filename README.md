@@ -61,37 +61,3 @@ alt="IMAGE ALT TEXT HERE" width="720" height="480" border="10" /></a>
 | 12.27.     | SwiftUI를 통한 담당 페이지 구현                                          |
   
   
-
-## Contribution
-
-  요약
-  - 현재 시간을 기준으로 30분 혹은 1시간 이내로 예약 가능한 동물병원들을 리스트 뷰로 보여주고 리스트타일을 클릭하면 병원의 정보를 보여주고
-    현재 위치정보를 기반으로 구글맵 API를 통해 길찾기 기능을 제공, 사용자 별로 반려동물을 등록 가능하며 예약하려는 병원과 채팅을 통해
-    간단한 상담 또는 일정 조율을 할 수 있습니다.
-
- 백엔드
-  서버
-  -  이원영 : 라우터 설계, 
-  -  신정섭 : //
-  -  이종남 : Docker 설계 및 구축
-  -  하동훈 : Redis, S3 설계 및 구축
-    
-  Python
-  -  이원영 : 라우터 설계, 
-  -  신정섭 : //
-  -  이종남 : Home 설계
-  -  하동훈 : User, Login, bookmark FastAPI 엔드포인트 설계 
-  
-  View
-  -  이원영 : 라우터 설계, 
-  -  신정섭 : //
-  -  이종남 : Home 설계
-  -  하동훈 : Login, Bookmark, User UI/UX 설계
-
-  View Model
-  -  이원영 : 라우터 설계, 
-  -  신정섭 : //
-  -  이종남 : Home 설계
-  -  하동훈 : User, Login, Bookmark FastAPI 연동
- 
-    
