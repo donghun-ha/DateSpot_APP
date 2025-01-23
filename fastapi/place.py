@@ -58,7 +58,7 @@ async def select():
 async def select():
 
     # Redis 키 설정 (이메일 기반)
-    redis_key = f"place : {"all"}"
+    redis_key = {"place" : "all"}
     
     # Redis 연결
     redis = await hosts.get_redis_connection()
