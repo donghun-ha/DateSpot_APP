@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from urllib.parse import unquote
-import hosts
+import hosts, json
 from geopy.distance import geodesic
 import unicodedata
 from pydantic import BaseModel
@@ -52,6 +52,49 @@ async def select():
             }
         )
     return dict_list
+
+
+@router.get("/select_redis")
+async def select():
+
+    # Redis 키 설정 (이메일 기반)
+    redis_key = f"place : {"all"}"
+    
+    # Redis 연결
+    redis = await hosts.get_redis_connection()
+
+    # Redis에서 데이터 검색
+    cached_user = await redis.get(redis_key)
+    if cached_user:
+        user_data = json.loads(cached_user)
+        print("Redis에서 사용자 데이터를 반환")
+        return {"source": "redis", "user_data": user_data}
+
+    conn = hosts.connect()
+    curs = conn.cursor()
+
+    # SQL 문장
+    sql = "SELECT * FROM place"
+    curs.execute(sql)
+    rows = curs.fetchall()
+    conn.close()
+    dict_list = []
+    for row in rows:
+        dict_list.append(
+            {
+                'name' : row[0],
+                'address' : row[1],
+                'lat' : row[2],
+                'lng' : row[3],
+                'description' : row[4],
+                'contact_info' : row[5],
+                'operating_hour' : row[6],
+                'parking' : row[7],
+                'closing_time' : row[8]
+            }
+        )
+    return dict_list
+
 
 
 def remove_invisible_characters(input_str: str) -> str:
