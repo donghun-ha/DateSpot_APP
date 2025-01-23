@@ -63,13 +63,15 @@ async def select():
     # Redis 연결
     redis = await hosts.get_redis_connection()
 
-    # Redis에서 데이터 검색
-    cached_user = await redis.get(redis_key)
-    if cached_user:
-        user_data = json.loads(cached_user)
-        print("Redis에서 사용자 데이터를 반환")
-        return {"source": "redis", "user_data": user_data}
+   # Redis에서 데이터 검색
+    cached_data = await redis.get(redis_key)
+    if cached_data:
+        # Redis 캐시에 데이터가 존재하면 반환
+        data = json.loads(cached_data)
+        print("Redis에서 데이터 반환")
+        return {"source": "redis", "data": data}
 
+    # Redis 캐시에 데이터가 없는 경우 DB 조회
     conn = hosts.connect()
     curs = conn.cursor()
 
@@ -78,22 +80,30 @@ async def select():
     curs.execute(sql)
     rows = curs.fetchall()
     conn.close()
+
+    # 결과를 딕셔너리로 변환
     dict_list = []
     for row in rows:
         dict_list.append(
             {
-                'name' : row[0],
-                'address' : row[1],
-                'lat' : row[2],
-                'lng' : row[3],
-                'description' : row[4],
-                'contact_info' : row[5],
-                'operating_hour' : row[6],
-                'parking' : row[7],
-                'closing_time' : row[8]
+                'name': row[0],
+                'address': row[1],
+                'lat': row[2],
+                'lng': row[3],
+                'description': row[4],
+                'contact_info': row[5],
+                'operating_hour': row[6],
+                'parking': row[7],
+                'closing_time': row[8]
             }
         )
-    return dict_list
+
+    # Redis에 캐싱 (유효 기간: 300초)
+    await redis.set(redis_key, json.dumps(dict_list), ex=300)
+    print("Redis에 데이터 캐싱 완료")
+
+    # DB 데이터를 반환
+    return {"source": "database", "data": dict_list}
 
 
 
