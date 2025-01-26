@@ -41,21 +41,6 @@ struct RestaurantDetailMap: View {
                         selectValue = newValue != nil
                     }
                     
-                    // 특정 Marker 선택 시 표시
-                    if selectedMarker == "여의도공원앞(구)" && selectValue {
-                        VStack {
-                            Text("혼잡")
-                                .font(.headline)
-                                .padding()
-                                .background(Color(.systemBackground)) // 다크모드/라이트모드 대응
-                                .cornerRadius(10)
-                                .shadow(radius: 5)
-                                .transition(.move(edge: .top).combined(with: .opacity))
-                            Spacer()
-                        }
-                        .padding(.top, 50)
-                    }
-                    
                     // 하단 카드 뷰
                     VStack {
                         Spacer()

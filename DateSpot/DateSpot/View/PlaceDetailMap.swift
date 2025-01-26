@@ -39,22 +39,7 @@ struct PlaceDetailMap: View {
                     .onChange(of: selectedMarker) { _, newValue in
                         selectValue = newValue != nil
                     }
-
-                    // 특정 Marker 선택 시 표시
-                    if selectedMarker == "여의도공원앞(구)" && selectValue {
-                        VStack {
-                            Text("혼잡")
-                                .font(.headline)
-                                .padding()
-                                .background(Color(.systemBackground)) // 다크모드/라이트모드 자동 대응
-                                .cornerRadius(10)
-                                .shadow(radius: 5)
-                                .transition(.move(edge: .top).combined(with: .opacity))
-                            Spacer()
-                        }
-                        .padding(.top, 50)
-                    }
-
+                    
                     // 하단 카드 뷰
                     VStack {
                         Spacer()
@@ -65,7 +50,7 @@ struct PlaceDetailMap: View {
                                         .font(.title3)
                                         .fontWeight(.semibold)
                                         .foregroundColor(Color.primary) // 다크모드/라이트모드 자동 대응
-
+                                    
                                     HStack {
                                         Image(systemName: "star.fill")
                                             .foregroundColor(.yellow)
@@ -73,29 +58,29 @@ struct PlaceDetailMap: View {
                                             .foregroundColor(Color.primary)
                                     }
                                 }
-
+                                
                                 Spacer()
-
+                                
                                 Image(uiImage: images)
                                     .resizable()
                                     .aspectRatio(contentMode: .fill)
                                     .frame(width: 80, height: 80)
                                     .clipShape(RoundedRectangle(cornerRadius: 8))
                             }
-
+                            
                             VStack(alignment: .leading, spacing: 8) {
                                 HStack {
                                     Image(systemName: "location.fill")
                                     Text(place.address)
                                         .foregroundColor(Color.primary)
                                 }
-
+                                
                                 HStack {
                                     Image(systemName: "clock.fill")
                                     Text(place.operating_hour)
                                         .foregroundColor(Color.primary)
                                 }
-
+                                
                                 HStack {
                                     Image(systemName: "phone.fill")
                                     Text(place.contact_info)

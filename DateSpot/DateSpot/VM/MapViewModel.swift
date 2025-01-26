@@ -39,15 +39,14 @@ class TabMapViewModel: NSObject, CLLocationManagerDelegate, ObservableObject {
     
     // 지도
     let tabMapLoc = CLLocationManager()  // 지도관리
+    @Published var authorization : Bool = false // GPS 권한 관리
     
     override init() {
         super.init()
         tabMapLoc.delegate = self
-        tabMapLoc.desiredAccuracy = kCLLocationAccuracyBest
-        tabMapLoc.requestWhenInUseAuthorization()
-        tabMapLoc.startUpdatingLocation()
     }
     
+    // 2km이내 식당, 맛집
     func filterData(restaurants: [Restaurant], places: [PlaceData], radius: Double = 2000) {
             guard let userLocation = userLocation else {
                 print("사용자 위치를 확인할 수 없습니다.")
@@ -67,7 +66,7 @@ class TabMapViewModel: NSObject, CLLocationManagerDelegate, ObservableObject {
             }
         }
     
-    // 마커 필터링  (View에서 placeData, restaurantData 입력)
+    // tabbar map  마커 필터링  (View에서 placeData, restaurantData 입력)
     func filterNearALL(currentLocation: CLLocation, placeData : [PlaceData], restaurantData : [Restaurant]) async {
         // 명소 필터링
         
@@ -114,40 +113,32 @@ class TabMapViewModel: NSObject, CLLocationManagerDelegate, ObservableObject {
         print("Failed to find user's location:", error.localizedDescription)
     }
     
-    // 검색기능
-    //    func searchLocations() {
-    //           let request = MKLocalSearch.Request()
-    //           request.naturalLanguageQuery = searchText
-    //           request.region = region
-    //
-    //           let search = MKLocalSearch(request: request)
-    //           search.start { [weak self] response, error in
-    //               guard let self = self else { return }
-    //
-    //               if let error = error {
-    //                   print("Search error: \(error)")
-    //                   return
-    //               }
-    //
-    //               if let response = response {
-    //                   DispatchQueue.main.async {
-    //                       self.searchResults = response.mapItems
-    //
-    //                       // 검색 결과가 있으면 카메라 이동
-    //                       if let firstResult = response.mapItems.first?.placemark.coordinate {
-    //                           self.cameraPosition = .region(
-    //                               MKCoordinateRegion(
-    //                                   center: firstResult,
-    //                                   span: MKCoordinateSpan(latitudeDelta: 0.015, longitudeDelta: 0.015)
-    //                               )
-    //                           )
-    //                       }
-    //                   }
-    //               }
-    //           }
-    //       }
+    // 위치 권한 요청
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        switch manager.authorizationStatus {
+        case .notDetermined:
+            print("GPS: notDetermined")
+            manager.desiredAccuracy = kCLLocationAccuracyBest
+            self.tabMapLoc.requestWhenInUseAuthorization()
+        case .denied:
+            print("GPS: denied")
+            self.authorization = false
+        case .restricted:
+            print("GPS: restricted")
+            self.authorization = false
+        case .authorizedWhenInUse:
+            print("GPS: authorizedWhenInUse")
+            manager.startUpdatingLocation()
+            self.authorization = true
+        default:
+            print("GPS: default")
+            self.authorization = false
+        }
+    }
+    
+    
+    // 마커 검색 후 카메라 이동
     func searchLocations() {
-        // 먼저 로컬 마커들에서 검색
         let localResults = searchLocalMarkers(searchText)
         if !localResults.isEmpty {
             self.searchResults = localResults
@@ -162,44 +153,45 @@ class TabMapViewModel: NSObject, CLLocationManagerDelegate, ObservableObject {
             }
             return
         }
+    }
+    
+    
+    // 로컬 마커 검색
+    func searchLocalMarkers(_ query: String) -> [MKMapItem] {
+        let lowercaseQuery = query.lowercased()
+        var results: [MKMapItem] = []
         
-        
-        func searchLocalMarkers(_ query: String) -> [MKMapItem] {
-            let lowercaseQuery = query.lowercased()
-            var results: [MKMapItem] = []
-            
-            // 레스토랑 검색
-            for restaurant in nearRestaurant {
-                if restaurant.name.lowercased().contains(lowercaseQuery) {
-                    let placemark = MKPlacemark(
-                        coordinate: CLLocationCoordinate2D(
-                            latitude: restaurant.lat,
-                            longitude: restaurant.lng
-                        )
+        // 레스토랑 검색
+        for restaurant in nearRestaurant {
+            if restaurant.name.lowercased().contains(lowercaseQuery) {
+                let placemark = MKPlacemark(
+                    coordinate: CLLocationCoordinate2D(
+                        latitude: restaurant.lat,
+                        longitude: restaurant.lng
                     )
-                    let mapItem = MKMapItem(placemark: placemark)
-                    mapItem.name = restaurant.name
-                    results.append(mapItem)
-                }
+                )
+                let mapItem = MKMapItem(placemark: placemark)
+                mapItem.name = restaurant.name
+                results.append(mapItem)
             }
-            
-            // 명소 검색
-            for place in nearPlace {
-                if place.name.lowercased().contains(lowercaseQuery) {
-                    let placemark = MKPlacemark(
-                        coordinate: CLLocationCoordinate2D(
-                            latitude: place.lat,
-                            longitude: place.lng
-                        )
-                    )
-                    let mapItem = MKMapItem(placemark: placemark)
-                    mapItem.name = place.name
-                    results.append(mapItem)
-                }
-            }
-            
-            return results
         }
         
-    } // VM
-}
+        // 명소 검색
+        for place in nearPlace {
+            if place.name.lowercased().contains(lowercaseQuery) {
+                let placemark = MKPlacemark(
+                    coordinate: CLLocationCoordinate2D(
+                        latitude: place.lat,
+                        longitude: place.lng
+                    )
+                )
+                let mapItem = MKMapItem(placemark: placemark)
+                mapItem.name = place.name
+                results.append(mapItem)
+            }
+        }
+        
+        return results
+    }
+    
+} // VM
