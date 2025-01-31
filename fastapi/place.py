@@ -132,7 +132,7 @@ async def add_bookmark(bookmark: PlaceBookRequest):
         with connection.cursor() as cursor:
             # 북마크 추가
             sql = """
-                INSERT INTO place_bookmark (user_email, restaurant_name, name, created_at)
+                INSERT INTO place_bookmark (user_email, place_name, name, created_at)
                 VALUES (%s, %s, %s, %s)
             """
             cursor.execute(sql, (
@@ -182,7 +182,7 @@ async def get_user_bookmarks(user_email: str):
             sql = """
                 SELECT p.name, p.address
                 FROM place_bookmark pb
-                JOIN place r ON pb.place_name = p.name
+                JOIN place p ON pb.place_name = p.name
                 WHERE pb.user_email = %s
             """
             cursor.execute(sql, (user_email,))
@@ -269,3 +269,33 @@ async def get_detail(name: str):
         for row in rows
     ]
     return {"results": results}
+
+@router.post("/delete_bookmark/")
+async def delete_bookmark(bookmark: PlaceBookRequest):
+    """
+    북마크 삭제 API
+    """
+    connection = hosts.connect()
+    try:
+        with connection.cursor() as cursor:
+            # 북마크 삭제 쿼리
+            sql = """
+                DELETE FROM place_bookmark
+                WHERE user_email = %s AND place_name = %s
+            """
+            cursor.execute(sql, (bookmark.user_email, bookmark.place_name))
+            connection.commit()
+            
+            # 삭제된 행 확인
+            if cursor.rowcount == 0:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Bookmark not found"
+                )
+
+        return {"message": "Bookmark deleted successfully"}
+    except Exception as e:
+        print(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete bookmark")
+    finally:
+        connection.close()

@@ -416,5 +416,57 @@ extension RestaurantViewModel {
             })
             .store(in: &cancellables)
     }
+    
+    func deleteBookmark(userEmail: String, restaurantName: String, name: String) {
+        // API URL
+        guard let url = URL(string: "\(baseURL)delete_bookmark/") else {
+            print("Invalid URL for deleting bookmark")
+            return
+        }
+        
+        // 요청 데이터
+        let requestBody: [String: Any] = [
+            "user_email": userEmail,
+            "place_name": restaurantName,
+            "name": name
+        ]
+        
+        // JSON 데이터 생성
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: requestBody) else {
+            print("Failed to serialize JSON data")
+            return
+        }
+        
+        // URLRequest 생성
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = jsonData
+        
+        // API 호출
+        URLSession.shared.dataTaskPublisher(for: request)
+            .tryMap { output -> Data in
+                guard let response = output.response as? HTTPURLResponse,
+                      response.statusCode == 200 else {
+                    throw URLError(.badServerResponse)
+                }
+                return output.data
+            }
+            .decode(type: [String: String].self, decoder: JSONDecoder())
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { completion in
+                switch completion {
+                case .finished:
+                    print("Bookmark deleted successfully")
+                case .failure(let error):
+                    print("Failed to delete bookmark: \(error.localizedDescription)")
+                }
+            }, receiveValue: { [weak self] _ in
+                // 삭제 후 로컬 북마크 상태 업데이트
+                self?.isBookmarked = false
+                self?.bookmarkedRestaurants.removeAll { $0.name == restaurantName }
+            })
+            .store(in: &cancellables)
+    }
 }
 

@@ -14,11 +14,13 @@ import Combine
 @MainActor
 class PlaceViewModel: ObservableObject {
     @Published var nearbyPlaces: [PlaceData] = [] // 근처 명소 데이터
+    @Published var bookmarkedPlaces: [BookmarkedPlace] = [] // 북마크 데이터
     @Published private(set) var places: [PlaceData] = [] // 전체 명소 리스트
     @Published private(set) var selectedPlace: PlaceData? // 선택된 명소 상세 정보
     @Published var images: [UIImage] = [] // 로드된 이미지 리스트
     @Published private(set) var images1: [String: UIImage] = [:] // 명소 이름별 첫 번째 이미지를 저장
     @Published var homeimage: [String: UIImage] = [:] // 명소 이름별 이미지 저장
+    @Published var isBookmarked: Bool = false
 
     private var cancellables = Set<AnyCancellable>()
     private let baseURL = "https://fastapi.fre.today/place/" // 기본 API URL
@@ -60,7 +62,7 @@ class PlaceViewModel: ObservableObject {
     func fetchFirstImage(for name: String) async {
         print("찾아야 할 명소 :\(name)")
         guard self.homeimage[name] == nil else { return } // 이미 로드된 경우 스킵
-        print("찾는 이미지 : \(homeimage[name])")
+//        print("찾는 이미지 : \(homeimage[name])")
         let imageKeys = await fetchImageKeys(for: name)
         guard let firstKey = imageKeys.first else {
             print("No image keys found for place: \(name)")
@@ -270,5 +272,195 @@ extension PlaceViewModel {
         let decoder = JSONDecoder()
         return try decoder.decode([PlaceData].self, from: resultsData)
     }
-
+    
+    func addBookmark(userEmail: String, placeName: String, name: String) {
+        // API URL
+        guard let url = URL(string: "\(baseURL)add_bookmark/") else { return }
+        
+        // 요청 데이터
+        let requestBody: [String: Any] = [
+            "user_email": userEmail,
+            "place_name": placeName,
+            "name": name
+        ]
+        
+        // JSON 데이터 생성
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: requestBody) else { return }
+        
+        // URLRequest 생성
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = jsonData
+        
+        // API 호출
+        URLSession.shared.dataTaskPublisher(for: request)
+            .tryMap { output -> Data in
+                guard let response = output.response as? HTTPURLResponse,
+                      response.statusCode == 200 else {
+                    throw URLError(.badServerResponse)
+                }
+                return output.data
+            }
+            .decode(type: [String: String].self, decoder: JSONDecoder())
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { completion in
+                switch completion {
+                case .finished:
+                    print("Bookmark added successfully")
+                case .failure(let error):
+                    print("Failed to add bookmark: \(error.localizedDescription)")
+                }
+            }, receiveValue: { [weak self] _ in
+                self?.isBookmarked = true
+            })
+            .store(in: &cancellables)
+    }
+    
+    func checkBookmark(userEmail: String, placeName: String) {
+        // API URL
+        print("북마크 확인")
+        guard let url = URL(string: "\(baseURL)check_bookmark/") else { return }
+        
+        // 요청 데이터
+        let requestBody: [String: Any] = [
+            "user_email": userEmail,
+            "place_name": placeName
+        ]
+        
+        // JSON 데이터 생성
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: requestBody) else { return }
+        
+        // URLRequest 생성
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = jsonData
+        
+        // API 호출
+        URLSession.shared.dataTaskPublisher(for: request)
+            .tryMap { output -> Data in
+                guard let response = output.response as? HTTPURLResponse,
+                      response.statusCode == 200 else {
+                    throw URLError(.badServerResponse)
+                }
+                return output.data
+            }
+            .decode(type: [String: Bool].self, decoder: JSONDecoder())
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { completion in
+                switch completion {
+                case .finished:
+                    print("Bookmark status checked successfully")
+                case .failure(let error):
+                    print("Failed to check bookmark: \(error.localizedDescription)")
+                }
+            }, receiveValue: { [weak self] response in
+                self?.isBookmarked = response["is_bookmarked"] ?? false
+            })
+            .store(in: &cancellables)
+    }
+    
+    
+    func fetchBookmarkedPlaces(userEmail: String) {
+        // URL 구성 및 쿼리 파라미터 추가
+        guard var urlComponents = URLComponents(string: "\(baseURL)get_user_bookmarks/") else {
+            print("Invalid URL for fetching user bookmarks")
+            return
+        }
+        
+        urlComponents.queryItems = [URLQueryItem(name: "user_email", value: userEmail)]
+        
+        guard let url = urlComponents.url else {
+            print("Failed to construct URL with query parameters")
+            return
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        // 빈 바디 추가 (FastAPI POST 요청에서 바디가 비어있을 때 오류 발생 가능)
+        request.httpBody = Data()
+        
+        URLSession.shared.dataTaskPublisher(for: request)
+            .tryMap { output in
+                // HTTP 응답 처리
+                guard let response = output.response as? HTTPURLResponse else {
+                    throw URLError(.badServerResponse)
+                }
+                guard response.statusCode == 200 else {
+                    throw URLError(.badServerResponse)
+                }
+                return output.data
+            }
+            .decode(type: [String: [BookmarkedPlace]].self, decoder: JSONDecoder()) // JSON 디코딩
+            .receive(on: DispatchQueue.main) // UI 업데이트는 메인 스레드에서 수행
+            .sink(receiveCompletion: { completion in
+                if case .failure(let error) = completion {
+                    print("Error occurred: \(error.localizedDescription)")
+                }
+            }, receiveValue: { [weak self] response in
+                if let results = response["results"] {
+                    print("Fetched bookmarked place: \(results)")
+                    self?.bookmarkedPlaces = results
+                } else {
+                    print("No results found in response")
+                    self?.bookmarkedPlaces = []
+                }
+            })
+            .store(in: &cancellables)
+    }
+    
+    func deleteBookmark(userEmail: String, placeName: String, name: String) {
+        // API URL
+        guard let url = URL(string: "\(baseURL)delete_bookmark/") else {
+            print("Invalid URL for deleting bookmark")
+            return
+        }
+        
+        // 요청 데이터
+        let requestBody: [String: Any] = [
+            "user_email": userEmail,
+            "place_name": placeName,
+            "name": name
+        ]
+        
+        // JSON 데이터 생성
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: requestBody) else {
+            print("Failed to serialize JSON data")
+            return
+        }
+        
+        // URLRequest 생성
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = jsonData
+        
+        // API 호출
+        URLSession.shared.dataTaskPublisher(for: request)
+            .tryMap { output -> Data in
+                guard let response = output.response as? HTTPURLResponse,
+                      response.statusCode == 200 else {
+                    throw URLError(.badServerResponse)
+                }
+                return output.data
+            }
+            .decode(type: [String: String].self, decoder: JSONDecoder())
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { completion in
+                switch completion {
+                case .finished:
+                    print("Bookmark deleted successfully")
+                case .failure(let error):
+                    print("Failed to delete bookmark: \(error.localizedDescription)")
+                }
+            }, receiveValue: { [weak self] _ in
+                // 삭제 후 로컬 북마크 상태 업데이트
+                self?.isBookmarked = false
+                self?.bookmarkedPlaces.removeAll { $0.name == placeName }
+            })
+            .store(in: &cancellables)
+    }
 }
