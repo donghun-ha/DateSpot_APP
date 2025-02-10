@@ -1,7 +1,6 @@
 from fastapi import HTTPException
 import os
 import pymysql 
-from redis.asyncio import Redis
 import boto3
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
 
