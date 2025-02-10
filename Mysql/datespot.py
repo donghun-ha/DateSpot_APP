@@ -1,4 +1,4 @@
-from fastapi import FastAPI 
+from backend import FastAPI 
 import pymysql 
 
 app = FastAPI()

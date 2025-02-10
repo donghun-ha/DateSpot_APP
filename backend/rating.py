@@ -5,7 +5,7 @@ Fixed: 24.12.26
 Usage: 별점 읽어오고 별점 수정하기 기능을 제공하는 라우터
 """
 
-from fastapi import APIRouter, HTTPException 
+from backend import APIRouter, HTTPException 
 import hosts
 from pydantic import BaseModel
 

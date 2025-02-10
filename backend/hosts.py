@@ -1,4 +1,4 @@
-from fastapi import HTTPException
+from backend import HTTPException
 import os
 import pymysql 
 from redis.asyncio import Redis

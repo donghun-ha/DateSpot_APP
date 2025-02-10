@@ -7,7 +7,7 @@ Apple 로그인 시 이메일 가리기 로직 처리.
 Usage: 로그인 시 MySQL Insert 처리
 """
 
-from fastapi import APIRouter, HTTPException, Request, File, Form, UploadFile
+from backend import APIRouter, HTTPException, Request, File, Form, UploadFile
 import uuid
 import json, hosts
 
