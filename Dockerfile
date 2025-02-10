@@ -10,7 +10,7 @@ COPY ./fastapi ./fastapi
 WORKDIR /DATESPOT/fastapi
 
 # Install dependencies
-COPY ./fastapi/requirements.txt ./requirements.txt
+COPY ./requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose the port the app runs on
