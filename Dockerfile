@@ -6,21 +6,14 @@ WORKDIR /DATESPOT
 # Copy the application folder
 COPY ./fastapi ./fastapi
 
-# Set the working directory for the app
-WORKDIR /DATESPOT/fastapi
+# Copy the requirements file first to leverage Docker cache
+COPY ./requirements.txt ./requirements.txt
 
 # Install dependencies
-COPY ./fastapi/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# ENV DATESPOT_DB=""
-# ENV DATESPOT_DB_USER=""
-# ENV DATESPOT_DB_PASSWORD=""
-# ENV DATESPOT_DB_TABLE=""
-# ENV DATESPOT_PORT=""
-# ENV REDIS_HOST=""
-# ENV REDIS_PORT=""
-# ENV REDIS_PASSWORD=""
+# Set the working directory for the app
+WORKDIR /DATESPOT/fastapi
 
 # Expose the port the app runs on
 EXPOSE 6004
