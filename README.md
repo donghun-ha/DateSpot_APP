@@ -10,7 +10,6 @@
 |    팀원   | <center> **하동훈**  </center> | 
 |    팀원   | <center> 이원영  </center> | 
 
-
 ## 시스템 구조
 <img width="823" alt="시스템구조" src="https://github.com/user-attachments/assets/e89ea45b-7381-4eac-9730-6920001df7c0" />
 
@@ -22,16 +21,12 @@
 
 
 ## 디자인 패턴(MVVM)
-<img width="859" alt="스크린샷 2025-01-02 오전 10 40 23" src="https://github.com/user-attachments/assets/e4dde2f9-7e2e-4b2e-b0f4-c45a10558b04" />
-
-
-
+<img width="859" alt="DateSpot MVVM" src="https://github.com/user-attachments/assets/a0549741-f25b-4df2-a06c-7104ac8aaf39" />
 
 
 ## API
-<img width="1171" alt="API_DateSpot1" src="https://github.com/user-attachments/assets/befd3285-3fc2-4d22-a54d-7472c285784b" />
-<img width="1167" alt="API_DateSpot2" src="https://github.com/user-attachments/assets/0f8f40a6-dedf-4493-b556-578d3e7235b8" />
-
+<img width="1167" alt="DateSpot API1" src="https://github.com/user-attachments/assets/773c2e1d-3bc5-4e5a-958d-0a1950e7cb51" />
+<img width="1190" alt="DateSpot API2" src="https://github.com/user-attachments/assets/414d2ea6-5bc3-4d86-8959-e23f2643f275" />
 
 ### Packages / 사용한 패키지
 <img width="391" alt="Swift Package" src="https://github.com/user-attachments/assets/f62d577c-c852-44a3-bf08-6f1ec05453a2" />
@@ -66,37 +61,3 @@ alt="IMAGE ALT TEXT HERE" width="720" height="480" border="10" /></a>
 | 12.27.     | SwiftUI를 통한 담당 페이지 구현                                          |
   
   
-
-## Contribution
-
-  요약
-  - 현재 시간을 기준으로 30분 혹은 1시간 이내로 예약 가능한 동물병원들을 리스트 뷰로 보여주고 리스트타일을 클릭하면 병원의 정보를 보여주고
-    현재 위치정보를 기반으로 구글맵 API를 통해 길찾기 기능을 제공, 사용자 별로 반려동물을 등록 가능하며 예약하려는 병원과 채팅을 통해
-    간단한 상담 또는 일정 조율을 할 수 있습니다.
-
- 백엔드
-  서버
-  -  이원영 : 라우터 설계, 
-  -  신정섭 : //
-  -  이종남 : //
-  -  하동훈 : Redis, S3 설계 및 구축
-    
-  Python
-  -  이원영 : 라우터 설계, 
-  -  신정섭 : //
-  -  이종남 : //
-  -  하동훈 : User, Login, bookmark FastAPI 엔드포인트 설계 
-  
-  View
-  -  이원영 : 라우터 설계, 
-  -  신정섭 : //
-  -  이종남 : //
-  -  하동훈 : Login, Bookmark, User UI/UX 설계
-
-  View Model
-  -  이원영 : 라우터 설계, 
-  -  신정섭 : //
-  -  이종남 : //
-  -  하동훈 : User, Login, Bookmark FastAPI 연동
- 
-    
