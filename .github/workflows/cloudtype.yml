@@ -26,34 +26,22 @@ jobs:
             app: python@3.9
             options:
               env:
-                - name: VET_FIREBASE_KEY
-                  var: VET_FIREBASE_KEY
                 - name: AWS_ACCESS_KEY_ID
                   var: AWS_ACCESS_KEY_ID
                 - name: AWS_SECRET_ACCESS_KEY
                   var: AWS_SECRET_ACCESS_KEY
-                - name: AWS_S3_BUCKET_NAME
-                  var: AWS_S3_BUCKET_NAME
-                - name: VET_DB
-                  var: VET_DB
-                - name: VET_DB_USER
-                  var: VET_DB_USER
-                - name: VET_DB_PASSWORD
-                  var: VET_DB_PASSWORD
-                - name: VET_DB_TABLE
-                  var: VET_DB_TABLE
-                - name: VET_PORT
-                  var: VET_PORT
-                - name: REDIS_HOST
-                  var: REDIS_HOST
+                - name: BUCKET_NAME
+                  var: BUCKET_NAME
+                - name: REGION
+                  var: REGION
+                - name: DATESPOT_DB_USER
+                  var: DATESPOT_DB_USER
+                - name: DATESPOT_DB_PASSWORD
+                  var: DATESPOT_DB_PASSWORD
+                - name: DATESPOT_DB_TABLE
+                  var: DATESPOT_DB_TABLE
                 - name: REDIS_PORT
                   var: REDIS_PORT
-                - name: REDIS_PASSWORD
-                  var: REDIS_PASSWORD
-                - name: ALGORITHM
-                  var: ALGORITHM
-                - name: SECRET_KEY
-                  var: SECRET_KEY
               ports: "8000"
               start: uvicorn main:app --host 0.0.0.0 --port 8000
               buildenv: []
