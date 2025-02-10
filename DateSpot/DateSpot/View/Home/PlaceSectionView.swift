@@ -3,31 +3,58 @@ import SwiftUI
 struct PlaceSectionView: View {
     @StateObject var viewModel = PlaceViewModel() // ViewModel 초기화
     @State private var userLocation: (lat: Double, lng: Double) = (37.5665, 126.9780) // 기본 위치 (서울)
+    @StateObject var mapViewModel = TabMapViewModel()
+    @State var isloading = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("명소")
+            if !mapViewModel.authorization{
+                Text("위치 제공 동의가 필요합니다.")
+            }else if isloading == false{
+                ProgressView("Loading...")
+            }else{
+                Text("명소")
                 .font(.title)
                 .fontWeight(.bold)
                 .padding(.horizontal)
-            
-            ScrollView(.horizontal, showsIndicators: false) {
-                LazyHStack(spacing: 20) {
-                    ForEach(viewModel.nearbyPlaces.prefix(5), id: \.name) { place in
-                        PlaceCardView(place: place, viewModel: viewModel, userLocation: userLocation)
+                
+                ScrollView(.horizontal, showsIndicators: false) {
+                    LazyHStack(spacing: 20) {
+                        ForEach(viewModel.nearbyPlaces.prefix(5), id: \.name) { place in
+                            PlaceCardView(place: place, viewModel: viewModel)
+                        }
+                        
                     }
-
+                    .padding(.horizontal)
                 }
-                .padding(.horizontal)
-            }
         }
+            }
+        
         .onAppear {
-            Task {
-                await viewModel.fetchNearbyPlaces(
-                    lat: userLocation.lat,
-                    lng: userLocation.lng,
-                    radius: 1000
-                )
+            if mapViewModel.authorization{
+                Task {
+                    isloading = false
+                    
+                    await viewModel.fetchNearbyPlaces(
+                        lat: (mapViewModel.userLocation?.coordinate.latitude)!,
+                        lng: (mapViewModel.userLocation?.coordinate.longitude)!,
+                        radius: 1000
+                    )
+                    isloading = true
+                }
+            }
+            else{
+                Task {
+                    isloading = false
+                    
+                    await viewModel.fetchNearbyPlaces(
+                        lat: (userLocation.lat),
+                        lng: (userLocation.lng),
+                        radius: 1000
+                    )
+                    isloading = true
+                }
+                
             }
         }
     }
@@ -65,7 +92,7 @@ struct PlaceSectionView: View {
 struct PlaceCardView: View {
     let place: PlaceData // Place 모델
     @ObservedObject var viewModel: PlaceViewModel
-    let userLocation: (lat: Double, lng: Double)
+//    let userLocation: (lat: Double, lng: Double)
     
     var body: some View {
         NavigationLink(

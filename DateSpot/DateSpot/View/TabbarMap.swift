@@ -62,15 +62,20 @@ struct TabbarMapView: View {
                 placement: .navigationBarDrawer(displayMode: .always),
                 prompt: "장소 검색"
             )
-            .onChange(of: mapViewModel) { _,_ in
+//            .onChange(of: mapViewModel) { _,_ in
+//                if mapViewModel.searchText.isEmpty {
+//                    mapViewModel.searchResults = []
+//                    showSearchSheet = false
+//                }
+//            }
+            .onSubmit(of: .search) {
                 if mapViewModel.searchText.isEmpty {
                     mapViewModel.searchResults = []
                     showSearchSheet = false
+                }else{
+                    mapViewModel.searchLocations()
+                    showSearchSheet = !mapViewModel.searchResults.isEmpty
                 }
-            }
-            .onSubmit(of: .search) {
-                mapViewModel.searchLocations()
-                showSearchSheet = !mapViewModel.searchResults.isEmpty
             }
             .onDisappear {
                 mapViewModel.tabMapLoc.stopUpdatingLocation()

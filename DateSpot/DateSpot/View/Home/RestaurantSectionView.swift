@@ -3,21 +3,29 @@ import SwiftUI
 struct RestaurantSectionView: View {
     @StateObject var viewModel = RestaurantViewModel() // ViewModel 초기화
     @State private var userLocation: (lat: Double, lng: Double) = (37.5255100592, 127.0367640978) // 기본 위치 (서울)
-
+    @StateObject var mapViewModel = TabMapViewModel()
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            sectionHeader
-            restaurantScrollView
+            if !mapViewModel.authorization {
+                Text("위치 제공 동의가 필요합니다.")
+            }
+            else{
+                sectionHeader
+                restaurantScrollView
+            }
         }
         .onAppear {
-            Task {
-                // FastAPI에서 근처 레스토랑 데이터를 가져오기
-                await viewModel.fetchNearbyRestaurants(
-                    lat: userLocation.lat,
-                    lng: userLocation.lng,
-                    radius: 1000
-                )
-            }
+//            if mapViewModel.authorization {
+//                Task {
+//                    // FastAPI에서 근처 레스토랑 데이터를 가져오기
+//                    await viewModel.fetchNearbyRestaurants(
+//                        lat: (mapViewModel.userLocation?.coordinate.latitude)!,
+//                        lng: (mapViewModel.userLocation?.coordinate.longitude)!,
+//                        radius: 1000
+//                    )
+//                }
+//            }
         }
     }
 
@@ -48,8 +56,8 @@ struct RestaurantSectionView: View {
             Task {
                 // 스크롤될 때마다 동적으로 데이터 로드
                 await viewModel.fetchNearbyRestaurants(
-                    lat: userLocation.lat,
-                    lng: userLocation.lng,
+                    lat: (mapViewModel.userLocation?.coordinate.latitude)!,
+                    lng: (mapViewModel.userLocation?.coordinate.longitude)!,
                     radius: 1000
                 )
             }

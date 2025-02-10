@@ -9,10 +9,14 @@ struct HomeContentView: View {
 
     var body: some View {
         NavigationView {
-                if isLoading {
-                    ProgressView("Loading...")
-                        .font(.headline) 
-                } else {
+            if !mapViewModel.authorization {
+                Text("mapviewmodel.authorization = false")
+            }
+//                else if isLoading {
+//                    ProgressView("Loading...")
+//                        .font(.headline) 
+//                }
+            else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 20) {
                             // 2km 반경 레스토랑 섹션
@@ -30,16 +34,18 @@ struct HomeContentView: View {
                     }
                 }
             }
-            .onAppear {
-                Task {
-                    isLoading = true
-                    // 사용자 위치 기반 데이터 필터링
-                    mapViewModel.filterData(
-                        restaurants: restaurantViewModel.restaurants,
-                        places: placeViewModel.places
-                    )
-                    isLoading = false
-                }
+        .onAppear {
+//            if mapViewModel.authorization {
+//                Task {
+//                isLoading = true
+//                // 사용자 위치 기반 데이터 필터링
+//                mapViewModel.filterData(
+//                    restaurants: restaurantViewModel.restaurants,
+//                    places: placeViewModel.places
+//                )
+//                isLoading = false
+//            }
+//        }
             }
         }
     
