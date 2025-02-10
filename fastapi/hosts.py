@@ -15,9 +15,6 @@ DB_USER = os.getenv('DATESPOT_DB_USER')
 DB_PASSWORD = os.getenv('DATESPOT_DB_PASSWORD')
 DB_TABLE = os.getenv('DATESPOT_DB_TABLE')
 DB_PORT = os.getenv('DATESPOT_PORT')
-REDIS_HOST = os.getenv('REDIS_HOST')
-REDIS_PORT = os.getenv("REDIS_PORT")
-REDIS_PASSWORD = os.getenv("REDIS_PASSWORD")
 
 
 def create_s3_client():
@@ -36,34 +33,6 @@ def create_s3_client():
     except (NoCredentialsError, PartialCredentialsError) as e:
         raise HTTPException(status_code=401, detail=f"AWS credentials error: {str(e)}")
     
-
-# Redis client 초기화
-redis_client = None
-
-
-# Redis 연결 함수
-async def get_redis_connection():
-    """
-    Redis 연결 초기화 및 기존 연결 반환
-    """
-    global redis_client
-    if not redis_client:
-        try:
-            print("Initializing Redis connection...")
-            # Redis 클라이언트 생성
-            redis_client = Redis(
-                host='datespot-redis.a4ifxd.ng.0001.apn2.cache.amazonaws.com',
-                port=REDIS_PORT,
-                decode_responses=True  # 문자열 디코딩 활성화
-            )
-            # 연결 테스트
-            await redis_client.ping()
-            print("Redis 연결 성공")
-        except Exception as e:
-            print(f"Redis 연결 실패: {e}")
-            redis_client = None
-            raise e
-    return redis_client
 
 def connect():
     """
