@@ -2,9 +2,11 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from urllib.parse import unquote
 import hosts
+from geopy.distance import geodesic
 import unicodedata
 from pydantic import BaseModel
 from datetime import datetime
+from pymysql.cursors import DictCursor
 
 router = APIRouter()
 
@@ -87,44 +89,31 @@ async def get_images(name: str):
         print(f"Error while fetching images: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error fetching images: {str(e)}")
 
-@router.get("/image_thumb")
-async def stream_image(name: str):
+@router.get("/image")
+async def stream_image(file_key: str):
     """
     단일 이미지를 S3에서 검색하고 스트리밍 반환
     """
-    s3 = hosts.create_s3_client()
+    s3_client = hosts.create_s3_client()
     try:
-        # 입력값 정리 및 디코딩
-        decoded_name = unquote(name).strip()
-        normalized_name = normalize_place_name_nfd(decoded_name)
-        prefix = f"명소/{normalized_name}_"
-        normalized_prefix = normalize_place_name_nfd(prefix)
-
-        # S3에서 파일 검색 (Prefix를 사용하여 제한)
-        response = s3.list_objects_v2(Bucket=hosts.BUCKET_NAME, Prefix=normalized_prefix)
-        if "Contents" not in response or not response["Contents"]:
-            print(f"No images found for prefix: {normalized_prefix}")
-            raise HTTPException(status_code=404, detail="Image not found")
-
-        # 첫 번째 파일 키 가져오기
-        file_key = response["Contents"][0]["Key"]
-
+        # 입력값 정리 및 유니코드 정규화 (NFD 적용)
+        decoded_key = unquote(file_key).strip()
+        normalized_key = unicodedata.normalize("NFD", decoded_key)
+        cleaned_key = remove_invisible_characters(normalized_key)
         # S3 객체 가져오기
-        cleaned_key = remove_invisible_characters(file_key)
-        s3_object = s3.get_object(Bucket=hosts.BUCKET_NAME, Key=cleaned_key)
-
+        s3_object = s3_client.get_object(Bucket=hosts.BUCKET_NAME, Key=cleaned_key)
         # 이미지 스트리밍 반환
         return StreamingResponse(
             content=s3_object["Body"],
             media_type="image/jpeg"
         )
 
-    except s3.exceptions.NoSuchKey:
-        print(f"NoSuchKey error for key: {name}")
+    except s3_client.exceptions.NoSuchKey:
+        print(f"NoSuchKey error for key: {file_key}")
         raise HTTPException(status_code=404, detail="File not found in S3")
     except Exception as e:
         print(f"Error while streaming image: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # Pydantic 모델
@@ -132,6 +121,9 @@ class PlaceBookRequest(BaseModel):
     user_email: str
     place_name: str
     name: str
+class checkPlaceBook(BaseModel):
+    user_email: str
+    place_name: str
 
 @router.post("/add_bookmark/")
 async def add_bookmark(bookmark: PlaceBookRequest):
@@ -156,3 +148,124 @@ async def add_bookmark(bookmark: PlaceBookRequest):
         raise HTTPException(status_code=500, detail="Failed to add bookmark")
     finally:
         connection.close()
+
+@router.post("/check_bookmark/")
+async def check_bookmark(request: checkPlaceBook):
+    connection = hosts.connect()
+    try:
+        with connection.cursor(DictCursor) as cursor:  # DictCursor 사용
+            # 북마크 존재 여부 확인
+            sql = """
+                SELECT COUNT(*) AS count
+                FROM place_bookmark
+                WHERE user_email = %s AND place_name = %s
+            """
+            cursor.execute(sql, (request.user_email, request.place_name))
+            result = cursor.fetchone()
+            is_bookmarked = result["count"] > 0  # DictCursor로 딕셔너리로 처리 가능
+        return {"is_bookmarked": is_bookmarked}
+    except Exception as e:
+        print(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to check bookmark")
+    finally:
+        connection.close()
+
+
+@router.post("/get_user_bookmarks/")
+async def get_user_bookmarks(user_email: str):
+    """
+    주어진 이메일에 해당하는 모든 북마크 명소 이름을 반환
+    """
+    connection = hosts.connect()
+    try:
+        with connection.cursor(DictCursor) as cursor:
+            sql = """
+                SELECT p.name, p.address
+                FROM place_bookmark pb
+                JOIN place r ON pb.place_name = p.name
+                WHERE pb.user_email = %s
+            """
+            cursor.execute(sql, (user_email,))
+            bookmarks = cursor.fetchall()
+        return {"results": bookmarks}
+    except Exception as e:
+        print(f"Error fetching bookmarks: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch user bookmarks")
+    finally:
+        connection.close()
+
+class UserLocation(BaseModel):
+    lat: float
+    lng: float
+
+@router.post("/nearby_places/")
+async def get_nearby_places(location: UserLocation, radius: float = 1000):
+    connection = hosts.connect()
+    try:
+        with connection.cursor() as cursor:
+            place_query = "SELECT name, address, parking, lat, lng, description, contact_info, operating_hour, closing_time FROM place"
+            cursor.execute(place_query)
+            places = cursor.fetchall()
+
+        user_coords = (location.lat, location.lng)
+
+        # 유효한 장소 필터링
+        valid_places = [
+            {
+                "name": p[0],
+                "address": p[1],
+                "lat": p[3],
+                "lng": p[4],
+                "distance": geodesic(user_coords, (p[3], p[4])).meters,
+                "description": p[5] if p[5] else "No description available",
+                "contact_info": p[6] if p[6] else "No contact info",
+                "operating_hour": p[7] if p[7] else "Unknown",
+                "parking": p[2] if p[2] else "No parking info",
+                "closing_time": p[8] if p[8] else "Unknown"
+            }
+            for p in places
+            if p[3] is not None and p[4] is not None
+        ]
+
+        nearby_places = [p for p in valid_places if p["distance"] <= radius]
+
+        return nearby_places
+    except Exception as e:
+        print(f"Error fetching nearby places: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch nearby places")
+    finally:
+        connection.close()
+
+# 디테일 페이지로 이동할때 클릭한 place 정보 쿼리
+@router.get('/go_detail')
+async def get_detail(name: str):
+    """
+    북마크한 매장 또는 명소의 정보 가져오기
+    """
+    conn = hosts.connect()
+    curs = conn.cursor()
+
+    sql = "SELECT * FROM place WHERE name = %s"
+    curs.execute(sql, (name,))
+    rows = curs.fetchall()
+    conn.close()
+
+    if not rows:
+        raise HTTPException(status_code=404, detail="Not Found")
+    
+    # 데이터를 매핑하여 반환 // SwiftUI에 맞는 형태
+    results = [
+        {
+            "name": row[0],
+            "address": row[1],
+            "lat": row[2],
+            "lng": row[3],
+            "description": row[4],
+            "contact_info": row[5],
+            "operating_hour": row[6],
+            "parking": row[7],
+            "closing_time": row[8]
+        }
+        for row in rows
+    ]
+    return {"results": results}

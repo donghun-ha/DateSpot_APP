@@ -1,28 +1,35 @@
+//
+//  PlaceDetailView.swift
+//  DateSpot
+//
+//  Created by 하동훈 on 8/1/2025.
+//
+
 import SwiftUI
 import RealmSwift
 
-struct DetailView: View {
-    @StateObject private var restaurantViewModel = RestaurantViewModel()
+struct PlaceDetailView: View {
+//    @StateObject private var restaurantViewModel = RestaurantViewModel()
     @StateObject private var placeViewModel = PlaceViewModel()
     @State private var selection: Int = 0
     @State private var isLoading = true
     @State private var nearbyPlaces: [PlaceData] = []
-    var restaurantName: String = "[백년가게]만석장"
-//    var restaurants: Restaurant // Restaurant 매개변수
+    var placeName: String = "남산서울타워"
+
 
     var body: some View {
         NavigationView {
             if isLoading {
                 ProgressView("Loading...")
                     .font(.headline)
-            } else if let restaurant = restaurantViewModel.selectedRestaurant {
+            } else if let place = placeViewModel.selectedPlace {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
                         // 이미지 슬라이더
-                        if !restaurantViewModel.images.isEmpty {
+                        if !placeViewModel.images.isEmpty {
                             ImageSliderView(
-                                currentRestaurant: restaurantName,
-                                images: restaurantViewModel.images,
+                                currentRestaurant: placeName,
+                                images: placeViewModel.images,
                                 selection: $selection
                             )
                         } else {
@@ -35,8 +42,8 @@ struct DetailView: View {
                                 .padding()
                         }
                         
-                        // 레스토랑 상세 정보
-                        RestaurantDetailInfoView(restaurant: restaurant, images: $restaurantViewModel.images[0])
+                        // 명소 상세 정보
+                        PlaceDetailInfoView(place: place, images: $placeViewModel.images[0])
 
                         // 근처 명소
                         if !nearbyPlaces.isEmpty {
@@ -55,28 +62,25 @@ struct DetailView: View {
             }
         }
         .onAppear {
-            print("Detail뷰 받은 레스토랑 이름: \(restaurantName)")
+            print("Detail뷰 받은 레스토랑 이름: \(placeName)")
             Task {
-                await restaurantViewModel.fetchRestaurantDetail(name: restaurantName)
-            }
-            debugPrint(Realm.Configuration.defaultConfiguration.fileURL ?? "")
-            Task {
+                await placeViewModel.fetchPlaceDetail(name: placeName)
                 isLoading = true
-                // 레스토랑 세부 정보 및 이미지 가져오기
-                await restaurantViewModel.fetchRestaurantDetail(name: restaurantName)
-                await restaurantViewModel.loadImages(for: restaurantName)
+                // 명소 세부 정보 및 이미지 가져오기
+                await placeViewModel.loadImages(for: placeName)
 
                 // 명소 데이터 가져오기
-                await placeViewModel.fetchPlaces(currentLat: restaurantViewModel.selectedRestaurant?.lat ?? 37.5665, currentLng: restaurantViewModel.selectedRestaurant?.lng ?? 126.9780)
-                if let restaurant = restaurantViewModel.selectedRestaurant {
+//                await placeViewModel.fetchPlaces(currentLat: placeViewModel.selectedPlace?.lat ?? 37.5665, currentLng: placeViewModel.selectedPlace?.lng ?? 126.9780)
+                if let place = placeViewModel.selectedPlace {
                     // 가까운 5개의 명소 계산
                     nearbyPlaces = calculateNearbyPlaces(
                         places: placeViewModel.places,
-                        restaurantLat: restaurant.lat,
-                        restaurantLng: restaurant.lng
+                        restaurantLat: place.lat,
+                        restaurantLng: place.lng
                     )
-                }
-                isLoading = false
+            }
+            debugPrint(Realm.Configuration.defaultConfiguration.fileURL ?? "")
+            isLoading = false
             }
         }
     }

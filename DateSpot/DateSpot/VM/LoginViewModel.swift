@@ -8,6 +8,7 @@
 import SwiftUI
 import GoogleSignIn
 import AuthenticationServices
+import RealmSwift
 
 // MainActor 비동기 처리
 @MainActor
@@ -17,12 +18,72 @@ class LoginViewModel: NSObject, ObservableObject {
     // Published : 변수의 변경 사항을 자동으로 알릴 수 있는 프로퍼티 래퍼
     @Published var alertMessage: String = "" // Alert 등에 표시할 메세지
     @Published var showAlert: Bool = false   // Alert 표시 여부
-    @Published var isLoginSuccessful: Bool = false
     
     // Login AppState
+    @Published var isLoginSuccessful: Bool = false // 로그인 상태
     @Published var loggedInUserEmail: String = ""    // 로그인한 사용자 이메일
     @Published var loggedInUserName : String = ""    // 로그인한 사용자 이름
     @Published var loggedInUserImage: String = "" // 로그인한 사용자 프로필 이미지
+    
+    // MARK: -Realm
+    private let realm: Realm
+    
+    override init() {
+        do {
+            self.realm = try Realm()
+            print("Realm 초기화 성공")
+        } catch {
+            fatalError("Realm 초기화 실패: \(error.localizedDescription)")
+        }
+    }
+    
+    // Realm에서 사용자 데이터 로드
+    func loadUserDataIfAvailable() {
+        // ----------- Realm 데이터 로드 시 로그 추가 -----------
+        print("🔍 Realm 데이터 로드 시작")
+        let users = realm.objects(UserData.self)
+        guard let user = users.first else {
+            print("❌ 저장된 사용자 데이터 없음") // 데이터 없음 로그
+            return
+        }
+
+        DispatchQueue.main.async {
+            self.loggedInUserEmail = user.userEmail
+            self.loggedInUserName = user.userName
+            self.loggedInUserImage = user.userImage
+            self.isLoginSuccessful = true
+            print("✅ Realm 데이터 로드 성공: \(user)")
+        }
+    }
+
+    // Realm에 사용자 데이터 저장
+    func saveUserData(email: String, name: String, image: String) {
+        // ----------- saveUserData 호출 여부 로그 추가 -----------
+        print("🔍 saveUserData 호출됨: email=\(email), name=\(name), image=\(image)") // 호출 여부 확인
+        let data = UserData(userEmail: email, userName: name, userImage: image)
+        do {
+            try realm.write {
+                realm.add(data, update: .modified) // 중복 데이터 업데이트
+            }
+            print("✅ UserData 저장 성공: \(data)")
+        } catch {
+            print("❌ UserData 저장 실패: \(error.localizedDescription)")
+        }
+    }
+    
+    // Realm에서 사용자 로그아웃 및 탈퇴 (데이터 삭제)
+    func deleteUser() {
+        do {
+            try realm.write {
+                realm.deleteAll()
+            }
+            print("로그아웃 : 로컬 데이터 삭제 완료")
+            self.isLoginSuccessful = false
+        } catch {
+            print("Realm 로그아웃 실패: \(error.localizedDescription)")
+        }
+    }
+    
     // MARK: - Service
     private let loginService = LoginService()
     
@@ -48,7 +109,7 @@ class LoginViewModel: NSObject, ObservableObject {
           guard let user = result?.user,
                 let email = user.profile?.email,
                 let name = user.profile?.name,
-                let imageURL = user.profile?.imageURL(withDimension: 100)
+                let imageURL = user.profile?.imageURL(withDimension: 100)?.absoluteString
             else {
                 self.showError("Google 사용자 정보 누락")
                 return
@@ -57,20 +118,11 @@ class LoginViewModel: NSObject, ObservableObject {
             // 사용자 정보 저장
             self.loggedInUserEmail = email
             self.loggedInUserName = name
-//          self.loggedInUserImage =
-            // 구글은 기본적으로 URL로 이미지를 전송해주기 때문에 비동기로 이미지를 로드하는 방식을 사용
-//            Task {
-//                do {
-//                    let (data, _) = try await URLSession.shared.data(from: imageURL)
-//                   if let image = UIImage(data: data) {
-//                       DispatchQueue.main.async {
-//                           self.loggedInUserImage = imageURL
-//                       }
-//                   }
-//               } catch {
-//                   print("이미지 로드 실패: \(error.localizedDescription)")
-//               }
-//            }
+            self.loggedInUserImage = imageURL
+            
+            // ----------- saveUserData 호출 추가 및 로그 -----------
+            self.saveUserData(email: email, name: name, image: imageURL)
+            print("✅ Google 로그인 데이터 저장 완료: \(email), \(name), \(imageURL)")
             
             // 서버로 전송
             Task {
@@ -131,7 +183,11 @@ extension LoginViewModel: ASAuthorizationControllerDelegate {
             self.loggedInUserEmail = email
             self.loggedInUserName = fullName
             self.loggedInUserImage = "" // Apple 로그인에서는 이미지 제공하지 않음.
-
+            
+            // ----------- saveUserData 호출 추가 및 로그 -----------
+            self.saveUserData(email: email, name: fullName, image: "")
+            print("✅ Apple 로그인 데이터 저장 완료: \(email), \(fullName)")
+            
             // 디버깅 정보 출력
             print("User Identifier: \(userIdentifier)")
             print("Email received: \(email)")
@@ -162,7 +218,9 @@ extension LoginViewModel: ASAuthorizationControllerDelegate {
         // Apple 로그인 실패 시
         showError("Apple 로그인 실패: \(error.localizedDescription)")
     }
-}
+    
+    
+}// LoginViewModel
 
 // MARK: - ASAuthorizationControllerPresentationContextProviding
 extension LoginViewModel: ASAuthorizationControllerPresentationContextProviding {

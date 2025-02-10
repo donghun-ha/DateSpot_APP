@@ -1,7 +1,14 @@
+//
+// PlaceDetailInfoView.swift
+//  DateSpot
+//
+//  Created by 하동훈 on 8/1/2025.
+//
+
 import SwiftUI
 
-struct RestaurantDetailInfoView: View {
-    @State var restaurant: Restaurant
+struct PlaceDetailInfoView: View {
+    @State var place: PlaceData
     @EnvironmentObject var appState: AppState
     @StateObject private var ratingViewModel = RatingViewModel()
     @State private var rates: Int = 0 // StarRatingView와 바인딩할 별점 값
@@ -10,7 +17,7 @@ struct RestaurantDetailInfoView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text(restaurant.name)
+                Text(place.name)
                     .font(.title)
                     .fontWeight(.bold)
 
@@ -19,7 +26,7 @@ struct RestaurantDetailInfoView: View {
                 Button(action: {
                    print(appState.userEmail ?? "")
                }) {
-                   NavigationLink(destination: RestaurantDetailMap(restaurants: $restaurant, images: $images, rates: $rates), label: {
+                   NavigationLink(destination: PlaceDetailMap(place: $place, images: $images, rates: $rates), label: {
                    HStack {
                        Image(systemName: "paperplane.fill")
                            .foregroundColor(.white)
@@ -44,8 +51,8 @@ struct RestaurantDetailInfoView: View {
                     Task {
                         if let email = appState.userEmail {
                             print("Updating rating to \(newRating)")
-                            await ratingViewModel.restaurantupdateUserRating(for: email, restaurantName: restaurant.name, rating: newRating)
-                            await ratingViewModel.restaurantfetchUserRating(for: email, restaurantName: restaurant.name)
+                            await ratingViewModel.placeupdateUserRating(for: email, placeName: place.name, rating: newRating)
+                            await ratingViewModel.placefetchUserRating(for: email, placeName: place.name)
                             rates = ratingViewModel.userRating ?? 0
                         } else {
                             print("User email is not available")
@@ -56,7 +63,7 @@ struct RestaurantDetailInfoView: View {
                 .onAppear {
                     Task {
                         if let email = appState.userEmail {
-                            await ratingViewModel.restaurantfetchUserRating(for: email, restaurantName: restaurant.name)
+                            await ratingViewModel.placefetchUserRating(for: email, placeName: place.name)
                             rates = ratingViewModel.userRating ?? 0
                         }
                     }
@@ -68,27 +75,27 @@ struct RestaurantDetailInfoView: View {
             HStack(spacing: 4) {
                 Image(systemName: "clock")
                     .foregroundColor(.blue)
-                Text("운영 시간: \(restaurant.operatingHour)")
+                Text("운영 시간: \(place.operating_hour)")
                     .font(.subheadline)
             }
 
             HStack(spacing: 4) {
                 Image(systemName: "location")
                     .foregroundColor(.blue)
-                Text(restaurant.address)
+                Text(place.address)
                     .font(.subheadline)
             }
 
-            if !restaurant.closedDays.isEmpty {
-                Text("휴무일: \(restaurant.closedDays)")
+//            if !restaurant.closedDays.isEmpty {
+//                Text("휴무일: \(restaurant.closedDays)")
+//                    .font(.subheadline)
+//            }
+            if !place.parking.isEmpty {
+                Text("주차: \(place.parking)")
                     .font(.subheadline)
             }
-            if !restaurant.parking.isEmpty {
-                Text("주차: \(restaurant.parking)")
-                    .font(.subheadline)
-            }
-            if !restaurant.contactInfo.isEmpty {
-                Text("연락처: \(restaurant.contactInfo)")
+            if !place.contact_info.isEmpty {
+                Text("연락처: \(place.contact_info)")
                     .font(.subheadline)
             }
         }
