@@ -10,16 +10,19 @@ import GoogleSignIn
 import AuthenticationServices
 import RealmSwift
 
-
 // Login 화면
 struct LoginView: View {
     @EnvironmentObject var appState: AppState
-    @StateObject var viewModel = LoginViewModel()
-    
+    @StateObject private var viewModel: LoginViewModel
     // 이미지 배열
     let images = ["tripImage1", "tripImage2", "tripImage3", "tripImage4"]
     @State private var currentImageIndex = 0
     @State private var navigateToTabBar = false // TabBarView로 이동 여부
+
+    // 초기화 메서드 추가
+    init(appState: AppState) {
+        _viewModel = StateObject(wrappedValue: LoginViewModel(appState: appState))
+    }
 
     var body: some View {
         ZStack {
@@ -54,12 +57,12 @@ struct LoginView: View {
                     .padding(.bottom, 50)
                     .padding(.horizontal, 20)
                 }
-                .onChange(of: viewModel.isLoginSuccessful) { _,isSuccess in
+                .onChange(of: viewModel.isLoginSuccessful) { _, isSuccess in
                     if isSuccess {
                         appState.isLoggedIn = true
                         appState.userEmail = viewModel.loggedInUserEmail
-                        appState.userName = viewModel.loggedInUserName
-                        appState.userImage = viewModel.loggedInUserImage
+                        appState.userName = viewModel.loggedInUserName ?? ""
+                        appState.userImage = viewModel.loggedInUserImage ?? ""
                         navigateToTabBar = true // TabBarView로 이동
                         print("navigateToTabBar: \(navigateToTabBar)")
                     }
@@ -68,8 +71,6 @@ struct LoginView: View {
         }
         .onAppear {
             startImageRotation()
-            viewModel.loadUserDataIfAvailable() // Realm에서 데이터 로드
-            print("Realm load 상태 : \(viewModel.loggedInUserEmail)")
         }
     }
 
@@ -83,8 +84,6 @@ struct LoginView: View {
     }
 }
 
-
-   #Preview {
-       LoginView().environmentObject(AppState())
-   }
-
+// #Preview {
+//     LoginView(appState: AppState()).environmentObject(AppState())
+// }

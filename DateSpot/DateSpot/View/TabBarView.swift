@@ -11,7 +11,6 @@ struct TabBarView: View {
     @EnvironmentObject var appState: AppState // 전역 상태 사용
     
     var body: some View {
-        if appState.isLoggedIn {
             NavigationStack{
                 TabView {
                     HomeContentView()
@@ -34,12 +33,8 @@ struct TabBarView: View {
                             Label("프로필", systemImage: "person.fill")
                         }
                 }
-            }
             .environmentObject(appState) // 전역 상태 전달
             .preferredColorScheme(appState.isDarkMode ? .dark : .light) // 전역 다크모드 사용
-        } else {
-            LoginView() // 로그인 화면
-                .environmentObject(appState) // 전역 상태 전달
         }
     }
 }

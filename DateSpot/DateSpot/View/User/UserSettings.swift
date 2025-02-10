@@ -20,6 +20,21 @@ struct UserSettings: View {
                 List(content: {
                     // 계정 관리 섹션
                     Section(header: Text("계정 관리"), content: {
+                        // 로그인 버튼
+                        if !appState.isLoggedIn {
+                            NavigationLink(destination: LoginView(appState: appState)
+                                .onDisappear {
+                                    // 로그인 성공 시 상태 업데이트
+                                    if appState.isLoggedIn {
+                                        print("로그인 성공: UserSettings로 복귀")
+                                    }
+                                }) {
+                                    Text("로그인")
+                                }
+                        }
+                
+                        
+                        // 로그아웃 버튼
                         Button("로그아웃") {
                             isLogoutAlertPresented = true
                         }
@@ -28,9 +43,8 @@ struct UserSettings: View {
                             Button("확인", role: .destructive) {
                                 // Logout logic
                                 Task {
-                                    // 비동기 호출로 로그아웃 로직 실행
                                     await viewModel.logoutUser(email: appState.userEmail ?? "")
-                                    LoginViewModel().deleteUser()
+                                    appState.deleteUser()
                                     appState.isLoggedIn = false // 로그인 상태를 false로 설정
                                     print("Logged out")
                                 }
@@ -38,14 +52,38 @@ struct UserSettings: View {
                         } message: {
                             Text("로그아웃 하시겠습니까?")
                         }
+                        .foregroundStyle(.red)
                         
-                        // 개인정보처리방침 버튼 추가
+                        // 개인정보처리방침 버튼
                         Button("개인정보처리방침") {
                             if let url = URL(string: "https://alabaster-chocolate-fe8.notion.site/17ab5e9490658007806eff51192312f7?pvs=73") {
                                 UIApplication.shared.open(url)
                             }
                         }
                         .foregroundColor(.blue) // 버튼 텍스트 색상
+                        
+                        // 계정 탈퇴 버튼
+                        Button("계정 탈퇴") {
+                            isDeleteAccountAlertPresented = true
+                        }
+                        .alert("계정 탈퇴", isPresented: $isDeleteAccountAlertPresented, actions: {
+                            Button("취소", role: .cancel) {}
+                            Button("확인", role: .destructive) {
+                                // 계정 탈퇴 로직
+                                Task {
+                                    await viewModel.deleteUser(email: appState.userEmail ?? "")
+                                    appState.deleteUser()
+                                    appState.isLoggedIn = false // 계정 탈퇴
+                                    print("계정 탈퇴 성공")
+                                }
+                            }
+                        }, message: {
+                            Text("""
+                            계정을 삭제하면 모든 데이터가 영구적으로 삭제되며 복구할 수 없습니다.
+                            진행하시겠습니까?
+                            """)
+                        })
+                        .foregroundStyle(.red)
                     })
                     
                     // Theme 설정 섹션
@@ -66,6 +104,6 @@ struct UserSettings: View {
     }
 }
 
-//#Preview {
-//    UserSettings()
-//}
+#Preview {
+    UserSettings()
+}

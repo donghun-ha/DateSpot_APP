@@ -43,16 +43,9 @@ struct DateSpotApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate // AppDelegate 연결
     
     var body: some Scene {
-        WindowGroup {
-            if appState.isLoggedIn {
-                TabBarView() // 로그인 후 홈 화면으로 이동
-                    .environmentObject(appState) // 앱 상태를 전달
-                    .environmentObject(restaurantViewModel) // environmentObject로 전달
-                    .environmentObject(placeViewModel)      // environmentObject로 전달
-            } else {
-                LoginView() // 로그인 화면
-                    .environmentObject(appState) // 앱 상태를 전달
-            }
+        WindowGroup{
+            TabBarView() // fix: 초기 로그인 화면을 개인정보권한 문제로 홈화면으로 변경
+                .environmentObject(appState)
         }
     }
 }
