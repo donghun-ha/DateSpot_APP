@@ -19,7 +19,7 @@ struct UserView: View {
     @EnvironmentObject var appState: AppState
     @StateObject private var viewModel = UserViewModel()
     @State private var showImagePicker = false
-    @State private var showLoginAlert = false
+    @State private var showLoginSheet = false
     @State private var selectedImage: UIImage?
     
     var body: some View {
@@ -70,16 +70,17 @@ struct UserView: View {
                         .foregroundColor(.gray)
                 }
                 .padding(.leading, 8)
-            
+                
                 
                 Spacer()
                 
                 // 설정 아이콘
-                NavigationLink(destination: UserSettings(), label: {
-                    Image(systemName: "gearshape")
-                        .font(.title2)
-                })
+                    NavigationLink(destination: UserSettings(), label: {
+                        Image(systemName: "gearshape")
+                            .font(.title2)
+                    })
             }
+            
             .padding()
     
             
@@ -123,7 +124,7 @@ struct UserView: View {
             ImagePicker(selectedImage: $selectedImage)
                 .onDisappear {
                     guard appState.userEmail != nil else {
-                        showLoginAlert = true
+                        showLoginSheet = true
                         return
                     }
                     
@@ -134,7 +135,7 @@ struct UserView: View {
                     }
                 }
         }
-        .alert("로그인이 필요합니다!", isPresented: $showLoginAlert) {
+        .alert("로그인이 필요합니다!", isPresented: $showLoginSheet) {
             Button("확인", role: .cancel) {}
         }
     }
@@ -146,7 +147,7 @@ struct UserView: View {
             showImagePicker = true
         } else {
             // 로그인이 안 된 상태 -> 경고(Alert) 표시
-            showLoginAlert = true
+            showLoginSheet = true
         }
     }
 }
