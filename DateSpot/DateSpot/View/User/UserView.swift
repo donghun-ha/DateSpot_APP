@@ -19,6 +19,7 @@ struct UserView: View {
     @EnvironmentObject var appState: AppState
     @StateObject private var viewModel = UserViewModel()
     @State private var showImagePicker = false
+    @State private var showLoginAlert = false
     @State private var selectedImage: UIImage?
     
     var body: some View {
@@ -37,7 +38,7 @@ struct UserView: View {
                                 .clipShape(Circle())
                                 .overlay(Circle().stroke(Color.gray, lineWidth: 2))
                                 .onTapGesture {
-                                    showImagePicker = true
+                                    handleProfileImageTap()
                                 }
                         case .failure:
                             Image(systemName: "person.circle.fill")
@@ -56,19 +57,20 @@ struct UserView: View {
                         .frame(width: 80, height: 80)
                         .foregroundColor(.gray)
                         .onTapGesture {
-                            showImagePicker = true
+                            handleProfileImageTap()
                         }
                 }
                 
                 // 유저 정보
                 VStack(alignment: .leading) {
-                    Text(appState.userName)
+                    Text(appState.userName ?? "로그인이 필요합니다!")
                         .font(.headline)
-                    Text(appState.userEmail ?? "")
+                    Text(appState.userEmail ?? "이메일 정보 없음")
                         .font(.subheadline)
                         .foregroundColor(.gray)
                 }
                 .padding(.leading, 8)
+            
                 
                 Spacer()
                 
@@ -112,18 +114,39 @@ struct UserView: View {
         }
         .onAppear {
             Task {
-                await viewModel.fetchUserImage(email: appState.userEmail!)
+                if appState.userEmail != nil {
+                    await viewModel.fetchUserImage(email: appState.userEmail!)
+                }
             }
         }
         .sheet(isPresented: $showImagePicker) {
             ImagePicker(selectedImage: $selectedImage)
                 .onDisappear {
+                    guard appState.userEmail != nil else {
+                        showLoginAlert = true
+                        return
+                    }
+                    
                     if let selectedImage = selectedImage {
                         Task {
                             await viewModel.uploadImage(email: appState.userEmail!, image: selectedImage)
                         }
                     }
                 }
+        }
+        .alert("로그인이 필요합니다!", isPresented: $showLoginAlert) {
+            Button("확인", role: .cancel) {}
+        }
+    }
+    
+    // 로그인이 Alert 표시 함수
+    private func handleProfileImageTap() {
+        if let _ = appState.userEmail {
+            // 로그인 상태 -> 이미지 선택 화면 표시
+            showImagePicker = true
+        } else {
+            // 로그인이 안 된 상태 -> 경고(Alert) 표시
+            showLoginAlert = true
         }
     }
 }

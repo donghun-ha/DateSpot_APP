@@ -21,71 +21,77 @@ class LoginViewModel: NSObject, ObservableObject {
     
     // Login AppState
     @Published var isLoginSuccessful: Bool = false // 로그인 상태
-    @Published var loggedInUserEmail: String = ""    // 로그인한 사용자 이메일
-    @Published var loggedInUserName : String = ""    // 로그인한 사용자 이름
-    @Published var loggedInUserImage: String = "" // 로그인한 사용자 프로필 이미지
+    @Published var loggedInUserEmail: String? = nil    // 로그인한 사용자 이메일
+    @Published var loggedInUserName : String? = nil    // 로그인한 사용자 이름
+    @Published var loggedInUserImage: String? = nil // 로그인한 사용자 프로필 이미지
     
-    // MARK: -Realm
-    private let realm: Realm
-    
-    override init() {
-        do {
-            self.realm = try Realm()
-            print("Realm 초기화 성공")
-        } catch {
-            fatalError("Realm 초기화 실패: \(error.localizedDescription)")
-        }
-    }
-    
-    // Realm에서 사용자 데이터 로드
-    func loadUserDataIfAvailable() {
-        // ----------- Realm 데이터 로드 시 로그 추가 -----------
-        print("🔍 Realm 데이터 로드 시작")
-        let users = realm.objects(UserData.self)
-        guard let user = users.first else {
-            print("❌ 저장된 사용자 데이터 없음") // 데이터 없음 로그
-            return
-        }
-
-        DispatchQueue.main.async {
-            self.loggedInUserEmail = user.userEmail
-            self.loggedInUserName = user.userName
-            self.loggedInUserImage = user.userImage
-            self.isLoginSuccessful = true
-            print("✅ Realm 데이터 로드 성공: \(user)")
-        }
-    }
-
-    // Realm에 사용자 데이터 저장
-    func saveUserData(email: String, name: String, image: String) {
-        // ----------- saveUserData 호출 여부 로그 추가 -----------
-        print("🔍 saveUserData 호출됨: email=\(email), name=\(name), image=\(image)") // 호출 여부 확인
-        let data = UserData(userEmail: email, userName: name, userImage: image)
-        do {
-            try realm.write {
-                realm.add(data, update: .modified) // 중복 데이터 업데이트
-            }
-            print("✅ UserData 저장 성공: \(data)")
-        } catch {
-            print("❌ UserData 저장 실패: \(error.localizedDescription)")
-        }
-    }
-    
-    // Realm에서 사용자 로그아웃 및 탈퇴 (데이터 삭제)
-    func deleteUser() {
-        do {
-            try realm.write {
-                realm.deleteAll()
-            }
-            print("로그아웃 : 로컬 데이터 삭제 완료")
-            self.isLoginSuccessful = false
-        } catch {
-            print("Realm 로그아웃 실패: \(error.localizedDescription)")
-        }
-    }
-    
+//    // MARK: -Realm
+//    private let realm: Realm
+//    
+//    override init() {
+//        do {
+//            self.realm = try Realm()
+//            print("Realm 초기화 성공")
+//        } catch {
+//            fatalError("Realm 초기화 실패: \(error.localizedDescription)")
+//        }
+//    }
+//    
+//    // Realm에서 사용자 데이터 로드
+//    func loadUserDataIfAvailable() {
+//        // ----------- Realm 데이터 로드 시 로그 추가 -----------
+//        print("🔍 Realm 데이터 로드 시작")
+//        let users = realm.objects(UserData.self)
+//        guard let user = users.first else {
+//            print("❌ 저장된 사용자 데이터 없음") // 데이터 없음 로그
+//            return
+//        }
+//
+//        DispatchQueue.main.async {
+//            self.loggedInUserEmail = user.userEmail
+//            self.loggedInUserName = user.userName
+//            self.loggedInUserImage = user.userImage
+//            self.isLoginSuccessful = true
+//            print("✅ Realm 데이터 로드 성공: \(user)")
+//        }
+//    }
+//
+//    // Realm에 사용자 데이터 저장
+//    func saveUserData(email: String, name: String, image: String) {
+//        // ----------- saveUserData 호출 여부 로그 추가 -----------
+//        print("🔍 saveUserData 호출됨: email=\(email), name=\(name), image=\(image)") // 호출 여부 확인
+//        let data = UserData(userEmail: email, userName: name, userImage: image)
+//        do {
+//            try realm.write {
+//                realm.add(data, update: .modified) // 중복 데이터 업데이트
+//            }
+//            print("✅ UserData 저장 성공: \(data)")
+//        } catch {
+//            print("❌ UserData 저장 실패: \(error.localizedDescription)")
+//        }
+//    }
+//    
+//    // Realm에서 사용자 로그아웃 및 탈퇴 (데이터 삭제)
+//    func deleteUser() {
+//        do {
+//            try realm.write {
+//                realm.deleteAll()
+//            }
+//            print("로그아웃 : 로컬 데이터 삭제 완료")
+//            self.isLoginSuccessful = false
+//        } catch {
+//            print("Realm 로그아웃 실패: \(error.localizedDescription)")
+//        }
+//    }
+//    
     // MARK: - Service
     private let loginService = LoginService()
+    private let appState: AppState // AppState주입
+    
+    // 초기화 시 AppState를 주입
+    init(appState: AppState) {
+        self.appState = appState
+    }
     
     // MARK: - Google Login
     
@@ -116,12 +122,20 @@ class LoginViewModel: NSObject, ObservableObject {
             }
             
             // 사용자 정보 저장
-            self.loggedInUserEmail = email
-            self.loggedInUserName = name
-            self.loggedInUserImage = imageURL
+            self.appState.saveUserData(
+                email: email,
+                name: name,
+                image: imageURL
+            )
             
             // ----------- saveUserData 호출 추가 및 로그 -----------
-            self.saveUserData(email: email, name: name, image: imageURL)
+            self.appState.saveUserData(
+                email: email,
+                name: name,
+                image: imageURL
+            )
+            self.appState.isLoggedIn = true
+            
             print("✅ Google 로그인 데이터 저장 완료: \(email), \(name), \(imageURL)")
             
             // 서버로 전송
@@ -185,7 +199,13 @@ extension LoginViewModel: ASAuthorizationControllerDelegate {
             self.loggedInUserImage = "" // Apple 로그인에서는 이미지 제공하지 않음.
             
             // ----------- saveUserData 호출 추가 및 로그 -----------
-            self.saveUserData(email: email, name: fullName, image: "")
+            self.appState.saveUserData(
+                email: email,
+                name: fullName,
+                image: ""
+            )
+            self.appState.isLoggedIn = true
+            
             print("✅ Apple 로그인 데이터 저장 완료: \(email), \(fullName)")
             
             // 디버깅 정보 출력

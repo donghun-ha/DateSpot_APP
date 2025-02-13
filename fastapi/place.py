@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from urllib.parse import unquote
-import hosts
+import hosts, json
 from geopy.distance import geodesic
 import unicodedata
 from pydantic import BaseModel
@@ -52,6 +52,59 @@ async def select():
             }
         )
     return dict_list
+
+
+@router.get("/select_redis")
+async def select():
+
+    # Redis 키 설정 (이메일 기반)
+    redis_key = "place:all"
+    
+    # Redis 연결
+    redis = await hosts.get_redis_connection()
+
+   # Redis에서 데이터 검색
+    cached_data = await redis.get(redis_key)
+    if cached_data:
+        # Redis 캐시에 데이터가 존재하면 반환
+        data = json.loads(cached_data)
+        print("Redis에서 데이터 반환")
+        return {"source": "redis", "data": data}
+
+    # Redis 캐시에 데이터가 없는 경우 DB 조회
+    conn = hosts.connect()
+    curs = conn.cursor()
+
+    # SQL 문장
+    sql = "SELECT * FROM place"
+    curs.execute(sql)
+    rows = curs.fetchall()
+    conn.close()
+
+    # 결과를 딕셔너리로 변환
+    dict_list = []
+    for row in rows:
+        dict_list.append(
+            {
+                'name': row[0],
+                'address': row[1],
+                'lat': row[2],
+                'lng': row[3],
+                'description': row[4],
+                'contact_info': row[5],
+                'operating_hour': row[6],
+                'parking': row[7],
+                'closing_time': row[8]
+            }
+        )
+
+    # Redis에 캐싱 (유효 기간: 300초)
+    await redis.set(redis_key, json.dumps(dict_list), ex=300)
+    print("Redis에 데이터 캐싱 완료")
+
+    # DB 데이터를 반환
+    return {"source": "database", "data": dict_list}
+
 
 
 def remove_invisible_characters(input_str: str) -> str:

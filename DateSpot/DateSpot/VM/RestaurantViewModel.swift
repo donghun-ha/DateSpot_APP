@@ -21,7 +21,7 @@ class RestaurantViewModel: ObservableObject {
     @Published var isBookmarked: Bool = false
     
     private var cancellables = Set<AnyCancellable>()
-    private let baseURL = "https://fastapi.fre.today/restaurant/" // 기본 API URL
+    private let baseURL = "https://port-0-datespot-m6k2ohs83ef13aeb.sel4.cloudtype.app/restaurant/" // 기본 API URL
     
     
     func fetchRestaurants() async {
@@ -369,7 +369,7 @@ extension RestaurantViewModel {
     
     func fetchBookmarkedRestaurants(userEmail: String) {
         // URL 구성 및 쿼리 파라미터 추가
-        guard var urlComponents = URLComponents(string: "https://fastapi.fre.today/restaurant/get_user_bookmarks/") else {
+        guard var urlComponents = URLComponents(string: "https://port-0-datespot-m6k2ohs83ef13aeb.sel4.cloudtype.app/get_user_bookmarks/") else {
             print("Invalid URL for fetching user bookmarks")
             return
         }

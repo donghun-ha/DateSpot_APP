@@ -23,7 +23,7 @@ class PlaceViewModel: ObservableObject {
     @Published var isBookmarked: Bool = false
 
     private var cancellables = Set<AnyCancellable>()
-    private let baseURL = "https://fastapi.fre.today/place/" // 기본 API URL
+    private let baseURL = "https://port-0-datespot-m6k2ohs83ef13aeb.sel4.cloudtype.app/place/" // 기본 API URL
 
     // 전체 데이터를 다운로드하고 가까운 5개의 명소를 필터링
     func fetchPlaces(currentLat: Double, currentLng: Double) async {
