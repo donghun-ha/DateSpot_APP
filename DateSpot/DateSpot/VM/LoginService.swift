@@ -23,7 +23,7 @@ class LoginService {
     // 서버에 이메일, 이름 전송 후 JSON 응답
     func sendUserData(email: String, name: String, userIdentifier: String, loginType: String) async throws -> [String: Any]{
         // FastApi 주소 설정
-        guard let url = URL(string: "https://port-0-datespot-m6k2ohs83ef13aeb.sel4.cloudtype.app/login") else {
+        guard let url = URL(string: "https://port-0-datespot-m6ylmd1n1f3e8419.sel4.cloudtype.app/login") else {
             throw URLError(.badURL)
         }
         

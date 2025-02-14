@@ -46,6 +46,8 @@ struct DateSpotApp: App {
         WindowGroup{
             TabBarView() // fix: 초기 로그인 화면을 개인정보권한 문제로 홈화면으로 변경
                 .environmentObject(appState)
+                .environmentObject(restaurantViewModel)
+                .environmentObject(placeViewModel)
         }
     }
 }

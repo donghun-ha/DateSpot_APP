@@ -13,11 +13,11 @@ import RealmSwift
 // Login 화면
 struct LoginView: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.dismiss) var dismiss
     @StateObject private var viewModel: LoginViewModel
     // 이미지 배열
     let images = ["tripImage1", "tripImage2", "tripImage3", "tripImage4"]
     @State private var currentImageIndex = 0
-    @State private var navigateToTabBar = false // TabBarView로 이동 여부
 
     // 초기화 메서드 추가
     init(appState: AppState) {
@@ -26,10 +26,6 @@ struct LoginView: View {
 
     var body: some View {
         ZStack {
-            if navigateToTabBar {
-                // TabBarView로 이동
-                TabBarView()
-            } else {
                 // 로그인 화면
                 Image(images[currentImageIndex])
                     .resizable()
@@ -63,11 +59,10 @@ struct LoginView: View {
                         appState.userEmail = viewModel.loggedInUserEmail
                         appState.userName = viewModel.loggedInUserName ?? ""
                         appState.userImage = viewModel.loggedInUserImage ?? ""
-                        navigateToTabBar = true // TabBarView로 이동
-                        print("navigateToTabBar: \(navigateToTabBar)")
+                        dismiss()
                     }
                 }
-            }
+            
         }
         .onAppear {
             startImageRotation()
