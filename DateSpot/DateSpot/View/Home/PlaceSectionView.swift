@@ -99,7 +99,7 @@ struct PlaceCardView: View {
             destination: PlaceDetailView(placeName: place.name)
         ) {
             ZStack {
-                if let image = viewModel.homeimage[place.name] {
+                if let image = viewModel.homeimage[place.name.lowercased()] {
                     CardView(
                         image: image,
                         category: place.parking,
