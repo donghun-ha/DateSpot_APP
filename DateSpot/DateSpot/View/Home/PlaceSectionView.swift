@@ -31,30 +31,30 @@ struct PlaceSectionView: View {
             }
         
         .onAppear {
-            if mapViewModel.authorization{
-                Task {
-                    isloading = false
-                    
-                    await viewModel.fetchNearbyPlaces(
-                        lat: (mapViewModel.userLocation?.coordinate.latitude)!,
-                        lng: (mapViewModel.userLocation?.coordinate.longitude)!,
-                        radius: 1000
-                    )
-                    isloading = true
-                }
-            }
-//            else{
+//            if mapViewModel.authorization{
 //                Task {
 //                    isloading = false
 //                    
 //                    await viewModel.fetchNearbyPlaces(
-//                        lat: (userLocation.lat),
-//                        lng: (userLocation.lng),
+//                        lat: (mapViewModel.userLocation?.coordinate.latitude)!,
+//                        lng: (mapViewModel.userLocation?.coordinate.longitude)!,
 //                        radius: 1000
 //                    )
 //                    isloading = true
 //                }
-//                
+//            }
+//            else{
+                Task {
+                    isloading = false
+                    
+                    await viewModel.fetchNearbyPlaces(
+                        lat: (userLocation.lat),
+                        lng: (userLocation.lng),
+                        radius: 1000
+                    )
+                    isloading = true
+                }
+                
 //            }
         }
     }

@@ -16,24 +16,24 @@ struct RestaurantSectionView: View {
             }
         }
         .onAppear {
-            if mapViewModel.authorization{
+//            if mapViewModel.authorization{
+//                Task {
+//                    await viewModel.fetchNearbyRestaurants(
+//                        lat: (mapViewModel.userLocation?.coordinate.latitude)!,
+//                        lng: (mapViewModel.userLocation?.coordinate.longitude)!,
+//                        radius: 1000
+//                    )
+//                    
+//                }
+//            }
+//            else{
                 Task {
-                    await viewModel.fetchNearbyPlaces(
-                        lat: (mapViewModel.userLocation?.coordinate.latitude)!,
-                        lng: (mapViewModel.userLocation?.coordinate.longitude)!,
+                    await viewModel.fetchNearbyRestaurants(
+                        lat: (userLocation.lat),
+                        lng: (userLocation.lng),
                         radius: 1000
                     )
                 }
-            }
-//            else{
-//                Task {
-//                    await viewModel.fetchNearbyPlaces(
-//                        lat: (userLocation.lat),
-//                        lng: (userLocation.lng),
-//                        radius: 1000
-//                    )
-//                }
-//                
 //            }
         }
     }
