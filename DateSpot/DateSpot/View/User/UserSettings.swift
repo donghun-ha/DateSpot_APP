@@ -12,6 +12,8 @@ struct UserSettings: View {
     @EnvironmentObject var appState: AppState // 앱 상태 관리
     @State private var isLogoutAlertPresented: Bool = false
     @State private var isDeleteAccountAlertPresented: Bool = false
+    @State private var showLoginView = false // 로그인 화면 시트
+    @State private var showLoginSuccessAlert = false // 로그인 성공 여부
     @State private var viewModel = UserViewModel()
     
     var body: some View {
@@ -22,15 +24,9 @@ struct UserSettings: View {
                     Section(header: Text("계정 관리"), content: {
                         // 로그인 버튼
                         if !appState.isLoggedIn {
-                            NavigationLink(destination: LoginView(appState: appState)
-                                .onDisappear {
-                                    // 로그인 성공 시 상태 업데이트
-                                    if appState.isLoggedIn {
-                                        print("로그인 성공: UserSettings로 복귀")
-                                    }
-                                }) {
-                                    Text("로그인")
-                                }
+                            Button("로그인") {
+                                showLoginView = true
+                            }
                         }
                 
                         
@@ -38,6 +34,8 @@ struct UserSettings: View {
                         Button("로그아웃") {
                             isLogoutAlertPresented = true
                         }
+                        .disabled(!appState.isLoggedIn) // 로그인 상태가 아니라면 비활성화
+                        .foregroundStyle(appState.isLoggedIn ? .red : .gray)
                         .alert("로그아웃", isPresented: $isLogoutAlertPresented) {
                             Button("취소", role: .cancel) {}
                             Button("확인", role: .destructive) {
@@ -66,6 +64,8 @@ struct UserSettings: View {
                         Button("계정 탈퇴") {
                             isDeleteAccountAlertPresented = true
                         }
+                        .disabled(!appState.isLoggedIn)
+                        .foregroundStyle(appState.isLoggedIn ? .red : .gray)
                         .alert("계정 탈퇴", isPresented: $isDeleteAccountAlertPresented, actions: {
                             Button("취소", role: .cancel) {}
                             Button("확인", role: .destructive) {
@@ -92,6 +92,22 @@ struct UserSettings: View {
                     })
                 })
                 .listStyle(InsetGroupedListStyle()) // 깔끔한 iOS 스타일의 리스트 적용
+                .onAppear {
+                    print("UserSettings : isLoggedIn = \(appState.isLoggedIn), email = \(appState.userEmail ?? "nil")")
+                          }
+                .onChange(of: appState.isLoggedIn) { _, newValue in
+                    if newValue {
+                        print("로그인 상태 변경됨: \(newValue)")
+                        showLoginSuccessAlert = true
+                        showLoginView = false
+                    }
+                }
+                .sheet(isPresented: $showLoginView) {
+                    LoginView(appState: appState)
+                }
+                .alert("로그인 성공", isPresented: $showLoginSuccessAlert) {
+                    Button("확인", role: .cancel) {}
+                }
                 
                 // 앱 버전 표시
                 Text("Version 1.0.0")

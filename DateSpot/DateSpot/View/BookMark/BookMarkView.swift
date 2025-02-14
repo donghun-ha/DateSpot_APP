@@ -12,6 +12,8 @@ struct BookMarkView: View {
     @EnvironmentObject var restaurantViewModel: RestaurantViewModel // 맛집 뷰모델 참조
     @EnvironmentObject var placeViewModel: PlaceViewModel // 명소 뷰모델 참조
     @State private var isLoading = true
+    @State private var showAlert = false
+    @State private var navigateToMyPage = false // 마이페이지 이동 여부
     
     var body: some View {
         NavigationView {
@@ -74,6 +76,19 @@ struct BookMarkView: View {
             .onAppear {
                 loadBookmarks()
             }
+            .alert(isPresented: $showAlert) {
+                Alert(
+                    title: Text("로그인 필요"),
+                    message: Text("북마크를 보려면 로그인이 필요합니다."),
+                    dismissButton: .default(Text("확인")) {
+                        navigateToMyPage = true // 활성화
+                    }
+                )
+            }
+            .navigationDestination(
+                isPresented: $navigateToMyPage){
+                    UserView()
+                }
         }
     }
     

@@ -21,7 +21,7 @@ class RestaurantViewModel: ObservableObject {
     @Published var isBookmarked: Bool = false
     
     private var cancellables = Set<AnyCancellable>()
-    private let baseURL = "https://port-0-datespot-m6k2ohs83ef13aeb.sel4.cloudtype.app/restaurant/" // 기본 API URL
+    private let baseURL = "https://port-0-datespot-m6ylmd1n1f3e8419.sel4.cloudtype.app/restaurant/" // 기본 API URL
     
     
     func fetchRestaurants() async {

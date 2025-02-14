@@ -9,6 +9,8 @@ import SwiftUI
 
 struct TabBarView: View {
     @EnvironmentObject var appState: AppState // 전역 상태 사용
+    @EnvironmentObject var restaurantViewModel: RestaurantViewModel
+    @EnvironmentObject var placeViewModel: PlaceViewModel
     
     var body: some View {
             NavigationStack{
@@ -27,6 +29,8 @@ struct TabBarView: View {
                         .tabItem {
                             Label("북마크", systemImage: "bookmark.fill")
                         }
+                        .environmentObject(restaurantViewModel)
+                        .environmentObject(placeViewModel)
                     
                     UserView()
                         .tabItem {

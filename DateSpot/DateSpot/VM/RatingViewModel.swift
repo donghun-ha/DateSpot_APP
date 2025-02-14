@@ -24,7 +24,7 @@ protocol RatingViewModelProtocol {
 class RatingViewModel: ObservableObject {
     @Published var ratings: [Rating] = [] // 서버에서 가져온 별점 리스트
     @Published var userRating: Int? // 현재 사용자의 별점
-    private let baseURL = "https://port-0-datespot-m6k2ohs83ef13aeb.sel4.cloudtype.app/rating" // API URL
+    private let baseURL = "https://port-0-datespot-m6ylmd1n1f3e8419.sel4.cloudtype.app/rating" // API URL
 
     // 특정 레스토랑의 별점 가져오기
     func restaurantfetchUserRating(for email: String, restaurantName: String) async {
