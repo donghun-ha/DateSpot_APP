@@ -43,19 +43,19 @@ struct PlaceSectionView: View {
                     isloading = true
                 }
             }
-            else{
-                Task {
-                    isloading = false
-                    
-                    await viewModel.fetchNearbyPlaces(
-                        lat: (userLocation.lat),
-                        lng: (userLocation.lng),
-                        radius: 1000
-                    )
-                    isloading = true
-                }
-                
-            }
+//            else{
+//                Task {
+//                    isloading = false
+//                    
+//                    await viewModel.fetchNearbyPlaces(
+//                        lat: (userLocation.lat),
+//                        lng: (userLocation.lng),
+//                        radius: 1000
+//                    )
+//                    isloading = true
+//                }
+//                
+//            }
         }
     }
     

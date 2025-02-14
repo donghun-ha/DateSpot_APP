@@ -16,15 +16,24 @@ struct RestaurantSectionView: View {
             }
         }
         .onAppear {
-//            if mapViewModel.authorization {
+            if mapViewModel.authorization{
+                Task {
+                    await viewModel.fetchNearbyPlaces(
+                        lat: (mapViewModel.userLocation?.coordinate.latitude)!,
+                        lng: (mapViewModel.userLocation?.coordinate.longitude)!,
+                        radius: 1000
+                    )
+                }
+            }
+//            else{
 //                Task {
-//                    // FastAPI에서 근처 레스토랑 데이터를 가져오기
-//                    await viewModel.fetchNearbyRestaurants(
-//                        lat: (mapViewModel.userLocation?.coordinate.latitude)!,
-//                        lng: (mapViewModel.userLocation?.coordinate.longitude)!,
+//                    await viewModel.fetchNearbyPlaces(
+//                        lat: (userLocation.lat),
+//                        lng: (userLocation.lng),
 //                        radius: 1000
 //                    )
 //                }
+//                
 //            }
         }
     }
