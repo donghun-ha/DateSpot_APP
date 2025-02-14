@@ -38,7 +38,9 @@ class RestaurantViewModel: ObservableObject {
     //        }
     
     func fetchFirstImage(for name: String) async {
-        guard homeimage[name] == nil else { return } // 이미 로드된 경우 스킵
+        let lowercasedName = name.lowercased() // ✅ 명소 이름을 소문자로 변환x`
+        guard self.homeimage[lowercasedName] == nil else { return } // ✅ 대소문자 통일
+
         
         let imageKeys = await fetchImageKeys(for: name)
         guard let firstKey = imageKeys.first else {
@@ -55,7 +57,7 @@ class RestaurantViewModel: ObservableObject {
     
     /// 이미지 키 가져오기
     func fetchImageKeys(for name: String) async -> [String] {
-        let encodedName = name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? name
+        let encodedName = name.lowercased().addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? name
         print("eoncodedName : \(encodedName)")
         guard let url = URL(string: "\(baseURL)images?name=\(encodedName)") else {
             print("Invalid URL for fetchImageKeys")
