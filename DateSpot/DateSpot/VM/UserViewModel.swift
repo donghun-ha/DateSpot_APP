@@ -11,7 +11,7 @@ class UserViewModel: ObservableObject {
     @Published var userImage: String = "" // 사용자 이미지 URL
     @Published var isUploading: Bool = false // 업로드 상태 플래그
     
-    private let backendBaseURL = "https://fastapi.fre.today"
+    private let backendBaseURL = "https://port-0-datespot-m6k2ohs83ef13aeb.sel4.cloudtype.app"
     
     // 사용자 이미지 가져오기
     func fetchUserImage(email: String) async {
