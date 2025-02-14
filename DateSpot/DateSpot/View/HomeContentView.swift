@@ -9,10 +9,7 @@ struct HomeContentView: View {
 
     var body: some View {
         NavigationView {
-            if !mapViewModel.authorization {
-                Text("mapviewmodel.authorization = false")
-            }
-                else if isLoading {
+            if isLoading {
                     ProgressView("Loading...")
                         .font(.headline) 
                 }
@@ -35,7 +32,6 @@ struct HomeContentView: View {
                 }
             }
         .onAppear {
-            if mapViewModel.authorization {
                 Task {
                 isLoading = true
                 // 사용자 위치 기반 데이터 필터링
@@ -44,8 +40,7 @@ struct HomeContentView: View {
                     places: placeViewModel.places
                 )
                 isLoading = false
-            }
-        }
+                    }
             }
         }
     

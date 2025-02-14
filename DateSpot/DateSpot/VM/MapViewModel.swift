@@ -48,10 +48,11 @@ class TabMapViewModel: NSObject, CLLocationManagerDelegate, ObservableObject {
     
     // 2km이내 식당, 맛집
     func filterData(restaurants: [Restaurant], places: [PlaceData], radius: Double = 2000) {
-            guard let userLocation = userLocation else {
-                print("사용자 위치를 확인할 수 없습니다.")
-                return
-            }
+//            guard let userLocation = userLocation else {
+//                print("사용자 위치를 확인할 수 없습니다.")
+//                return
+//            }
+        var userLocation = userLocation ?? CLLocation(latitude: 37.5665, longitude: 126.9780)
             
             // 2km 반경 레스토랑 필터링
             self.filteredRestaurants = restaurants.filter { restaurant in

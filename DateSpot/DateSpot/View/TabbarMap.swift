@@ -47,9 +47,10 @@ struct TabbarMapView: View {
                     }
                 }
             }
-            .onAppear {
-                Task {
-                    if mapViewModel.authorization {
+            .onReceive(mapViewModel.$authorization.combineLatest(mapViewModel.$userLocation)) { (authorization, userLocation) in
+                if authorization {
+                    Task {
+                        loadingStatus = false
                         await restaurantVM.fetchRestaurants()
                         await placeVM.fetchPlaces(currentLat: (mapViewModel.userLocation?.coordinate.latitude)!, currentLng: (mapViewModel.userLocation?.coordinate.longitude)!)
                         await mapViewModel.filterNearALL(currentLocation: mapViewModel.userLocation!, placeData: placeVM.places, restaurantData: restaurantVM.restaurants)
@@ -62,12 +63,6 @@ struct TabbarMapView: View {
                 placement: .navigationBarDrawer(displayMode: .always),
                 prompt: "장소 검색"
             )
-//            .onChange(of: mapViewModel) { _,_ in
-//                if mapViewModel.searchText.isEmpty {
-//                    mapViewModel.searchResults = []
-//                    showSearchSheet = false
-//                }
-//            }
             .onSubmit(of: .search) {
                 if mapViewModel.searchText.isEmpty {
                     mapViewModel.searchResults = []

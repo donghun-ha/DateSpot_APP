@@ -4,20 +4,22 @@ struct RestaurantSectionView: View {
     @StateObject var viewModel = RestaurantViewModel() // ViewModel 초기화
     @State private var userLocation: (lat: Double, lng: Double) = (37.5255100592, 127.0367640978) // 기본 위치 (서울)
     @StateObject var mapViewModel = TabMapViewModel()
+    @State var isloading = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            if !mapViewModel.authorization {
-                Text("위치 제공 동의가 필요합니다.")
+             if isloading == false {
+                ProgressView("Loading...")
             }
             else{
                 sectionHeader
                 restaurantScrollView
             }
         }
-        .onAppear {
+//        .onAppear() {
 //            if mapViewModel.authorization{
 //                Task {
+//                    try? await Task.sleep(nanoseconds: 1_000_000_000) // 1초 대기
 //                    await viewModel.fetchNearbyRestaurants(
 //                        lat: (mapViewModel.userLocation?.coordinate.latitude)!,
 //                        lng: (mapViewModel.userLocation?.coordinate.longitude)!,
@@ -27,15 +29,40 @@ struct RestaurantSectionView: View {
 //                }
 //            }
 //            else{
+//                Task {
+//                    await viewModel.fetchNearbyRestaurants(
+//                        lat: (userLocation.lat),
+//                        lng: (userLocation.lng),
+//                        radius: 1000
+//                    )
+//                }
+//            }
+//        }
+        .onReceive(mapViewModel.$authorization.combineLatest(mapViewModel.$userLocation)) { (authorization, userLocation) in
+            if authorization {
                 Task {
+                    isloading = false
+                    try? await Task.sleep(nanoseconds: 500_000_000) //gps 데이터 받는 동안 1초 대기
+                        await viewModel.fetchNearbyRestaurants(
+                            lat: (mapViewModel.userLocation?.coordinate.latitude)!,
+                            lng: (mapViewModel.userLocation?.coordinate.longitude)!,
+                            radius: 1000
+                        )
+                    isloading = true
+                }
+            } else {
+                Task {
+                    isloading = false
                     await viewModel.fetchNearbyRestaurants(
-                        lat: (userLocation.lat),
-                        lng: (userLocation.lng),
+                        lat: 37.5255100592,
+                        lng: 127.0367640978,
                         radius: 1000
                     )
+                    isloading = true
                 }
-//            }
+            }
         }
+
     }
 
     private var sectionHeader: some View {
@@ -62,13 +89,25 @@ struct RestaurantSectionView: View {
         }
         .buttonStyle(PlainButtonStyle())
         .onAppear {
-            Task {
+            if mapViewModel.authorization {
+                Task {
                 // 스크롤될 때마다 동적으로 데이터 로드
                 await viewModel.fetchNearbyRestaurants(
                     lat: (mapViewModel.userLocation?.coordinate.latitude)!,
                     lng: (mapViewModel.userLocation?.coordinate.longitude)!,
                     radius: 1000
                 )
+            }
+        }
+            else {
+                Task {
+                // 스크롤될 때마다 동적으로 데이터 로드
+                await viewModel.fetchNearbyRestaurants(
+                    lat: userLocation.lat,
+                    lng: userLocation.lng,
+                    radius: 1000
+                )
+            }
             }
         }
     }
