@@ -12,10 +12,10 @@ struct HomeContentView: View {
             if !mapViewModel.authorization {
                 Text("mapviewmodel.authorization = false")
             }
-//                else if isLoading {
-//                    ProgressView("Loading...")
-//                        .font(.headline) 
-//                }
+                else if isLoading {
+                    ProgressView("Loading...")
+                        .font(.headline) 
+                }
             else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 20) {
@@ -35,17 +35,17 @@ struct HomeContentView: View {
                 }
             }
         .onAppear {
-//            if mapViewModel.authorization {
-//                Task {
-//                isLoading = true
-//                // 사용자 위치 기반 데이터 필터링
-//                mapViewModel.filterData(
-//                    restaurants: restaurantViewModel.restaurants,
-//                    places: placeViewModel.places
-//                )
-//                isLoading = false
-//            }
-//        }
+            if mapViewModel.authorization {
+                Task {
+                isLoading = true
+                // 사용자 위치 기반 데이터 필터링
+                mapViewModel.filterData(
+                    restaurants: restaurantViewModel.restaurants,
+                    places: placeViewModel.places
+                )
+                isLoading = false
+            }
+        }
             }
         }
     
