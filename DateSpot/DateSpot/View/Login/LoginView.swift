@@ -57,8 +57,8 @@ struct LoginView: View {
                     if isSuccess {
                         appState.isLoggedIn = true
                         appState.userEmail = viewModel.loggedInUserEmail
-                        appState.userName = viewModel.loggedInUserName ?? ""
-                        appState.userImage = viewModel.loggedInUserImage ?? ""
+                        appState.userName = viewModel.loggedInUserName
+                        appState.userImage = viewModel.loggedInUserImage
                         dismiss()
                     }
                 }

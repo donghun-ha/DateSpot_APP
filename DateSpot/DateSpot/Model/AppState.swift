@@ -38,10 +38,7 @@ class AppState: ObservableObject {
         }
 
         DispatchQueue.main.async {
-            self.userEmail = user.userEmail
-            self.userName = user.userName
-            self.userImage = user.userImage
-            self.isLoggedIn = true
+            self.updateUserData(email: user.userEmail, name: user.userName, image: user.userImage)
             print("✅ Realm 데이터 로드 성공: \(user)")
         }
     }
@@ -55,10 +52,24 @@ class AppState: ObservableObject {
                 realm.add(data, update: .modified) // 중복 데이터 업데이트
             }
             print("✅ AppState UserData 저장 성공")
+            
+            // UI 업데이트
+            DispatchQueue.main.async {
+                self.updateUserData(email: email, name: name, image: image)
+            }
         } catch {
             print("❌ AppState UserData 저장 실패: \(error.localizedDescription)")
         }
     }
+    
+    // ✅ UI 상태 업데이트 함수
+       private func updateUserData(email: String, name: String, image: String) {
+           self.isLoggedIn = true
+           self.userEmail = email
+           self.userName = name
+           self.userImage = image
+           self.objectWillChange.send()
+       }
     
     // Realm에서 사용자 로그아웃 및 탈퇴 (데이터 삭제)
     func deleteUser() {

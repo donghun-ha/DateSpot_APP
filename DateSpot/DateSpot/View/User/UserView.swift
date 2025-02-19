@@ -25,7 +25,7 @@ struct UserView: View {
     var body: some View {
         VStack {
             // 상단 프로필 섹션
-            HStack {
+            HStack {    
                 // 프로필 이미지
                 if let imageURL = URL(string: viewModel.userImage), !viewModel.userImage.isEmpty {
                     AsyncImage(url: imageURL) { phase in
@@ -152,6 +152,6 @@ struct UserView: View {
     }
 }
 
-#Preview {
-    UserView()
-}
+//#Preview {
+//    UserView()
+//}

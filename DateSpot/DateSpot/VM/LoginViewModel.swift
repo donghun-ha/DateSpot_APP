@@ -127,14 +127,10 @@ class LoginViewModel: NSObject, ObservableObject {
                 name: name,
                 image: imageURL
             )
-            
-            // ----------- saveUserData 호출 추가 및 로그 -----------
-            self.appState.saveUserData(
-                email: email,
-                name: name,
-                image: imageURL
-            )
-            self.appState.isLoggedIn = true
+            DispatchQueue.main.async {
+                self.isLoginSuccessful = true
+                self.objectWillChange.send()
+            }
             
             print("✅ Google 로그인 데이터 저장 완료: \(email), \(name), \(imageURL)")
             
