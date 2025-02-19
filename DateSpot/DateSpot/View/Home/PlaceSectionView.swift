@@ -87,7 +87,7 @@ struct PlaceSectionView: View {
             if let image = viewModel.homeimage[place.name] {
                 CardView(
                     image: image,
-                    category: place.parking,
+//                    category: place.parking,
                     heading: place.name,
                     author: place.address
                 )
@@ -95,7 +95,7 @@ struct PlaceSectionView: View {
             } else {
                 CardView(
                     image: UIImage(systemName: "photo") ?? UIImage(), // 옵셔널 해제
-                    category: place.parking,
+//                    category: place.parking,
                     heading: place.name,
                     author: place.address
                 )
@@ -123,7 +123,7 @@ struct PlaceCardView: View {
                 if let image = viewModel.homeimage[place.name.lowercased()] {
                     CardView(
                         image: image,
-                        category: place.parking,
+//                        category: place.parking,
                         heading: place.name,
                         author: place.address
                     )
@@ -131,7 +131,7 @@ struct PlaceCardView: View {
                 } else {
                     CardView(
                         image: UIImage(systemName: "photo"),
-                        category: place.parking,
+//                        category: place.parking,
                         heading: place.name,
                         author: place.address
                     )

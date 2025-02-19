@@ -2,7 +2,7 @@ import SwiftUI
 
 struct CardView: View {
     let image: UIImage?
-    let category: String
+//    let category: String
     let heading: String
     let author: String
 
@@ -30,10 +30,10 @@ struct CardView: View {
                 .fontWeight(.bold)
                 .padding([.top, .horizontal])
 
-            Text(category)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .padding(.horizontal)
+//            Text(category)
+//                .font(.subheadline)
+//                .foregroundColor(.secondary)
+//                .padding(.horizontal)
 
             Text(author)
                 .font(.footnote)

@@ -117,7 +117,7 @@ struct RestaurantSectionView: View {
             if let image = viewModel.homeimage[restaurant.name] {
                 CardView(
                     image: image,
-                    category: restaurant.parking,
+//                    category: restaurant.parking,
                     heading: restaurant.name,
                     author: restaurant.address
                 )
@@ -125,7 +125,7 @@ struct RestaurantSectionView: View {
             } else {
                 CardView(
                     image: UIImage(systemName: "photo"), // 기본 이미지
-                    category: restaurant.parking,
+//                    category: restaurant.parking,
                     heading: restaurant.name,
                     author: restaurant.address
                 )
