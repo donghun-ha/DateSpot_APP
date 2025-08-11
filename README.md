@@ -74,6 +74,11 @@ iOS(SwiftUI) → FastAPI(EC2) → MySQL
 
 ---
 
+## 📚 API
+![API](./assets/datespot_api.png)
+
+---
+
 ## 🗂 ERD
 ![ERD](./assets/datespot_erd.png)
 
