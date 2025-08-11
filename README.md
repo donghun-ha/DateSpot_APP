@@ -108,4 +108,4 @@ SwiftUI와 서버 연동을 함께 다루며 화면·상태·네트워크를 하
 ---
 
 ## 📌 GitHub Repo
-[DateSpot Repository](https://github.com/donghun-ha/DateSpot)
+[DateSpot Repository](https://github.com/donghun-ha/DateSpot_APP)
